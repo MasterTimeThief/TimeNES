@@ -8,6 +8,7 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/f32"
+	"gioui.org/io/key"
 	"gioui.org/op"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
@@ -34,11 +35,9 @@ var CHRROM [0x2000]byte
 var Header [0x10]byte
 var CartRAM [0x2000]byte
 
-//var filepath string = "D:/Coding/go-nes/__PatreonRoms/7_Graphics.nes"
+var filepath string = "roms/smb.nes"
 
-var filepath string = "D:/Coding/go-nes/smb.nes"
-
-// var filepath string = "D:/Coding/go-nes/rom_singles/01-implied.nes"
+// var filepath string = "roms/rom_singles/02-immediate.nes"
 var LoggingCPU = false
 var LoggingPPU = true
 var LogCount = 1000
@@ -71,6 +70,9 @@ var ppuScrollFineX byte
 var DrawNewFrame bool = false
 
 var screenCount int = 33
+
+var Controller1, Controller2 byte
+var Controller1ShiftRegister, Controller2ShiftRegister uint16
 
 // Sets everything outside of operands for the tracelogger to run later
 func prepTraceLogger() {
@@ -264,6 +266,7 @@ func Run(window *app.Window) {
 
 	for {
 		for !CPU_Halted {
+			UpdateControllers()
 			Emulate_CPU()
 			if DrawNewFrame {
 				DrawNewFrame = false
@@ -276,6 +279,19 @@ func Run(window *app.Window) {
 	}
 }
 
+/*
+0 - B
+1 - A
+2 - Select
+3 - Start
+4 - Up
+5 - Down
+6 - Left
+7 - Right
+*/
+var Controller1State [8]bool
+var Controller2State [8]bool
+
 func DrawWindow(ops op.Ops, window *app.Window) {
 	switch e := window.Event().(type) {
 	case app.DestroyEvent:
@@ -286,6 +302,83 @@ func DrawWindow(ops op.Ops, window *app.Window) {
 	case app.FrameEvent:
 		// This graphics context is used for managing the rendering state.
 		gtx := app.NewContext(&ops, e)
+
+		//Handle keyboard input
+		for {
+			ev, ok := gtx.Event(
+				//Controller 1
+				key.Filter{Name: key.NameUpArrow},    //Up
+				key.Filter{Name: key.NameDownArrow},  //Down
+				key.Filter{Name: key.NameLeftArrow},  //Left
+				key.Filter{Name: key.NameRightArrow}, //Right
+				key.Filter{Name: "Z"},                //B
+				key.Filter{Name: "X"},                //A
+				key.Filter{Name: key.NameReturn},     //Start
+				key.Filter{Name: key.NameShift},      //Select
+				//Controller 2
+			)
+			if !ok {
+				break
+			}
+			fmt.Printf("KEY   : %+v\n", ev)
+			if ev.(key.Event).State == key.Press {
+				name := ev.(key.Event).Name
+
+				if name == "X" {
+					Controller1State[0] = true
+				}
+				if name == "Z" {
+					Controller1State[1] = true
+				}
+				if name == key.NameShift {
+					Controller1State[2] = true
+				}
+				if name == key.NameReturn {
+					Controller1State[3] = true
+				}
+				if name == key.NameUpArrow {
+					Controller1State[4] = true
+				}
+				if name == key.NameDownArrow {
+					Controller1State[5] = true
+				}
+				if name == key.NameLeftArrow {
+					Controller1State[6] = true
+				}
+				if name == key.NameRightArrow {
+					Controller1State[7] = true
+				}
+			}
+
+			if ev.(key.Event).State == key.Release {
+				name := ev.(key.Event).Name
+
+				if name == "X" {
+					Controller1State[0] = false
+				}
+				if name == "Z" {
+					Controller1State[1] = false
+				}
+				if name == key.NameShift {
+					Controller1State[2] = false
+				}
+				if name == key.NameReturn {
+					Controller1State[3] = false
+				}
+				if name == key.NameUpArrow {
+					Controller1State[4] = false
+				}
+				if name == key.NameDownArrow {
+					Controller1State[5] = false
+				}
+				if name == key.NameLeftArrow {
+					Controller1State[6] = false
+				}
+				if name == key.NameRightArrow {
+					Controller1State[7] = false
+				}
+			}
+		}
 
 		//DrawScreen()
 
@@ -433,12 +526,9 @@ func Read(Address uint16) byte {
 		case 0x2001:
 		case 0x2002: //PPUSTATUS
 			ppustatus := byte(0)
-			if ppuVBlank {
-				ppustatus |= byte(0x80)
-			} else {
-				ppustatus |= byte(0x00)
-			}
-			ppustatus |= 0x40 //Will change later for Sprite Zero Hit
+			ppustatus |= byte(ternary(ppuVBlank, 0x80, 0x00))
+			ppustatus |= byte(ternary(ppuStatusSprZeroHit, 0x40, 0x00))
+			ppustatus |= byte(ternary(ppuStatusOverflow, 0x20, 0x00))
 			ppuVBlank = false
 			WriteLatch = false
 			return ppustatus
@@ -461,6 +551,14 @@ func Read(Address uint16) byte {
 		default:
 			return 0
 		}
+	} else if Address == 0x4016 { //Controller 1
+		cBit := byte((Controller1ShiftRegister & 0x80) >> 7)
+		Controller1ShiftRegister <<= 1
+		return cBit
+	} else if Address == 0x4017 { //Controller 2
+		cBit := byte((Controller2ShiftRegister & 0x80) >> 7)
+		Controller2ShiftRegister <<= 1
+		return cBit
 	} else if Address >= 0x8000 {
 		//Read from ROM
 		return ROM[Address-0x8000]
@@ -543,6 +641,13 @@ func Write(Address uint16, Value byte) {
 			VRAMAddress += ternary(ppuVRAMInc32Mode, 0x20, 0x01)
 			VRAMAddress &= 0x3FFF
 		}
+	} else if Address == 0x4014 { //OAM
+		for i := 0; i < 256; i++ {
+			OAM[i] = Read((uint16(Value) << 8) + uint16(i))
+		}
+	} else if Address == 0x4016 { //Controller Input
+		Controller1ShiftRegister = uint16(Controller1)
+		Controller2ShiftRegister = uint16(Controller2)
 	} else if Address < 0x4020 {
 		//Audio Processing Unit stuff
 		//$4000 - $4017 is APU and I/O registers
@@ -551,6 +656,30 @@ func Write(Address uint16, Value byte) {
 	} else if Address < 0x8000 {
 		CartRAM[Address&0x7FF] = Value
 	}
+}
+
+// Update states of controllers
+func UpdateControllers() {
+	Controller1 = 0
+	Controller2 = 0
+
+	Controller1 |= byte(ternary(Controller1State[0], 0x80, 0x00))
+	Controller1 |= byte(ternary(Controller1State[1], 0x40, 0x00))
+	Controller1 |= byte(ternary(Controller1State[2], 0x20, 0x00))
+	Controller1 |= byte(ternary(Controller1State[3], 0x10, 0x00))
+	Controller1 |= byte(ternary(Controller1State[4], 0x08, 0x00))
+	Controller1 |= byte(ternary(Controller1State[5], 0x04, 0x00))
+	Controller1 |= byte(ternary(Controller1State[6], 0x02, 0x00))
+	Controller1 |= byte(ternary(Controller1State[7], 0x01, 0x00))
+
+	Controller2 |= byte(ternary(Controller2State[0], 0x80, 0x00))
+	Controller2 |= byte(ternary(Controller2State[1], 0x40, 0x00))
+	Controller2 |= byte(ternary(Controller2State[2], 0x20, 0x00))
+	Controller2 |= byte(ternary(Controller2State[3], 0x10, 0x00))
+	Controller2 |= byte(ternary(Controller2State[4], 0x08, 0x00))
+	Controller2 |= byte(ternary(Controller2State[5], 0x04, 0x00))
+	Controller2 |= byte(ternary(Controller2State[6], 0x02, 0x00))
+	Controller2 |= byte(ternary(Controller2State[7], 0x01, 0x00))
 }
 
 func ReadPPU(Address uint16) byte {
@@ -873,6 +1002,14 @@ func Emulate_CPU() {
 	switch opcode {
 	case 0x02: //HLT
 		CPU_Halted = true
+	case 0x12: //HLT
+		CPU_Halted = true
+	case 0x22: //HLT
+		CPU_Halted = true
+	case 0x32: //HLT
+		CPU_Halted = true
+	case 0x42: //HLT
+		CPU_Halted = true
 	case 0xA0: //LDY Immediate
 		Y = ReadFromPC()
 		SetZNFlags(Y)
@@ -995,17 +1132,26 @@ func Emulate_CPU() {
 		Cycles = 5
 
 	case 0x86: //STX Zero Page
-		temp := ReadFromPC()
-		Write(BuildAddress(temp, 0x00), X)
+		Address := ReadOperands_ZeroPageAddressed()
+		Write(Address, X)
 		Cycles = 3
+	case 0x96: //STX Zero Page, Y
+		Address := ReadOperands_ZeroPageAddressed_YIndexed()
+		Write(Address, X)
+		Cycles = 4
 	case 0x8E: //STX Absolute
 		Address := ReadOperands_AbsoluteAddressed()
 		Write(Address, X)
 		Cycles = 4
+
 	case 0x84: //STY Zero Page
-		temp := ReadFromPC()
-		Write(BuildAddress(temp, 0x00), Y)
+		Address := ReadOperands_ZeroPageAddressed()
+		Write(Address, Y)
 		Cycles = 3
+	case 0x94: //STY Zero Page, X
+		Address := ReadOperands_ZeroPageAddressed_XIndexed()
+		Write(Address, Y)
+		Cycles = 4
 	case 0x8C: //STY Absolute
 		Address := ReadOperands_AbsoluteAddressed()
 		Write(Address, Y)
@@ -1106,6 +1252,67 @@ func Emulate_CPU() {
 		flag_Decimal = false
 	case 0xEA: //NOP
 		Cycles = 2
+	//Non-official NOP codes
+	case 0x1A: //NOP Implied
+		Cycles = 2
+	case 0x3A: //NOP Implied
+		Cycles = 2
+	case 0x5A: //NOP Implied
+		Cycles = 2
+	case 0x7A: //NOP Implied
+		Cycles = 2
+	case 0xDA: //NOP Implied
+		Cycles = 2
+	case 0xFA: //NOP Implied
+		Cycles = 2
+	case 0x80: //NOP Immediate
+		ReadFromPC()
+		Cycles = 2
+	case 0x82: //NOP Immediate
+		ReadFromPC()
+		Cycles = 2
+	case 0x89: //NOP Immediate
+		ReadFromPC()
+		Cycles = 2
+	case 0xC2: //NOP Immediate
+		ReadFromPC()
+		Cycles = 2
+	case 0xE2: //NOP Immediate
+		ReadFromPC()
+		Cycles = 2
+	case 0x04: //NOP Zero Page
+		Cycles = 3
+	case 0x44: //NOP Zero Page
+		Cycles = 3
+	case 0x64: //NOP Zero Page
+		Cycles = 3
+	case 0x14: //NOP Zero Page, X
+		Cycles = 4
+	case 0x34: //NOP Zero Page, X
+		Cycles = 4
+	case 0x54: //NOP Zero Page, X
+		Cycles = 4
+	case 0x74: //NOP Zero Page, X
+		Cycles = 4
+	case 0xD4: //NOP Zero Page, X
+		Cycles = 4
+	case 0xF4: //NOP Zero Page, X
+		Cycles = 4
+	case 0x0C: //NOP Absolute
+		Cycles = 4
+	case 0x1C: //NOP Absolute, X
+		Cycles = 4
+	case 0x3C: //NOP Absolute, X
+		Cycles = 4
+	case 0x5C: //NOP Absolute, X
+		Cycles = 4
+	case 0x7C: //NOP Absolute, X
+		Cycles = 4
+	case 0xDC: //NOP Absolute, X
+		Cycles = 4
+	case 0xFC: //NOP Absolute, X
+		Cycles = 4
+
 	case 0x08: //PHP
 		var temp byte
 		temp += byte(BoolToInt(flag_Carry))
@@ -1249,11 +1456,26 @@ func Emulate_CPU() {
 		Address := ReadOperands_AbsoluteAddressed()
 		Op_ORA(Read(Address))
 		Cycles = 4
-	//case 0x15:
-	//case 0x1D:
-	//case 0x19:
-	//case 0x01:
-	//case 0x11:
+	case 0x15: //ORA Zero Page, X
+		Address := ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ORA(Read(Address))
+		Cycles = 4
+	case 0x1D: //ORA Absolute, X
+		Address := ReadOperands_AbsoluteAddressed_XIndexed()
+		Op_ORA(Read(Address))
+		Cycles = 4
+	case 0x19: //ORA Absolute, Y
+		Address := ReadOperands_AbsoluteAddressed_YIndexed()
+		Op_ORA(Read(Address))
+		Cycles = 4
+	case 0x01: //ORA Indirect, X
+		Address := ReadOperands_IndirectAddressed_XIndexed()
+		Op_ORA(Read(Address))
+		Cycles = 6
+	case 0x11: //ORA Indirect, Y
+		Address := ReadOperands_IndirectAddressed_YIndexed()
+		Op_ORA(Read(Address))
+		Cycles = 5
 
 	case 0x29: //AND Immediate
 		Op_AND(ReadFromPC())
@@ -1340,6 +1562,9 @@ func Emulate_CPU() {
 		Cycles = 5
 
 	case 0xE9: //SBC Immediate
+		Op_SBC(ReadFromPC())
+		Cycles = 2
+	case 0xEB: //SBC Immediate (Unofficial)
 		Op_SBC(ReadFromPC())
 		Cycles = 2
 	case 0xE5: //SBC Zero Page
@@ -1481,12 +1706,6 @@ func Emulate_CPU() {
 		Address := ReadOperands_IndirectAddressed()
 		ProgramCounter = Address
 		Cycles = 5 //TODO: What the fuck
-	case 0x1A: //NOP
-		Cycles = 2
-	case 0x3A: //NOP
-		Cycles = 2
-	case 0x5A: //NOP
-		Cycles = 2
 
 	/*
 		case 0x07: //SLO Zero Page (Illegal?)
@@ -1605,7 +1824,11 @@ func Emulate_PPU() {
 		DrawNewFrame = true
 	} else if ppuDot == 1 && ppuScanline == 261 {
 		ppuVBlank = false
+		ppuStatusOverflow = false
+		ppuStatusSprZeroHit = false
 	}
+
+	SpriteEvaluation()
 
 	if ppuScanline < 240 || ppuScanline == 261 {
 		if (ppuDot > 0 && ppuDot <= 256) || (ppuDot > 320 && ppuDot <= 336) {
@@ -1618,8 +1841,20 @@ func Emulate_PPU() {
 					ppuShiftRegister_attributeL = ppuShiftRegister_attributeL << 1 //Shift 1 bit to the left
 					ppuShiftRegister_attributeH = ppuShiftRegister_attributeH << 1 //Shift 1 bit to the left
 				}
-				PPU8Steps()
+				if ppuMask_RenderBG || ppuMask_RenderSprites { //If rendering at all, let's decrement the X position of the objects
+					if ppuDot > 1 && ppuDot <= 256 { //Don't decrement until dot 1
+						for i := 0; i < 8; i++ {
+							if ppu_SpriteXposition[i] > 0 {
+								ppu_SpriteXposition[i]--
+							} else {
+								ppu_SpriteShiftRegisterL[i] = byte(ppu_SpriteShiftRegisterL[i] << 1) //Shift 1 bit to the left
+								ppu_SpriteShiftRegisterH[i] = byte(ppu_SpriteShiftRegisterH[i] << 1) //Shift 1 bit to the left
+							}
 
+						}
+					}
+				}
+				PPU8Steps()
 			}
 		}
 	}
@@ -1653,28 +1888,49 @@ func Emulate_PPU() {
 				PalHi = 0
 			}
 		}
-		/*TwoBit := 0
-		if ((lowByte >> (7 - x)) & 1) == 1 {
-			TwoBit += 1
+		var SpritePalHi byte = 0        //Which color palette to use
+		var SpritePalLow byte = 0       //Index into a color palette
+		var SpritePriority bool = false //Is the sprite in front or behind the BG?
+		if ppuMask_RenderSprites && (ppuDot > 8 || ppuMask_8pxMaskSprites) {
+			for i := 0; i < 8; i++ {
+				if ppu_SpriteXposition[i] == 0 && i < int(ppuSecondaryOAMSize/4) { //If the sprite X position == 0 (The x position is decremented every ppu cycle)
+					SpixelL := ((ppu_SpriteShiftRegisterL[i]) & 0x80) != 0
+					SpixelH := ((ppu_SpriteShiftRegisterH[i]) & 0x80) != 0
+					SpritePalLow = 0
+					if SpixelL {
+						SpritePalLow = 1
+					}
+					if SpixelH {
+						SpritePalLow |= 2
+					}
+
+					SpritePalHi = byte((ppu_SpriteAttribute[i] & 0x03) | 0x04)
+					SpritePriority = ((ppu_SpriteAttribute[i] >> 5) & 1) == 0
+				} else {
+					continue
+				}
+				if SpritePalLow != 0 {
+					if i == 0 && ppuScanlineContainsSpriteZero && SpritePalLow != 0 && PalLow != 0 && ppuMask_RenderBG && ppuDot < 256 {
+						ppuStatusSprZeroHit = true
+					}
+					break
+				}
+			}
 		}
-		if ((highByte >> (7 - x)) & 1) == 1 {
-			TwoBit += 2
-		}*/
-		/*TwoBit := 0
-		if ((PalLow >> (7 - ((ppuDot - 1) & 7))) & 1) == 1 {
-			TwoBit += 1
+
+		if (SpritePriority && SpritePalLow != 0) || PalLow == 0 {
+			PalLow = SpritePalLow
+			PalHi = SpritePalHi
+			if PalLow == 0 {
+				PalHi = 0
+			}
 		}
-		if ((PalHi >> (7 - ((ppuDot - 1) & 7))) & 1) == 1 {
-			TwoBit += 2
-		}*/
-		if screenCount == 1 && ppuScanline <= 32 {
+
+		nametable.Set(ppuDot-1, ppuScanline, Palette[PaletteRAM[(PalHi*4)+PalLow]])
+
+		/*if screenCount == 1 && ppuScanline <= 32 {
 			TraceLoggerPPU()
-		}
-
-		color := Palette[PaletteRAM[(PalHi*4)+PalLow]]
-		//color := Palette[ReadPPU(uint16((PalHi*4)+PalLow))]
-
-		nametable.Set(ppuDot-1, ppuScanline, color)
+		}*/
 	}
 
 	ppuDot++
@@ -1764,4 +2020,183 @@ func PPU_ResetXScroll() {
 
 func PPU_ResetYScroll() {
 	VRAMAddress = ((VRAMAddress & 0b0000010000011111) | (TransferAddress & 0b0111101111100000))
+}
+
+var OAM [0x100]byte
+var SecondaryOAM [0x20]byte
+var ppuSpriteEvalTemp byte
+var ppuOAMAddress, ppuSecondaryOAMAddress, ppuSecondaryOAMSize uint16
+var ppuSecondaryOAMFull, ppuStatusOverflow, ppuStatusSprZeroHit, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
+var ppuSpriteEvalTick int
+
+var ppu_SpriteShiftRegisterL [8]byte
+var ppu_SpriteShiftRegisterH [8]byte
+
+var ppu_SpriteAttribute [8]byte
+var ppu_SpritePattern [8]byte
+var ppu_SpriteXposition [8]byte
+var ppu_SpriteYposition [8]byte
+
+func SpriteEvaluation() {
+	if ppuDot == 0 { //Step 0: Reset Secondary OAM count
+		ppuSecondaryOAMAddress = 0
+		ppuSecondaryOAMFull = false
+	} else if ppuDot > 0 && ppuDot <= 64 { //Step 1: Clear Secondary OAM
+		if (ppuDot & 1) == 1 {
+			//Odd PPU cycles load the value $FF
+			ppuSpriteEvalTemp = 0xFF
+		} else {
+			//Even PPU cycles store the value in secondaryOAM
+			SecondaryOAM[ppuSecondaryOAMAddress] = ppuSpriteEvalTemp
+			ppuSecondaryOAMAddress++
+			ppuSecondaryOAMAddress &= 0x1F //Keep this limited from $00 to $1F
+		}
+	} else if ppuDot > 64 && ppuDot <= 256 { //Step 2: Load OAM into Secondary OAM (If not full)
+		if (ppuDot & 1) == 1 {
+			//Odd PPU cycles load the value from OAM
+			ppuSpriteEvalTemp = OAM[ppuOAMAddress&0xFF] //CHECK IF THIS IS LEGIT
+		} else {
+			if !ppuSpriteEvaluationOAMOverflowed {
+				//Even PPU cycles store the value in secondaryOAM
+				if !ppuSecondaryOAMFull { //If SecondaryOAM is not full yet
+					// As long as secondaryOAM isn't full, this write *always* occurs, regardless of evaluation
+					SecondaryOAM[ppuSecondaryOAMAddress] = ppuSpriteEvalTemp
+				}
+				if ppuSpriteEvalTick == 0 {
+					//Reading index 0 of an object's set of 4 bytes
+					if (ppuScanline-int(ppuSpriteEvalTemp) >= 0) && (ppuScanline-int(ppuSpriteEvalTemp) < int(ternary(ppuUse8x16Sprites, 16, 8))) {
+						//This object *is* on this scanline!
+						if !ppuSecondaryOAMFull {
+							ppuSecondaryOAMAddress++ //Increment this for the next write to Secondary OAM
+							ppuOAMAddress++          //Increment this for the next ream of Object Attribute Memory
+							if ppuDot == 66 {
+								// Rather than verifying that this is OAM index 0,
+								// the PPU sets this flag if we found an object on this scanline
+								// during ppuDot 66, which would be the PPU cycle evaluating index 0
+								ppuScanlineContainsSpriteZero = true
+							}
+
+						} else {
+							ppuStatusOverflow = true
+						}
+						ppuSpriteEvalTick++
+
+					} else {
+						ppuOAMAddress += 4
+					}
+				} else { //If ppuSpriteEvalTick != 0
+					// Reading index 1, 2, or 3 of an object's OAM data.
+					// We're not going to be making any checks for if things are on this scanline,
+					// so we can just simply increment the OAM address
+					ppuSecondaryOAMAddress++ //Increment this for the next write to Secondary OAM
+					ppuOAMAddress++          //Increment this for the next ream of Object Attribute Memory
+					if ppuSecondaryOAMAddress == 0x20 {
+						ppuSecondaryOAMFull = true
+					}
+					ppuSpriteEvalTick++
+					ppuSpriteEvalTick &= 3 // Wrap around to tick 0 after tick 3
+				}
+				if ppuOAMAddress == 0 {
+					// If we overflow the OAM address, we want to stop running the sprite evaluation checks until dot 257
+					ppuSpriteEvaluationOAMOverflowed = true
+				}
+			}
+		}
+	} else if ppuDot > 256 && ppuDot <= 320 { //Step 3:
+		ppuOAMAddress = 0 //This is set to $00 during every one of these cycles
+		if ppuDot == 257 {
+			ppuSecondaryOAMSize = ppuSecondaryOAMAddress
+			ppuSecondaryOAMAddress = 0
+			ppuSpriteEvalTick = 0
+		}
+
+		switch ppuSpriteEvalTick {
+		case 0:
+			//Set this object's Y position in the array
+			ppu_SpriteYposition[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
+			ppuSecondaryOAMAddress++
+		case 1:
+			//Set this object's Y position in the array
+			ppu_SpritePattern[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
+			ppuSecondaryOAMAddress++
+		case 2:
+			//Set this object's Y position in the array
+			ppu_SpriteAttribute[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
+			ppuSecondaryOAMAddress++
+		case 3:
+			//Set this object's Y position in the array
+			ppu_SpriteXposition[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
+		case 4:
+			ppuAddressBus = ppuFindSpritePatternData(ppuSecondaryOAMAddress / 4)
+		case 5:
+			ppuSpriteEvalTemp = ReadPPU(ppuAddressBus)
+			if ppuScanline == 261 {
+				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
+			}
+			if ((ppu_SpriteAttribute[ppuSecondaryOAMAddress/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
+				// Real nice way to change the order of bits from 76543210 to 01234567
+				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xF0) >> 4) | ((ppuSpriteEvalTemp & 0xF) << 4))
+				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xCC) >> 2) | ((ppuSpriteEvalTemp & 0x33) << 2))
+				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xAA) >> 1) | ((ppuSpriteEvalTemp & 0x55) << 1))
+			}
+			ppu_SpriteShiftRegisterL[ppuSecondaryOAMAddress/4] = ppuSpriteEvalTemp
+		case 6:
+			ppuAddressBus += 8
+		case 7:
+			ppuSpriteEvalTemp = ReadPPU(ppuAddressBus)
+			if ppuScanline == 261 {
+				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
+			}
+			if ((ppu_SpriteAttribute[ppuSecondaryOAMAddress/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
+				// Real nice way to change the order of bits from 76543210 to 01234567
+				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xF0) >> 4) | ((ppuSpriteEvalTemp & 0xF) << 4))
+				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xCC) >> 2) | ((ppuSpriteEvalTemp & 0x33) << 2))
+				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xAA) >> 1) | ((ppuSpriteEvalTemp & 0x55) << 1))
+			}
+			ppu_SpriteShiftRegisterH[ppuSecondaryOAMAddress/4] = ppuSpriteEvalTemp
+			ppuSecondaryOAMAddress++
+		}
+		ppuSpriteEvalTick++
+		ppuSpriteEvalTick &= 7 // And reset at 8
+
+	}
+}
+
+func ppuFindSpritePatternData(SecondaryOAMSlot uint16) uint16 {
+	if !ppuUse8x16Sprites { //8x8 sprites
+		// The address is $0000 or $1000 depending on the pattern table
+		// plus the pattern value from OAM * 16
+		// plus the number of scanlines from the top of the object
+		// if the attributes are set to flip Y, it's 7 - the number of scanlines from the top of the object
+		if ((ppu_SpriteAttribute[SecondaryOAMSlot] >> 7) & 1) == 0 { //Attributes are not set up to flip Y
+			return uint16(ternary(ppuSpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
+		} else { //Attributes are set up to flip Y
+			return uint16(ternary(ppuSpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16((7-(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))&7))
+
+		}
+
+	} else { //8x16 sprites
+		// in 8x16 mode, instead of using ppu_SpritePattern to deternime which pattern table to fetch data from...
+		// these sprites instead use bit 0 of the object's pattern information from OAM
+
+		// The address is $0000 or $1000 depending on the pattern table
+		// plus (the pattern value from OAM, clearing bit 0) * 16
+		// plus the number of scanlines from the top of the object
+		// if the attributes are set to flip Y, it's 7 - the number of scanlines from the top of the object
+
+		//If we're drawing the bottom half of the sprite, add 16
+		if ((ppu_SpriteAttribute[SecondaryOAMSlot] >> 7) & 1) == 0 { //Attributes are not set up to flip Y
+			if ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]) < 8 {
+				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) | (uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
+			} else {
+				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 16) + uint16((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7))
+			}
+		} else { //Attributes are set up to flip Y
+			if ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]) < 8 {
+				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 16) + uint16(((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7)+7))
+			} else {
+				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 7) + uint16((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7))
+			}
+		}
+	}
 }
