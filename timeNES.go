@@ -14,14 +14,9 @@ import (
 	"gioui.org/unit"
 )
 
-//var filepath string = "roms/smb.nes"
+var filepath string = "roms/smb.nes"
 
 //var filepath string = "roms/nestest.nes"
-
-var filepath string = "roms/instr_test-v5/rom_singles/08-ind_x.nes"
-
-//Passed: () MEans broke on unofficial ops
-// 1, 2, (3),(4),(5),(6),(7),
 
 type App struct{ Clicks int }
 
@@ -50,7 +45,7 @@ var CartRAM [0x2000]byte
 var LoggingCPU = false
 var LoggingPPU = false
 var LogCount = 1000
-var ForceHaltCount int = 500000
+var InstructionCount int = 0
 var frame int
 var tracePC, traceVRAM uint16
 var traceA, traceX, tracyY, traceSP byte
@@ -133,7 +128,7 @@ func TraceLogger() {
 		"BEQ", "SBC", "HLT", "ISC", "NOP", "SBC", "INC", "ISC", "SED", "SBC",
 		"NOP", "ISC", "NOP", "SBC", "INC", "ISC",
 	}
-	if LoggingCPU /*&& TotalCycles > 391000*/ {
+	if LoggingCPU /*&& InstructionCount > 35000*/ {
 		Traceline := "$" + fmt.Sprintf("%04X", tracePC)
 
 		Traceline += "\t" + fmt.Sprintf("%02X ", opcode)
@@ -203,7 +198,7 @@ func TraceLogger() {
 
 		Traceline += "\tVRAM: " + fmt.Sprintf("%04X", traceVRAM)
 		Traceline += "\tCycle: " + fmt.Sprintf("%d", traceCycles)
-		//Traceline += "\tForceHaltCount: " + fmt.Sprintf("%d", ForceHaltCount)
+		Traceline += "\tInstructionCount: " + fmt.Sprintf("%d", InstructionCount)
 
 		fmt.Println(Traceline)
 		/*LogCount--
@@ -772,12 +767,18 @@ func ReadOperands_AbsoluteAddressed() uint16 {
 }
 
 func ReadOperands_IndirectAddressed() uint16 {
-	AddressBus := uint16(ReadFromPC())
-	TempAddress := AddressBus
-	AddressBus = uint16(Read(TempAddress)) //Low byte of new address
+	/*Addr := ReadFromPC()
+	TempAddress := Addr
+	Addr = Read(uint16(TempAddress)) //Low byte of new address
 	TempAddress++
-	AddressBus = (uint16(Read(TempAddress))<<8 | AddressBus) //High byte
-	return AddressBus
+	AddressBus = (uint16(Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
+	return AddressBus*/
+	AddressBus := uint16(ReadFromPC())
+	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
+	//Now read from HERE
+	indL := Read(AddressBus)
+	indH := Read(AddressBus + 1)
+	return BuildAddress(indL, indH)
 }
 
 func ReadOperands_AbsoluteAddressed_XIndexed() uint16 {
@@ -795,20 +796,20 @@ func ReadOperands_AbsoluteAddressed_YIndexed() uint16 {
 }
 
 func ReadOperands_IndirectAddressed_XIndexed() uint16 {
-	AddressBus := uint16(ReadFromPC() + X)
-	TempAddress := AddressBus
-	AddressBus = uint16(Read(TempAddress)) //Low byte of new address
+	Addr := ReadFromPC() + X
+	TempAddress := Addr
+	Addr = Read(uint16(TempAddress)) //Low byte of new address
 	TempAddress++
-	AddressBus = (uint16(Read(TempAddress))<<8 | AddressBus) //High byte
+	AddressBus = (uint16(Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
 	return AddressBus
 }
 
 func ReadOperands_IndirectAddressed_YIndexed() uint16 {
-	AddressBus := uint16(ReadFromPC())
-	TempAddress := AddressBus
-	AddressBus = uint16(Read(TempAddress)) //Low byte of new address
+	Addr := ReadFromPC()
+	TempAddress := Addr
+	Addr = Read(uint16(TempAddress)) //Low byte of new address
 	TempAddress++
-	AddressBus = (uint16(Read(TempAddress))<<8 | AddressBus) //High byte
+	AddressBus = (uint16(Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
 	AddressBus += uint16(Y)
 	return AddressBus
 }
@@ -1342,25 +1343,25 @@ func Emulate_CPU() {
 		Cycles = 4
 
 	case 0x08: //PHP
-		var temp byte
-		temp += byte(BoolToInt(flag_Carry))
-		temp += byte(BoolToInt(flag_Zero) * 2)
-		temp += byte(BoolToInt(flag_InterruptDisable) * 4)
-		temp += byte(BoolToInt(flag_Decimal) * 8)
+		temp := byte(0)
+		temp += byte(ternary(flag_Carry, 0x01, 0x00))
+		temp += byte(ternary(flag_Zero, 0x02, 0x00))
+		temp += byte(ternary(flag_InterruptDisable, 0x04, 0x00))
+		temp += byte(ternary(flag_Decimal, 0x08, 0x00))
 		temp += 0x10
 		temp += 0x20
-		temp += byte(BoolToInt(flag_Overflow) * 64)
-		temp += byte(BoolToInt(flag_Negative) * 128)
+		temp += byte(ternary(flag_Overflow, 0x40, 0x00))
+		temp += byte(ternary(flag_Negative, 0x80, 0x00))
 		Push(temp)
 		Cycles = 3
 	case 0x28: //PLP
 		temp := Pull()
-		flag_Carry = (temp & 1) != 0
-		flag_Zero = (temp & 2) != 0
-		flag_InterruptDisable = (temp & 4) != 0
-		flag_Decimal = (temp & 8) != 0
-		flag_Overflow = (temp & 64) != 0
-		flag_Negative = (temp & 128) != 0
+		flag_Carry = (temp & 0x01) != 0
+		flag_Zero = (temp & 0x02) != 0
+		flag_InterruptDisable = (temp & 0x04) != 0
+		flag_Decimal = (temp & 0x08) != 0
+		flag_Overflow = (temp & 0x40) != 0
+		flag_Negative = (temp & 0x80) != 0
 		Cycles = 4
 
 	case 0x0A: //ASL A
@@ -1711,25 +1712,22 @@ func Emulate_CPU() {
 		}
 		Push(byte(ProgramCounter >> 8))
 		Push(byte(ProgramCounter))
-		var temp byte
-		temp += byte(BoolToInt(flag_Carry))
-		temp += byte(BoolToInt(flag_Zero) * 2)
-		temp += byte(BoolToInt(flag_InterruptDisable) * 4)
-		temp += byte(BoolToInt(flag_Decimal) * 8)
-		temp += byte(BoolToInt(!DoNMI) * 0x10)
+
+		temp := byte(0)
+		temp += byte(ternary(flag_Carry, 0x01, 0x00))
+		temp += byte(ternary(flag_Zero, 0x02, 0x00))
+		temp += byte(ternary(flag_InterruptDisable, 0x04, 0x00))
+		temp += byte(ternary(flag_Decimal, 0x08, 0x00))
+		temp += byte(ternary(DoNMI, 0x00, 0x10))
 		temp += 0x20
-		temp += byte(BoolToInt(flag_Overflow) * 64)
-		temp += byte(BoolToInt(flag_Negative) * 128)
+		temp += byte(ternary(flag_Overflow, 0x40, 0x00))
+		temp += byte(ternary(flag_Negative, 0x80, 0x00))
 		Push(temp)
-		var PCL, PCH byte
-		if !DoNMI {
-			PCL = Read(0xFFFE)
-			PCH = Read(0xFFFF)
-		} else {
-			PCL = Read(0xFFFA)
-			PCH = Read(0xFFFB)
-		}
-		ProgramCounter = BuildAddress(PCL, PCH)
+		flag_InterruptDisable = true
+
+		PCL := Read(ternary(DoNMI, 0xFFFA, 0xFFFE))
+		PCH := Read(ternary(DoNMI, 0xFFFB, 0xFFFF))
+		ProgramCounter = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
 		DoNMI = false
 		Cycles = 7
 
@@ -1887,11 +1885,13 @@ func Emulate_CPU() {
 
 	//Force Stop, just in case
 	//if TotalCycles > 900000 {
-	/*if ForceHaltCount < 0 {
-		fmt.Println("Too many cycles, end")
-		CPU_Halted = true
-	}
-	ForceHaltCount--*/
+	/*
+		if InstructionCount > 500000 {
+			fmt.Println("Too many cycles, end")
+			CPU_Halted = true
+		}
+	*/
+	InstructionCount++
 }
 
 func Emulate_PPU() {
