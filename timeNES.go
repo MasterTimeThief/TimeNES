@@ -14,6 +14,15 @@ import (
 	"gioui.org/unit"
 )
 
+//var filepath string = "roms/smb.nes"
+
+//var filepath string = "roms/nestest.nes"
+
+var filepath string = "roms/instr_test-v5/rom_singles/08-ind_x.nes"
+
+//Passed: () MEans broke on unofficial ops
+// 1, 2, (3),(4),(5),(6),(7),
+
 type App struct{ Clicks int }
 
 var ProgramCounter uint16
@@ -25,23 +34,24 @@ var operands []byte
 var Cycles, TotalCycles int
 var CPU_Halted = false
 var flag_Carry, flag_Zero, flag_InterruptDisable, flag_Decimal, flag_Overflow, flag_Negative bool
+var MagicConstant byte = 0xFF
 
 var RAM [0x800]byte
 var VRAM [0x800]byte
 var PaletteRAM [0x20]byte
 var ROM [0x8000]byte
-var CHRData [0x2000]byte
+var PRGROMSize uint16 = 0x4000
+
+// var CHRData [0x2000]byte
 var CHRROM [0x2000]byte
 var Header [0x10]byte
 var CartRAM [0x2000]byte
 
-var filepath string = "roms/smb.nes"
-
-// var filepath string = "roms/rom_singles/02-immediate.nes"
 var LoggingCPU = false
-var LoggingPPU = true
+var LoggingPPU = false
 var LogCount = 1000
 var ForceHaltCount int = 500000
+var frame int
 var tracePC, traceVRAM uint16
 var traceA, traceX, tracyY, traceSP byte
 var traceFlagC, traceFlagZ, traceFlagI, traceFlagD, traceFlagV, traceFlagN bool
@@ -123,7 +133,7 @@ func TraceLogger() {
 		"BEQ", "SBC", "HLT", "ISC", "NOP", "SBC", "INC", "ISC", "SED", "SBC",
 		"NOP", "ISC", "NOP", "SBC", "INC", "ISC",
 	}
-	if LoggingCPU && TotalCycles > 391000 {
+	if LoggingCPU /*&& TotalCycles > 391000*/ {
 		Traceline := "$" + fmt.Sprintf("%04X", tracePC)
 
 		Traceline += "\t" + fmt.Sprintf("%02X ", opcode)
@@ -193,13 +203,13 @@ func TraceLogger() {
 
 		Traceline += "\tVRAM: " + fmt.Sprintf("%04X", traceVRAM)
 		Traceline += "\tCycle: " + fmt.Sprintf("%d", traceCycles)
-		Traceline += "\tForceHaltCount: " + fmt.Sprintf("%d", ForceHaltCount)
+		//Traceline += "\tForceHaltCount: " + fmt.Sprintf("%d", ForceHaltCount)
 
 		fmt.Println(Traceline)
-		LogCount--
+		/*LogCount--
 		if LogCount < 0 {
 			CPU_Halted = true
-		}
+		}*/
 	}
 }
 
@@ -273,7 +283,7 @@ func Run(window *app.Window) {
 				break
 			}
 		}
-		//fmt.Println("Halted")
+		//fmt.Println("CPU Paused, Drawing Window")
 
 		DrawWindow(ops, window)
 	}
@@ -314,13 +324,13 @@ func DrawWindow(ops op.Ops, window *app.Window) {
 				key.Filter{Name: "Z"},                //B
 				key.Filter{Name: "X"},                //A
 				key.Filter{Name: key.NameReturn},     //Start
-				key.Filter{Name: key.NameShift},      //Select
+				key.Filter{Name: "M"},                //Select
 				//Controller 2
 			)
 			if !ok {
 				break
 			}
-			fmt.Printf("KEY   : %+v\n", ev)
+			//fmt.Printf("KEY   : %+v\n", ev)
 			if ev.(key.Event).State == key.Press {
 				name := ev.(key.Event).Name
 
@@ -330,7 +340,7 @@ func DrawWindow(ops op.Ops, window *app.Window) {
 				if name == "Z" {
 					Controller1State[1] = true
 				}
-				if name == key.NameShift {
+				if name == "M" {
 					Controller1State[2] = true
 				}
 				if name == key.NameReturn {
@@ -359,7 +369,7 @@ func DrawWindow(ops op.Ops, window *app.Window) {
 				if name == "Z" {
 					Controller1State[1] = false
 				}
-				if name == key.NameShift {
+				if name == "M" {
 					Controller1State[2] = false
 				}
 				if name == key.NameReturn {
@@ -381,6 +391,8 @@ func DrawWindow(ops op.Ops, window *app.Window) {
 		}
 
 		//DrawScreen()
+		nametable.Set(frame&0xFF, 0, color.RGBA{R: 0xFF, G: 0x00, B: 0x00, A: 0xFF})
+		frame++
 
 		// Upload bitmap to GPU operations
 		imgOp := paint.NewImageOp(nametable)
@@ -561,7 +573,7 @@ func Read(Address uint16) byte {
 		return cBit
 	} else if Address >= 0x8000 {
 		//Read from ROM
-		return ROM[Address-0x8000]
+		return ROM[(Address-0x8000)&((uint16(Header[4])*0x4000)-1)]
 		//
 	}
 	return 0
@@ -654,7 +666,7 @@ func Write(Address uint16, Value byte) {
 		//$4018 - $401F is APU and I/O functions that are normally disabled
 
 	} else if Address < 0x8000 {
-		CartRAM[Address&0x7FF] = Value
+		CartRAM[Address&0x1FFF] = Value
 	}
 }
 
@@ -712,14 +724,18 @@ func Reset() {
 	HeaderedROM, err := os.ReadFile(filepath)
 	check(err)
 
-	copy(ROM[:], HeaderedROM[0x10:])
 	copy(Header[:], HeaderedROM[0x0:])
-	copy(CHRData[:], HeaderedROM[0x8010:])
-	copy(CHRROM[:], HeaderedROM[0x8010:])
+	size := uint16(Header[4])
+	copy(ROM[:], HeaderedROM[0x10:])
+	if Header[5] != 0 {
+		copy(CHRROM[:], HeaderedROM[(0x0010+(0x4000*size)):])
+	}
+	//copy(CHRData[:], HeaderedROM[0x8010:])
 
 	PCL := Read(0xFFFC)
 	PCH := Read(0xFFFD)
 	ProgramCounter = BuildAddress(PCL, PCH)
+	//ProgramCounter = 0xC000
 	StackPointer -= 3
 	//fmt.Printf("%#x", ProgramCounter)
 	//Run()
@@ -870,7 +886,7 @@ func Op_LSR(Address uint16) {
 	flag_Carry = (Value & 1) != 0
 	Value >>= 1
 	Write(Address, Value)
-	SetZNFlags(A)
+	SetZNFlags(Value)
 }
 
 // Perform Rotate Left onto value at Address
@@ -1010,6 +1026,20 @@ func Emulate_CPU() {
 		CPU_Halted = true
 	case 0x42: //HLT
 		CPU_Halted = true
+	case 0x52: //HLT
+		CPU_Halted = true
+	case 0x62: //HLT
+		CPU_Halted = true
+	case 0x72: //HLT
+		CPU_Halted = true
+	case 0x92: //HLT
+		CPU_Halted = true
+	case 0xB2: //HLT
+		CPU_Halted = true
+	case 0xD2: //HLT
+		CPU_Halted = true
+	case 0xF2: //HLT
+		CPU_Halted = true
 	case 0xA0: //LDY Immediate
 		Y = ReadFromPC()
 		SetZNFlags(Y)
@@ -1024,19 +1054,18 @@ func Emulate_CPU() {
 		Y = Read(Address)
 		SetZNFlags(Y)
 		Cycles = 4
-	case 0xB4: //LDY Zero Page, Y
-		Address := ReadOperands_ZeroPageAddressed_YIndexed()
+	case 0xB4: //LDY Zero Page, X
+		Address := ReadOperands_ZeroPageAddressed_XIndexed()
 		Y = Read(Address)
 		SetZNFlags(Y)
 		Cycles = 4
-	case 0xBC: //LDY Absolute, Y
-		Address := ReadOperands_AbsoluteAddressed_YIndexed()
+	case 0xBC: //LDY Absolute, X
+		Address := ReadOperands_AbsoluteAddressed_XIndexed()
 		Y = Read(Address)
 		SetZNFlags(Y)
 		Cycles = 4
 
 	case 0xA2: //LDX Immediate
-		//fmt.Printf("%#04x: LDX Immediate", ProgramCounter-1)
 		X = ReadFromPC()
 		SetZNFlags(X)
 		Cycles = 2
@@ -1091,7 +1120,6 @@ func Emulate_CPU() {
 		Cycles = 6
 
 	case 0xA9: //LDA Immediate
-		//fmt.Printf("%#04x: LDA Immediate", ProgramCounter-1)
 		A = ReadFromPC()
 		SetZNFlags(A)
 		Cycles = 2
@@ -1386,8 +1414,12 @@ func Emulate_CPU() {
 	case 0x4E: //LSR Absolute
 		Op_LSR(ReadOperands_AbsoluteAddressed())
 		Cycles = 6
-	//case 0x56:
-	//case 0x5E:
+	case 0x56: //LSR Zero Page, X
+		Op_LSR(ReadOperands_ZeroPageAddressed_XIndexed())
+		Cycles = 6
+	case 0x5E: //LSR Absolute, X
+		Op_LSR(ReadOperands_AbsoluteAddressed_XIndexed())
+		Cycles = 7
 
 	case 0x6A: //ROR A
 		futureCarry := (A & 1) != 0
@@ -1520,14 +1552,26 @@ func Emulate_CPU() {
 		Address := ReadOperands_AbsoluteAddressed()
 		Op_EOR(Read(Address))
 		Cycles = 4
-	//case 0x55:
+	case 0x55: //EOR Zero Page, X
+		Address := ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_EOR(Read(Address))
+		Cycles = 4
 	case 0x5D: //EOR Absolute, X
 		Address := ReadOperands_AbsoluteAddressed_XIndexed()
 		Op_EOR(Read(Address))
 		Cycles = 4
-	//case 0x59:
-	//case 0x41:
-	//case 0x51:
+	case 0x59: //EOR Absolute, Y
+		Address := ReadOperands_AbsoluteAddressed_YIndexed()
+		Op_EOR(Read(Address))
+		Cycles = 4
+	case 0x41: //EOR Indirect, X
+		Address := ReadOperands_IndirectAddressed_XIndexed()
+		Op_EOR(Read(Address))
+		Cycles = 6
+	case 0x51: //EOR Indirect, Y
+		Address := ReadOperands_IndirectAddressed_YIndexed()
+		Op_EOR(Read(Address))
+		Cycles = 5
 
 	case 0x69: //ADC Immediate
 		Op_ADC(ReadFromPC())
@@ -1706,6 +1750,105 @@ func Emulate_CPU() {
 		Address := ReadOperands_IndirectAddressed()
 		ProgramCounter = Address
 		Cycles = 5 //TODO: What the fuck
+	case 0xA3: //LAX Indirect, X
+		Address := ReadOperands_IndirectAddressed_XIndexed()
+		A = Read(Address)
+		X = A
+		SetZNFlags(X)
+		Cycles = 6
+	case 0x07: // SLO Zero Page
+		//ASL + ORA
+		Addr := ReadOperands_ZeroPageAddressed()
+		Op_ASL(Addr)
+		Op_ORA(Read(Addr))
+		Cycles = 5
+
+	case 0x7F: //RRA Absolute, X
+		//ROR + ADC
+		Address := ReadOperands_AbsoluteAddressed_XIndexed()
+		Op_ROR(Address)
+		Op_ADC(Read(Address))
+		Cycles = 7
+	case 0xC7: //DCP Zero Page
+		//DEC + CMP
+		Address := ReadOperands_ZeroPageAddressed()
+		Op_INC(Address, Read(Address))
+		Op_CMP(Read(Address))
+		Cycles = 5
+	case 0x9E: //SHX Absolute, Y
+		Addr := ReadOperands_AbsoluteAddressed_YIndexed()
+		val := (X & byte(((Addr&0xFF00)>>8)+1))
+		Write(Addr, val)
+		Cycles = 5
+	case 0x3B: //RLA Absolute, Y
+		//ROL + AND
+		Addr := ReadOperands_AbsoluteAddressed_YIndexed()
+		Op_ROL(Addr)
+		Op_AND(Read(Addr))
+		Cycles = 7
+	case 0x0B: //ANC Immediate
+		//AND + Set Carry as ASL
+		Op_AND(ReadFromPC())
+		flag_Carry = flag_Negative
+		Cycles = 2
+	case 0x2B: //ANC2 Immediate
+		//AND + Set Carry as ROL
+		//Same as $0B
+		Op_AND(ReadFromPC())
+		flag_Carry = flag_Negative
+		Cycles = 2
+	case 0x4B: //ALR
+		//AND + LSR
+		Op_AND(Read(ProgramCounter))
+		Op_LSR(ProgramCounter)
+		ProgramCounter++
+		Cycles = 2
+	case 0x7B: //RRA Absolute, Y
+		//ROR + ADC
+		Address := ReadOperands_AbsoluteAddressed_YIndexed()
+		Op_ROR(Address)
+		Op_ADC(Read(Address))
+		Cycles = 7
+	case 0x6B: //ARR
+		//AND + ROR
+		Op_AND(Read(ProgramCounter))
+		Op_ROR(ProgramCounter)
+		ProgramCounter++
+		Cycles = 2
+	case 0x8B: //ANE
+		//Highly unstable, Do Not Use
+		A = (((A | 0xEE) & X) & MagicConstant)
+		Cycles = 2
+	case 0xAB: //LXA
+		val := MagicConstant
+		A = val
+		X = A
+		SetZNFlags(A)
+		Cycles = 2
+	case 0xFF: //ISC Absolute, X
+		//INC + SBC
+		Address := ReadOperands_AbsoluteAddressed_XIndexed()
+		Op_INC(Address, Read(Address))
+		Op_SBC(Read(Address))
+		Cycles = 7
+
+		/*
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+			case 0x00:
+		*/
 
 	/*
 		case 0x07: //SLO Zero Page (Illegal?)
@@ -1725,6 +1868,10 @@ func Emulate_CPU() {
 	*/
 	default:
 		fmt.Println("Unknown Opcode: " + fmt.Sprintf("%02X", opcode))
+		LogCount--
+		if LogCount <= 0 {
+			CPU_Halted = true
+		}
 	}
 
 	TraceLogger()
@@ -1829,7 +1976,6 @@ func Emulate_PPU() {
 	}
 
 	SpriteEvaluation()
-
 	if ppuScanline < 240 || ppuScanline == 261 {
 		if (ppuDot > 0 && ppuDot <= 256) || (ppuDot > 320 && ppuDot <= 336) {
 			//If this is a visible pixel, or preparing the start of the next scanline
@@ -1845,7 +1991,7 @@ func Emulate_PPU() {
 					if ppuDot > 1 && ppuDot <= 256 { //Don't decrement until dot 1
 						for i := 0; i < 8; i++ {
 							if ppu_SpriteXposition[i] > 0 {
-								ppu_SpriteXposition[i]--
+								ppu_SpriteXposition[i]-- //Decrement the position of all objects in secondary OAM. When this is zero, the PPU can draw it
 							} else {
 								ppu_SpriteShiftRegisterL[i] = byte(ppu_SpriteShiftRegisterL[i] << 1) //Shift 1 bit to the left
 								ppu_SpriteShiftRegisterH[i] = byte(ppu_SpriteShiftRegisterH[i] << 1) //Shift 1 bit to the left
