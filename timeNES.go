@@ -4,21 +4,32 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"log"
 	"os"
 
-	"gioui.org/app"
-	"gioui.org/f32"
-	"gioui.org/io/key"
-	"gioui.org/op"
-	"gioui.org/op/paint"
-	"gioui.org/unit"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 var filepath string = "roms/smb.nes"
 
 //var filepath string = "roms/nestest.nes"
 
-type App struct{ Clicks int }
+//var filepath string = "roms/AccuracyCoin.nes"
+
+//type App struct{ Clicks int }
+
+const (
+	screenWidth  = 256
+	screenHeight = 240
+	screenScale  = 3
+)
+
+type Game struct {
+	gameScreen *image.RGBA
+	keys       []ebiten.Key
+}
 
 var ProgramCounter uint16
 var AddressBus, ppuAddressBus uint16
@@ -52,9 +63,8 @@ var traceA, traceX, tracyY, traceSP byte
 var traceFlagC, traceFlagZ, traceFlagI, traceFlagD, traceFlagV, traceFlagN bool
 var traceCycles int
 
-var ScreenWidth, ScreenHeight int = 256, 240
-var ScreenScale float32 = 3
-var nametable *image.RGBA = image.NewRGBA(image.Rect(0, 0, ScreenWidth, ScreenHeight))
+//var screenScale float32 = 3
+//var nametable *image.RGBA = image.NewRGBA(image.Rect(0, 0, ScreenWidth, ScreenHeight))
 
 var WriteLatch bool        //PPU's w register
 var TransferAddress uint16 //PPU's t register
@@ -78,6 +88,61 @@ var screenCount int = 33
 
 var Controller1, Controller2 byte
 var Controller1ShiftRegister, Controller2ShiftRegister uint16
+
+func (g *Game) Update() error {
+
+	for {
+		UpdateControllers(g)
+		Emulate_CPU(g)
+		if DrawNewFrame {
+			DrawNewFrame = false
+			return nil
+		}
+		if CPU_Halted {
+			return ebiten.Termination
+		}
+	}
+
+	//fmt.Println("CPU Paused, Drawing Window")
+
+	//DrawWindow(ops, window)
+
+	return nil
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+
+	// This graphics context is used for managing the rendering state.
+
+	//if DrawNewFrame {
+	screen.WritePixels(g.gameScreen.Pix)
+	//DrawNewFrame = false
+	//}
+
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()))
+	//ebitenutil.DebugPrint(screen, "Hello, World!")
+}
+
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return screenWidth, screenHeight
+}
+
+func main() {
+	ebiten.SetWindowSize(screenWidth*screenScale, screenHeight*screenScale)
+	ebiten.SetWindowTitle("TimeNES (MasterTimeThief made this :3)")
+	ebiten.SetTPS(ebiten.SyncWithFPS)
+
+	//Reset the console
+	Reset()
+
+	g := &Game{
+		gameScreen: image.NewRGBA(image.Rect(0, 0, screenWidth, screenHeight)),
+	}
+	if err := ebiten.RunGame(g); err != nil {
+		log.Fatal(err)
+	}
+
+}
 
 // Sets everything outside of operands for the tracelogger to run later
 func prepTraceLogger() {
@@ -267,277 +332,8 @@ func ternary(Condition bool, ValT, ValF uint16) uint16 {
 	return ValF
 }
 
-func main() {
-	Reset()
-
-	go func() {
-		window := new(app.Window)
-		window.Option(app.Title("GoNES (MasterTimeThief made this :3)"))
-		window.Option(app.Size(unit.Dp(ScreenWidth*int(ScreenScale)), unit.Dp(ScreenHeight*int(ScreenScale))))
-		Run(window)
-		os.Exit(0)
-	}()
-	app.Main()
-}
-
-func Run(window *app.Window) {
-	//theme := material.NewTheme()
-	var ops op.Ops
-
-	for {
-		for !CPU_Halted {
-			UpdateControllers()
-			Emulate_CPU()
-			if DrawNewFrame {
-				DrawNewFrame = false
-				break
-			}
-		}
-		//fmt.Println("CPU Paused, Drawing Window")
-
-		DrawWindow(ops, window)
-	}
-}
-
-/*
-0 - B
-1 - A
-2 - Select
-3 - Start
-4 - Up
-5 - Down
-6 - Left
-7 - Right
-*/
-var Controller1State [8]bool
-var Controller2State [8]bool
-
-func DrawWindow(ops op.Ops, window *app.Window) {
-	switch e := window.Event().(type) {
-	case app.DestroyEvent:
-		if e.Err != nil {
-			//Error handling
-		}
-		os.Exit(0)
-	case app.FrameEvent:
-		// This graphics context is used for managing the rendering state.
-		gtx := app.NewContext(&ops, e)
-
-		//Handle keyboard input
-		for {
-			ev, ok := gtx.Event(
-				//Controller 1
-				key.Filter{Name: key.NameUpArrow},    //Up
-				key.Filter{Name: key.NameDownArrow},  //Down
-				key.Filter{Name: key.NameLeftArrow},  //Left
-				key.Filter{Name: key.NameRightArrow}, //Right
-				key.Filter{Name: "Z"},                //B
-				key.Filter{Name: "X"},                //A
-				key.Filter{Name: key.NameReturn},     //Start
-				key.Filter{Name: "M"},                //Select
-				//Controller 2
-			)
-			if !ok {
-				break
-			}
-			//fmt.Printf("KEY   : %+v\n", ev)
-			if ev.(key.Event).State == key.Press {
-				name := ev.(key.Event).Name
-
-				if name == "X" {
-					Controller1State[0] = true
-				}
-				if name == "Z" {
-					Controller1State[1] = true
-				}
-				if name == "M" {
-					Controller1State[2] = true
-				}
-				if name == key.NameReturn {
-					Controller1State[3] = true
-				}
-				if name == key.NameUpArrow {
-					Controller1State[4] = true
-				}
-				if name == key.NameDownArrow {
-					Controller1State[5] = true
-				}
-				if name == key.NameLeftArrow {
-					Controller1State[6] = true
-				}
-				if name == key.NameRightArrow {
-					Controller1State[7] = true
-				}
-			}
-
-			if ev.(key.Event).State == key.Release {
-				name := ev.(key.Event).Name
-
-				if name == "X" {
-					Controller1State[0] = false
-				}
-				if name == "Z" {
-					Controller1State[1] = false
-				}
-				if name == "M" {
-					Controller1State[2] = false
-				}
-				if name == key.NameReturn {
-					Controller1State[3] = false
-				}
-				if name == key.NameUpArrow {
-					Controller1State[4] = false
-				}
-				if name == key.NameDownArrow {
-					Controller1State[5] = false
-				}
-				if name == key.NameLeftArrow {
-					Controller1State[6] = false
-				}
-				if name == key.NameRightArrow {
-					Controller1State[7] = false
-				}
-			}
-		}
-
-		//DrawScreen()
-		//Keep track of whether the screen is moving forward or not
-		for i := 0; i < 8; i++ {
-			nametable.Set(frame&0xFF, i, color.RGBA{R: 0xFF, G: 0x00, B: 0x00, A: 0xFF})
-		}
-		frame++
-
-		// Upload bitmap to GPU operations
-		imgOp := paint.NewImageOp(nametable)
-		imgOp.Filter = paint.FilterNearest // Keeps pixels crisp instead of blurry
-
-		// Paint the image onto the window
-		imgOp.Add(gtx.Ops)
-
-		// Scale the bitmap so it's easily visible (4x scale in this example)
-		op.Affine(f32.Affine2D{}.Scale(f32.Pt(0, 0), f32.Pt(ScreenScale, ScreenScale))).Add(gtx.Ops)
-
-		paint.PaintOp{}.Add(gtx.Ops)
-		// Pass the drawing operations to the GPU.
-		e.Frame(gtx.Ops)
-
-		inv := op.InvalidateCmd{At: gtx.Now.Add(0)}
-		gtx.Execute(inv)
-
-	}
-}
-
-func DrawScreen() {
-	/*
-		Palette := [64]color.RGBA{
-			{R: 0x65, G: 0x65, B: 0x65, A: 0xFF},
-			{R: 0x00, G: 0x2A, B: 0x84, A: 0xFF},
-			{R: 0x15, G: 0x13, B: 0xA2, A: 0xFF},
-			{R: 0x3A, G: 0x01, B: 0x9E, A: 0xFF},
-			{R: 0x59, G: 0x00, B: 0x7A, A: 0xFF},
-			{R: 0x6A, G: 0x00, B: 0x3E, A: 0xFF},
-			{R: 0x68, G: 0x08, B: 0x00, A: 0xFF},
-			{R: 0x53, G: 0x1D, B: 0x00, A: 0xFF},
-			{R: 0x32, G: 0x34, B: 0x00, A: 0xFF},
-			{R: 0x0D, G: 0x46, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x4F, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x4C, B: 0x09, A: 0xFF},
-			{R: 0x00, G: 0x3F, B: 0x4B, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-			{R: 0xAE, G: 0xAE, B: 0xAE, A: 0xFF},
-			{R: 0x17, G: 0x5F, B: 0xD6, A: 0xFF},
-			{R: 0x43, G: 0x41, B: 0xFF, A: 0xFF},
-			{R: 0x75, G: 0x29, B: 0xFA, A: 0xFF},
-			{R: 0x9E, G: 0x1D, B: 0xCA, A: 0xFF},
-			{R: 0xB4, G: 0x20, B: 0x7B, A: 0xFF},
-			{R: 0xB1, G: 0x33, B: 0x22, A: 0xFF},
-			{R: 0x96, G: 0x4E, B: 0x00, A: 0xFF},
-			{R: 0x6A, G: 0x6C, B: 0x00, A: 0xFF},
-			{R: 0x39, G: 0x84, B: 0x00, A: 0xFF},
-			{R: 0x0F, G: 0x90, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x8D, B: 0x33, A: 0xFF},
-			{R: 0x00, G: 0x7B, B: 0x8C, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-			{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-			{R: 0x66, G: 0xAF, B: 0xFF, A: 0xFF},
-			{R: 0x93, G: 0x90, B: 0xFF, A: 0xFF},
-			{R: 0xC5, G: 0x78, B: 0xFF, A: 0xFF},
-			{R: 0xEE, G: 0x6C, B: 0xFF, A: 0xFF},
-			{R: 0xFF, G: 0x6F, B: 0xCA, A: 0xFF},
-			{R: 0xFF, G: 0x82, B: 0x71, A: 0xFF},
-			{R: 0xE6, G: 0x9E, B: 0x25, A: 0xFF},
-			{R: 0xBA, G: 0xBC, B: 0x00, A: 0xFF},
-			{R: 0x88, G: 0xD5, B: 0x01, A: 0xFF},
-			{R: 0x5E, G: 0xE1, B: 0x32, A: 0xFF},
-			{R: 0x47, G: 0xDD, B: 0x82, A: 0xFF},
-			{R: 0x4A, G: 0xCB, B: 0xDC, A: 0xFF},
-			{R: 0x4E, G: 0x4E, B: 0x4E, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-			{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-			{R: 0xC0, G: 0xDE, B: 0xFF, A: 0xFF},
-			{R: 0xD2, G: 0xD1, B: 0xFF, A: 0xFF},
-			{R: 0xE7, G: 0xC7, B: 0xFF, A: 0xFF},
-			{R: 0xF8, G: 0xC2, B: 0xFF, A: 0xFF},
-			{R: 0xFF, G: 0xC3, B: 0xE9, A: 0xFF},
-			{R: 0xFF, G: 0xCB, B: 0xC4, A: 0xFF},
-			{R: 0xF5, G: 0xD7, B: 0xA5, A: 0xFF},
-			{R: 0xE2, G: 0xE3, B: 0x94, A: 0xFF},
-			{R: 0xCE, G: 0xED, B: 0x96, A: 0xFF},
-			{R: 0xBC, G: 0xF2, B: 0xAA, A: 0xFF},
-			{R: 0xB3, G: 0xF1, B: 0xCB, A: 0xFF},
-			{R: 0xB4, G: 0xE9, B: 0xF0, A: 0xFF},
-			{R: 0xB6, G: 0xB6, B: 0xB6, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		}
-		for row := 0; row < 30; row++ {
-			for col := 0; col < 32; col++ {
-				attributeOffset := byte((col >> 2) + (row>>2)*8)
-				Attributes := VRAM[0x3C0+uint16(attributeOffset)]
-				Quadrant := byte(((col >> 1) & 1) + ((row>>1)&1)*2)
-				Pair := byte((Attributes >> (Quadrant * 2)) & 3)
-
-				for y := 0; y < 8; y++ {
-					var useSecondPatternTable int
-					if ppuBGPatternTable {
-						useSecondPatternTable = 4096
-					} else {
-						useSecondPatternTable = 0
-					}
-					vIndex := col + row*32
-					cIndex := int(VRAM[vIndex])*16 + y + useSecondPatternTable
-					lowByte := CHRROM[cIndex]
-					highByte := CHRROM[cIndex+8]
-					for x := 0; x < 8; x++ {
-						TwoBit := 0
-						if ((lowByte >> (7 - x)) & 1) == 1 {
-							TwoBit += 1
-						}
-						if ((highByte >> (7 - x)) & 1) == 1 {
-							TwoBit += 2
-						}
-
-						var color color.RGBA
-						if TwoBit == 0 {
-							color = Palette[PaletteRAM[0]]
-						} else {
-							color = Palette[PaletteRAM[TwoBit+int(Pair*4)]]
-						}
-						nametable.Set(x+(col*8), y+(row*8), color)
-					}
-				}
-			}
-		}
-	*/
-}
+//var Controller1State [8]bool
+//var Controller2State [8]bool
 
 // Read from Address, and return that byte
 func Read(Address uint16) byte {
@@ -684,27 +480,50 @@ func Write(Address uint16, Value byte) {
 }
 
 // Update states of controllers
-func UpdateControllers() {
+func UpdateControllers(g *Game) {
+	/*
+		0 - B
+		1 - A
+		2 - Select
+		3 - Start
+		4 - Up
+		5 - Down
+		6 - Left
+		7 - Right
+	*/
+	g.keys = inpututil.AppendPressedKeys(g.keys[:0])
+
 	Controller1 = 0
 	Controller2 = 0
+	for _, k := range g.keys {
+		switch k {
+		case ebiten.KeyX:
+			Controller1 |= 0x80
+		case ebiten.KeyZ:
+			Controller1 |= 0x40
+		case ebiten.KeyShiftRight:
+			Controller1 |= 0x20
+		case ebiten.KeyEnter:
+			Controller1 |= 0x10
+		case ebiten.KeyArrowUp:
+			Controller1 |= 0x8
+		case ebiten.KeyArrowDown:
+			Controller1 |= 0x4
+		case ebiten.KeyArrowLeft:
+			Controller1 |= 0x2
+		case ebiten.KeyArrowRight:
+			Controller1 |= 0x1
+		}
+	}
 
-	Controller1 |= byte(ternary(Controller1State[0], 0x80, 0x00))
-	Controller1 |= byte(ternary(Controller1State[1], 0x40, 0x00))
-	Controller1 |= byte(ternary(Controller1State[2], 0x20, 0x00))
-	Controller1 |= byte(ternary(Controller1State[3], 0x10, 0x00))
-	Controller1 |= byte(ternary(Controller1State[4], 0x08, 0x00))
-	Controller1 |= byte(ternary(Controller1State[5], 0x04, 0x00))
-	Controller1 |= byte(ternary(Controller1State[6], 0x02, 0x00))
-	Controller1 |= byte(ternary(Controller1State[7], 0x01, 0x00))
-
-	Controller2 |= byte(ternary(Controller2State[0], 0x80, 0x00))
+	/*Controller2 |= byte(ternary(Controller2State[0], 0x80, 0x00))
 	Controller2 |= byte(ternary(Controller2State[1], 0x40, 0x00))
 	Controller2 |= byte(ternary(Controller2State[2], 0x20, 0x00))
 	Controller2 |= byte(ternary(Controller2State[3], 0x10, 0x00))
 	Controller2 |= byte(ternary(Controller2State[4], 0x08, 0x00))
 	Controller2 |= byte(ternary(Controller2State[5], 0x04, 0x00))
 	Controller2 |= byte(ternary(Controller2State[6], 0x02, 0x00))
-	Controller2 |= byte(ternary(Controller2State[7], 0x01, 0x00))
+	Controller2 |= byte(ternary(Controller2State[7], 0x01, 0x00))*/
 }
 
 func ReadPPU(Address uint16) byte {
@@ -1013,7 +832,7 @@ func Op_BIT(Value byte) {
 	flag_Overflow = ((Value & 0x40) != 0)
 }
 
-func Emulate_CPU() {
+func Emulate_CPU(g *Game) {
 	//Non Maskable Interrupt check
 	prevNMILevelDetector := NMILevelDetector
 	NMILevelDetector = (ppuEnableNMI && ppuVBlank)
@@ -1026,7 +845,9 @@ func Emulate_CPU() {
 	if !DoNMI {
 		//If we're not running an NMI
 		opcode = Read(ProgramCounter)
-		prepTraceLogger()
+		if LoggingCPU {
+			prepTraceLogger()
+		}
 		ProgramCounter++
 	} else {
 		//If we're running an NMI, force opcode $00
@@ -1889,17 +1710,18 @@ func Emulate_CPU() {
 			CPU_Halted = true
 		}
 	}
-
-	TraceLogger()
-	CartRAMLogger()
+	if LoggingCPU {
+		TraceLogger()
+	}
+	//CartRAMLogger()
 	operands = nil
 
 	TotalCycles += Cycles
 	for Cycles > 0 {
 		Cycles--
-		Emulate_PPU()
-		Emulate_PPU()
-		Emulate_PPU()
+		Emulate_PPU(g)
+		Emulate_PPU(g)
+		Emulate_PPU(g)
 	}
 
 	//Force Stop, just in case
@@ -1913,8 +1735,74 @@ func Emulate_CPU() {
 	InstructionCount++
 }
 
-func Emulate_PPU() {
+func Emulate_PPU(g *Game) {
 
+	if ppuDot == 1 && ppuScanline == 241 {
+		ppuVBlank = true
+		DrawNewFrame = true
+	} else if ppuDot == 1 && ppuScanline == 261 {
+		ppuVBlank = false
+		ppuStatusOverflow = false
+		ppuStatusSprZeroHit = false
+	}
+
+	SpriteEvaluation()
+	if ppuScanline < 240 || ppuScanline == 261 {
+		if (ppuDot > 0 && ppuDot <= 256) || (ppuDot > 320 && ppuDot <= 336) {
+			//If this is a visible pixel, or preparing the start of the next scanline
+			if ppuMask_RenderBG || ppuMask_RenderSprites {
+				//If rendering is enabled
+				if ppuMask_RenderBG { //If rendering the background, update the shift registers for the background
+					ppuShiftRegister_patternL = ppuShiftRegister_patternL << 1     //Shift 1 bit to the left
+					ppuShiftRegister_patternH = ppuShiftRegister_patternH << 1     //Shift 1 bit to the left
+					ppuShiftRegister_attributeL = ppuShiftRegister_attributeL << 1 //Shift 1 bit to the left
+					ppuShiftRegister_attributeH = ppuShiftRegister_attributeH << 1 //Shift 1 bit to the left
+				}
+				if ppuMask_RenderBG || ppuMask_RenderSprites { //If rendering at all, let's decrement the X position of the objects
+					if ppuDot > 1 && ppuDot <= 256 { //Don't decrement until dot 1
+						for i := 0; i < 8; i++ {
+							if ppu_SpriteXposition[i] > 0 {
+								ppu_SpriteXposition[i]-- //Decrement the position of all objects in secondary OAM. When this is zero, the PPU can draw it
+							} else {
+								ppu_SpriteShiftRegisterL[i] = byte(ppu_SpriteShiftRegisterL[i] << 1) //Shift 1 bit to the left
+								ppu_SpriteShiftRegisterH[i] = byte(ppu_SpriteShiftRegisterH[i] << 1) //Shift 1 bit to the left
+							}
+
+						}
+					}
+				}
+				PPU8Steps()
+			}
+		}
+	}
+
+	if (ppuScanline < 240 || ppuScanline == 261) && (ppuMask_RenderBG || ppuMask_RenderSprites) {
+		//If this is a visible scanline and rendering sprites / background is enabled
+		if ppuDot == 256 { //The Y Scroll is incremented on dot 256
+			PPU_IncrementScrollY()
+		} else if ppuDot == 257 { //The X scroll is reset on dot 257
+			PPU_ResetXScroll()
+		}
+		if ppuDot >= 280 && ppuDot <= 304 && ppuScanline == 261 { //numbers from the nesdev wiki
+			PPU_ResetYScroll() //The Y scroll is reset on every dot from 280 through 304 on the pre-render scanline
+		}
+	}
+
+	//Drawing
+	DrawScreen(g)
+
+	ppuDot++
+	if ppuDot > 341 {
+		ppuDot = 0
+		ppuScanline++
+		if ppuScanline > 261 {
+			ppuScanline = 0
+
+		}
+	}
+}
+
+func DrawScreen(g *Game) {
 	Palette := [64]color.RGBA{
 		{R: 0x65, G: 0x65, B: 0x65, A: 0xFF},
 		{R: 0x00, G: 0x2A, B: 0x84, A: 0xFF},
@@ -1984,60 +1872,7 @@ func Emulate_PPU() {
 		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
 		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
 	}
-
-	if ppuDot == 1 && ppuScanline == 241 {
-		ppuVBlank = true
-		DrawNewFrame = true
-	} else if ppuDot == 1 && ppuScanline == 261 {
-		ppuVBlank = false
-		ppuStatusOverflow = false
-		ppuStatusSprZeroHit = false
-	}
-
-	SpriteEvaluation()
-	if ppuScanline < 240 || ppuScanline == 261 {
-		if (ppuDot > 0 && ppuDot <= 256) || (ppuDot > 320 && ppuDot <= 336) {
-			//If this is a visible pixel, or preparing the start of the next scanline
-			if ppuMask_RenderBG || ppuMask_RenderSprites {
-				//If rendering is enabled
-				if ppuMask_RenderBG { //If rendering the background, update the shift registers for the background
-					ppuShiftRegister_patternL = ppuShiftRegister_patternL << 1     //Shift 1 bit to the left
-					ppuShiftRegister_patternH = ppuShiftRegister_patternH << 1     //Shift 1 bit to the left
-					ppuShiftRegister_attributeL = ppuShiftRegister_attributeL << 1 //Shift 1 bit to the left
-					ppuShiftRegister_attributeH = ppuShiftRegister_attributeH << 1 //Shift 1 bit to the left
-				}
-				if ppuMask_RenderBG || ppuMask_RenderSprites { //If rendering at all, let's decrement the X position of the objects
-					if ppuDot > 1 && ppuDot <= 256 { //Don't decrement until dot 1
-						for i := 0; i < 8; i++ {
-							if ppu_SpriteXposition[i] > 0 {
-								ppu_SpriteXposition[i]-- //Decrement the position of all objects in secondary OAM. When this is zero, the PPU can draw it
-							} else {
-								ppu_SpriteShiftRegisterL[i] = byte(ppu_SpriteShiftRegisterL[i] << 1) //Shift 1 bit to the left
-								ppu_SpriteShiftRegisterH[i] = byte(ppu_SpriteShiftRegisterH[i] << 1) //Shift 1 bit to the left
-							}
-
-						}
-					}
-				}
-				PPU8Steps()
-			}
-		}
-	}
-
-	if (ppuScanline < 240 || ppuScanline == 261) && (ppuMask_RenderBG || ppuMask_RenderSprites) {
-		//If this is a visible scanline and rendering sprites / background is enabled
-		if ppuDot == 256 { //The Y Scroll is incremented on dot 256
-			PPU_IncrementScrollY()
-		} else if ppuDot == 257 { //The X scroll is reset on dot 257
-			PPU_ResetXScroll()
-		}
-		if ppuDot >= 280 && ppuDot <= 304 && ppuScanline == 261 { //numbers from the nesdev wiki
-			PPU_ResetYScroll() //The Y scroll is reset on every dot from 280 through 304 on the pre-render scanline
-		}
-	}
-
-	//Drawing
-	if ppuScanline < 241 && ppuDot > 0 && ppuDot <= 256 {
+	if ppuScanline < 240 && ppuDot > 0 && ppuDot <= 256 {
 		var PalHi byte = 0  //Which color palette to use?
 		var PalLow byte = 0 //Index into a color palette
 		if ppuMask_RenderBG && (ppuDot > 8 || ppuMask_8pxMaskBG) {
@@ -2091,30 +1926,27 @@ func Emulate_PPU() {
 			}
 		}
 
-		nametable.Set(ppuDot-1, ppuScanline, Palette[PaletteRAM[(PalHi*4)+PalLow]])
+		color := Palette[PaletteRAM[(PalHi*4)+PalLow]]
+		//RenderColor(g, color)
+		pixIndex := uint64((((ppuScanline) * screenWidth) + (ppuDot - 1)) * 4)
+		//pixIndex &= 0x3BFFF
+		g.gameScreen.Pix[pixIndex] = color.R
+		g.gameScreen.Pix[pixIndex+1] = color.G
+		g.gameScreen.Pix[pixIndex+2] = color.B
+		g.gameScreen.Pix[pixIndex+3] = color.A
+		//g.gameScreen.Set(ppuDot-1, ppuScanline, color)
 
-		/*if screenCount == 1 && ppuScanline <= 32 {
-			TraceLoggerPPU()
-		}*/
 	}
-
-	ppuDot++
-	if ppuDot > 341 {
-		ppuDot = 0
-		ppuScanline++
-		if ppuScanline > 261 {
-			ppuScanline = 0
-
-			//Break and display screen after X screens have been printed
-			/*screenCount--
-			if screenCount <= 0 {
-				fmt.Println("Target Screen drawn, halting")
-				CPU_Halted = true
-			}*/
-		}
-	}
-
 }
+
+/*func RenderColor(g *Game, color color.RGBA) {
+	pixIndex := int((((ppuScanline-1)*screenWidth)+ppuDot)*4) - 1
+	//pixIndex &= 0xEFFF
+	g.gameScreen.Pix[pixIndex] = color.R
+	g.gameScreen.Pix[pixIndex+1] = color.G
+	g.gameScreen.Pix[pixIndex+2] = color.B
+	g.gameScreen.Pix[pixIndex+3] = 0xFF
+}*/
 
 func PPU8Steps() {
 	//What part of the 8-step process to run this cycle
