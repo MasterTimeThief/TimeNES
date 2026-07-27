@@ -239,6 +239,21 @@ func TraceLoggerPPU() {
 	}
 }
 
+var CartRamLastString string
+
+func CartRAMLogger() {
+	CartTestStatus := CartRAM[0]
+	CartTestValid := CartRAM[1] == 0xDE && CartRAM[2] == 0xB0 && CartRAM[3] == 0x61
+
+	newString := string(CartRAM[4:])
+
+	if CartTestValid && CartTestStatus == 0x80 && (newString != CartRamLastString) {
+		//Valid Test line
+		CartRamLastString = newString
+		fmt.Print(newString)
+	}
+}
+
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -386,7 +401,10 @@ func DrawWindow(ops op.Ops, window *app.Window) {
 		}
 
 		//DrawScreen()
-		nametable.Set(frame&0xFF, 0, color.RGBA{R: 0xFF, G: 0x00, B: 0x00, A: 0xFF})
+		//Keep track of whether the screen is moving forward or not
+		for i := 0; i < 8; i++ {
+			nametable.Set(frame&0xFF, i, color.RGBA{R: 0xFF, G: 0x00, B: 0x00, A: 0xFF})
+		}
 		frame++
 
 		// Upload bitmap to GPU operations
@@ -410,114 +428,115 @@ func DrawWindow(ops op.Ops, window *app.Window) {
 }
 
 func DrawScreen() {
-	Palette := [64]color.RGBA{
-		{R: 0x65, G: 0x65, B: 0x65, A: 0xFF},
-		{R: 0x00, G: 0x2A, B: 0x84, A: 0xFF},
-		{R: 0x15, G: 0x13, B: 0xA2, A: 0xFF},
-		{R: 0x3A, G: 0x01, B: 0x9E, A: 0xFF},
-		{R: 0x59, G: 0x00, B: 0x7A, A: 0xFF},
-		{R: 0x6A, G: 0x00, B: 0x3E, A: 0xFF},
-		{R: 0x68, G: 0x08, B: 0x00, A: 0xFF},
-		{R: 0x53, G: 0x1D, B: 0x00, A: 0xFF},
-		{R: 0x32, G: 0x34, B: 0x00, A: 0xFF},
-		{R: 0x0D, G: 0x46, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x4F, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x4C, B: 0x09, A: 0xFF},
-		{R: 0x00, G: 0x3F, B: 0x4B, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+	/*
+		Palette := [64]color.RGBA{
+			{R: 0x65, G: 0x65, B: 0x65, A: 0xFF},
+			{R: 0x00, G: 0x2A, B: 0x84, A: 0xFF},
+			{R: 0x15, G: 0x13, B: 0xA2, A: 0xFF},
+			{R: 0x3A, G: 0x01, B: 0x9E, A: 0xFF},
+			{R: 0x59, G: 0x00, B: 0x7A, A: 0xFF},
+			{R: 0x6A, G: 0x00, B: 0x3E, A: 0xFF},
+			{R: 0x68, G: 0x08, B: 0x00, A: 0xFF},
+			{R: 0x53, G: 0x1D, B: 0x00, A: 0xFF},
+			{R: 0x32, G: 0x34, B: 0x00, A: 0xFF},
+			{R: 0x0D, G: 0x46, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x4F, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x4C, B: 0x09, A: 0xFF},
+			{R: 0x00, G: 0x3F, B: 0x4B, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
 
-		{R: 0xAE, G: 0xAE, B: 0xAE, A: 0xFF},
-		{R: 0x17, G: 0x5F, B: 0xD6, A: 0xFF},
-		{R: 0x43, G: 0x41, B: 0xFF, A: 0xFF},
-		{R: 0x75, G: 0x29, B: 0xFA, A: 0xFF},
-		{R: 0x9E, G: 0x1D, B: 0xCA, A: 0xFF},
-		{R: 0xB4, G: 0x20, B: 0x7B, A: 0xFF},
-		{R: 0xB1, G: 0x33, B: 0x22, A: 0xFF},
-		{R: 0x96, G: 0x4E, B: 0x00, A: 0xFF},
-		{R: 0x6A, G: 0x6C, B: 0x00, A: 0xFF},
-		{R: 0x39, G: 0x84, B: 0x00, A: 0xFF},
-		{R: 0x0F, G: 0x90, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x8D, B: 0x33, A: 0xFF},
-		{R: 0x00, G: 0x7B, B: 0x8C, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0xAE, G: 0xAE, B: 0xAE, A: 0xFF},
+			{R: 0x17, G: 0x5F, B: 0xD6, A: 0xFF},
+			{R: 0x43, G: 0x41, B: 0xFF, A: 0xFF},
+			{R: 0x75, G: 0x29, B: 0xFA, A: 0xFF},
+			{R: 0x9E, G: 0x1D, B: 0xCA, A: 0xFF},
+			{R: 0xB4, G: 0x20, B: 0x7B, A: 0xFF},
+			{R: 0xB1, G: 0x33, B: 0x22, A: 0xFF},
+			{R: 0x96, G: 0x4E, B: 0x00, A: 0xFF},
+			{R: 0x6A, G: 0x6C, B: 0x00, A: 0xFF},
+			{R: 0x39, G: 0x84, B: 0x00, A: 0xFF},
+			{R: 0x0F, G: 0x90, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x8D, B: 0x33, A: 0xFF},
+			{R: 0x00, G: 0x7B, B: 0x8C, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
 
-		{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-		{R: 0x66, G: 0xAF, B: 0xFF, A: 0xFF},
-		{R: 0x93, G: 0x90, B: 0xFF, A: 0xFF},
-		{R: 0xC5, G: 0x78, B: 0xFF, A: 0xFF},
-		{R: 0xEE, G: 0x6C, B: 0xFF, A: 0xFF},
-		{R: 0xFF, G: 0x6F, B: 0xCA, A: 0xFF},
-		{R: 0xFF, G: 0x82, B: 0x71, A: 0xFF},
-		{R: 0xE6, G: 0x9E, B: 0x25, A: 0xFF},
-		{R: 0xBA, G: 0xBC, B: 0x00, A: 0xFF},
-		{R: 0x88, G: 0xD5, B: 0x01, A: 0xFF},
-		{R: 0x5E, G: 0xE1, B: 0x32, A: 0xFF},
-		{R: 0x47, G: 0xDD, B: 0x82, A: 0xFF},
-		{R: 0x4A, G: 0xCB, B: 0xDC, A: 0xFF},
-		{R: 0x4E, G: 0x4E, B: 0x4E, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
+			{R: 0x66, G: 0xAF, B: 0xFF, A: 0xFF},
+			{R: 0x93, G: 0x90, B: 0xFF, A: 0xFF},
+			{R: 0xC5, G: 0x78, B: 0xFF, A: 0xFF},
+			{R: 0xEE, G: 0x6C, B: 0xFF, A: 0xFF},
+			{R: 0xFF, G: 0x6F, B: 0xCA, A: 0xFF},
+			{R: 0xFF, G: 0x82, B: 0x71, A: 0xFF},
+			{R: 0xE6, G: 0x9E, B: 0x25, A: 0xFF},
+			{R: 0xBA, G: 0xBC, B: 0x00, A: 0xFF},
+			{R: 0x88, G: 0xD5, B: 0x01, A: 0xFF},
+			{R: 0x5E, G: 0xE1, B: 0x32, A: 0xFF},
+			{R: 0x47, G: 0xDD, B: 0x82, A: 0xFF},
+			{R: 0x4A, G: 0xCB, B: 0xDC, A: 0xFF},
+			{R: 0x4E, G: 0x4E, B: 0x4E, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
 
-		{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-		{R: 0xC0, G: 0xDE, B: 0xFF, A: 0xFF},
-		{R: 0xD2, G: 0xD1, B: 0xFF, A: 0xFF},
-		{R: 0xE7, G: 0xC7, B: 0xFF, A: 0xFF},
-		{R: 0xF8, G: 0xC2, B: 0xFF, A: 0xFF},
-		{R: 0xFF, G: 0xC3, B: 0xE9, A: 0xFF},
-		{R: 0xFF, G: 0xCB, B: 0xC4, A: 0xFF},
-		{R: 0xF5, G: 0xD7, B: 0xA5, A: 0xFF},
-		{R: 0xE2, G: 0xE3, B: 0x94, A: 0xFF},
-		{R: 0xCE, G: 0xED, B: 0x96, A: 0xFF},
-		{R: 0xBC, G: 0xF2, B: 0xAA, A: 0xFF},
-		{R: 0xB3, G: 0xF1, B: 0xCB, A: 0xFF},
-		{R: 0xB4, G: 0xE9, B: 0xF0, A: 0xFF},
-		{R: 0xB6, G: 0xB6, B: 0xB6, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-	}
-	for row := 0; row < 30; row++ {
-		for col := 0; col < 32; col++ {
-			attributeOffset := byte((col >> 2) + (row>>2)*8)
-			Attributes := VRAM[0x3C0+uint16(attributeOffset)]
-			Quadrant := byte(((col >> 1) & 1) + ((row>>1)&1)*2)
-			Pair := byte((Attributes >> (Quadrant * 2)) & 3)
+			{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
+			{R: 0xC0, G: 0xDE, B: 0xFF, A: 0xFF},
+			{R: 0xD2, G: 0xD1, B: 0xFF, A: 0xFF},
+			{R: 0xE7, G: 0xC7, B: 0xFF, A: 0xFF},
+			{R: 0xF8, G: 0xC2, B: 0xFF, A: 0xFF},
+			{R: 0xFF, G: 0xC3, B: 0xE9, A: 0xFF},
+			{R: 0xFF, G: 0xCB, B: 0xC4, A: 0xFF},
+			{R: 0xF5, G: 0xD7, B: 0xA5, A: 0xFF},
+			{R: 0xE2, G: 0xE3, B: 0x94, A: 0xFF},
+			{R: 0xCE, G: 0xED, B: 0x96, A: 0xFF},
+			{R: 0xBC, G: 0xF2, B: 0xAA, A: 0xFF},
+			{R: 0xB3, G: 0xF1, B: 0xCB, A: 0xFF},
+			{R: 0xB4, G: 0xE9, B: 0xF0, A: 0xFF},
+			{R: 0xB6, G: 0xB6, B: 0xB6, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		}
+		for row := 0; row < 30; row++ {
+			for col := 0; col < 32; col++ {
+				attributeOffset := byte((col >> 2) + (row>>2)*8)
+				Attributes := VRAM[0x3C0+uint16(attributeOffset)]
+				Quadrant := byte(((col >> 1) & 1) + ((row>>1)&1)*2)
+				Pair := byte((Attributes >> (Quadrant * 2)) & 3)
 
-			for y := 0; y < 8; y++ {
-				var useSecondPatternTable int
-				if ppuBGPatternTable {
-					useSecondPatternTable = 4096
-				} else {
-					useSecondPatternTable = 0
-				}
-				vIndex := col + row*32
-				cIndex := int(VRAM[vIndex])*16 + y + useSecondPatternTable
-				lowByte := CHRROM[cIndex]
-				highByte := CHRROM[cIndex+8]
-				for x := 0; x < 8; x++ {
-					TwoBit := 0
-					if ((lowByte >> (7 - x)) & 1) == 1 {
-						TwoBit += 1
-					}
-					if ((highByte >> (7 - x)) & 1) == 1 {
-						TwoBit += 2
-					}
-
-					var color color.RGBA
-					if TwoBit == 0 {
-						color = Palette[PaletteRAM[0]]
+				for y := 0; y < 8; y++ {
+					var useSecondPatternTable int
+					if ppuBGPatternTable {
+						useSecondPatternTable = 4096
 					} else {
-						color = Palette[PaletteRAM[TwoBit+int(Pair*4)]]
+						useSecondPatternTable = 0
 					}
-					nametable.Set(x+(col*8), y+(row*8), color)
+					vIndex := col + row*32
+					cIndex := int(VRAM[vIndex])*16 + y + useSecondPatternTable
+					lowByte := CHRROM[cIndex]
+					highByte := CHRROM[cIndex+8]
+					for x := 0; x < 8; x++ {
+						TwoBit := 0
+						if ((lowByte >> (7 - x)) & 1) == 1 {
+							TwoBit += 1
+						}
+						if ((highByte >> (7 - x)) & 1) == 1 {
+							TwoBit += 2
+						}
+
+						var color color.RGBA
+						if TwoBit == 0 {
+							color = Palette[PaletteRAM[0]]
+						} else {
+							color = Palette[PaletteRAM[TwoBit+int(Pair*4)]]
+						}
+						nametable.Set(x+(col*8), y+(row*8), color)
+					}
 				}
 			}
 		}
-	}
-
+	*/
 }
 
 // Read from Address, and return that byte
@@ -589,6 +608,8 @@ func Write(Address uint16, Value byte) {
 			ppuBGPatternTable = (Value & 0x10) != 0
 			ppuUse8x16Sprites = (Value & 0x20) != 0
 			ppuEnableNMI = (Value & 0x80) != 0
+
+			TransferAddress |= (uint16(ppuNametableSelect) << 10)
 		case 0x2001: //PPUMASK
 			ppuMask_8pxMaskBG = (Value & 2) != 0
 			ppuMask_8pxMaskSprites = (Value & 4) != 0
@@ -630,10 +651,7 @@ func Write(Address uint16, Value byte) {
 					VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
 				} else {
 					//Vertical Mirroring
-					index := VRAMAddress & 0x7FF
-					if Value == 0x24 {
-						//Value = 0xCF
-					}
+					index := int(VRAMAddress & 0x7FF)
 					VRAM[index] = Value
 				}
 			} else {
@@ -1723,7 +1741,7 @@ func Emulate_CPU() {
 		temp += byte(ternary(flag_Overflow, 0x40, 0x00))
 		temp += byte(ternary(flag_Negative, 0x80, 0x00))
 		Push(temp)
-		flag_InterruptDisable = true
+		//flag_InterruptDisable = true
 
 		PCL := Read(ternary(DoNMI, 0xFFFA, 0xFFFE))
 		PCH := Read(ternary(DoNMI, 0xFFFB, 0xFFFF))
@@ -1873,6 +1891,7 @@ func Emulate_CPU() {
 	}
 
 	TraceLogger()
+	CartRAMLogger()
 	operands = nil
 
 	TotalCycles += Cycles
@@ -2005,7 +2024,7 @@ func Emulate_PPU() {
 		}
 	}
 
-	if ppuMask_RenderBG || ppuMask_RenderSprites {
+	if (ppuScanline < 240 || ppuScanline == 261) && (ppuMask_RenderBG || ppuMask_RenderSprites) {
 		//If this is a visible scanline and rendering sprites / background is enabled
 		if ppuDot == 256 { //The Y Scroll is incremented on dot 256
 			PPU_IncrementScrollY()
@@ -2024,11 +2043,11 @@ func Emulate_PPU() {
 		if ppuMask_RenderBG && (ppuDot > 8 || ppuMask_8pxMaskBG) {
 			col0 := byte((ppuShiftRegister_patternL >> (15 - ppuScrollFineX)) & 1)
 			col1 := byte((ppuShiftRegister_patternH >> (15 - ppuScrollFineX)) & 1)
-			PalLow = byte(uint16(col1<<1) | uint16(col0))
+			PalLow = byte(uint16(col1)<<1 | uint16(col0))
 
 			pal0 := byte((ppuShiftRegister_attributeL >> (15 - ppuScrollFineX)) & 1)
 			pal1 := byte((ppuShiftRegister_attributeH >> (15 - ppuScrollFineX)) & 1)
-			PalHi = byte((pal1 << 1) | pal0)
+			PalHi = byte(uint16(pal1)<<1 | uint16(pal0))
 
 			if PalLow == 0 && PalHi != 0 { //Color 0 of all palettes are mirrors of color 0 of palette 0
 				PalHi = 0
@@ -2148,7 +2167,7 @@ func PPU_IncrementScrollY() {
 		VRAMAddress += 0x1000
 	} else {
 		VRAMAddress &= 0x0FFF
-		y := (VRAMAddress & 0x03E0) >> 5
+		y := uint16((VRAMAddress & 0x03E0) >> 5)
 		if y == 29 {
 			y = 0 // Reset the Y value and also flip some other bit in the 'v' register
 			VRAMAddress ^= 0x0800
@@ -2156,7 +2175,7 @@ func PPU_IncrementScrollY() {
 			y++ //Increment the Y value
 			y &= 0x1F
 		}
-		VRAMAddress = ((VRAMAddress & 0xFC1F) | (y << 5))
+		VRAMAddress = (uint16(VRAMAddress&0xFC1F) | uint16(y)<<5)
 	}
 }
 
