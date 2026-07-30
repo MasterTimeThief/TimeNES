@@ -63,7 +63,7 @@ var apuDMC DeltaModChannel
 
 var apuFrameCounterCycles = 0
 var apuEnablePulse1, apuEnablePulse2, apuEnableTriangle, apuEnableNoise, apuEnableDMC bool
-var apuDMCInterrupt, apuFrameInterrupt, apuDMAGetCycle, apuInhibitIRQ, apuFrameCounterMode bool
+var apuDMCInterrupt, apuDMCDelayed, apuFrameInterrupt, apuDMAGetCycle, apuInhibitIRQ, apuFrameCounterMode bool
 var apuFrameCounter int
 
 var apu4017ResetTimer int = 0

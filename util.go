@@ -29,7 +29,7 @@ func prepTraceLogger() {
 	traceFlagV = flag_Overflow
 	traceFlagN = flag_Negative
 
-	traceCycles = TotalCycles
+	traceCycles = CPU_TotalCycles
 }
 
 func TraceLogger() {

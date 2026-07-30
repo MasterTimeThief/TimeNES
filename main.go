@@ -23,7 +23,10 @@ import (
 
 //var filepath string = "roms/AccuracyCoin.nes"
 
-var filepath string = "roms/nestest.nes"
+var filepath string = ""
+var ROMExists bool = false
+var ROMLoaded bool = false
+var ShowFPS bool = true
 
 //type App struct{ Clicks int }
 
@@ -46,7 +49,6 @@ var RAM [0x800]byte
 var VRAM [0x800]byte
 var PaletteRAM [0x20]byte
 var ROM [0x8000]byte
-var PRGROMSize uint16 = 0x4000
 
 // var CHRData [0x2000]byte
 var CHRROM [0x2000]byte
@@ -118,7 +120,15 @@ func (g *Game) Update() error {
 		}
 	*/
 
-	for /*SelectedROM != ""*/ {
+	if filepath != "" && !ROMLoaded {
+		Reset()
+		if !ROMLoaded { //Invalid file
+			ROMExists = false
+			filepath = ""
+		}
+	}
+
+	for ROMLoaded {
 		UpdateControllers(g)
 		Emulate_CPU(g)
 		if DrawNewFrame {
@@ -144,16 +154,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// This graphics context is used for managing the rendering state.
 
-	//if SelectedROM != "" {
-	//if DrawNewFrame {
-	screenScaled := image.NewRGBA(image.Rect(0, 0, screenWidth*screenScale, screenHeight*screenScale))
-	draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
-	screen.WritePixels(screenScaled.Pix)
-	//DrawNewFrame = false
-	//}
-	//}
+	if !ROMExists {
+		ebitenutil.DebugPrintAt(screen, "No ROM File loaded!", 5, 460) // Draw the UI onto the screen
+	} else if ROMLoaded {
+		//if SelectedROM != "" {
+		//if DrawNewFrame {
+		screenScaled := image.NewRGBA(image.Rect(0, 0, screenWidth*screenScale, screenHeight*screenScale))
+		draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
+		screen.WritePixels(screenScaled.Pix)
+		//DrawNewFrame = false
+		//}
+		//}
+	}
 
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), 380, 15) // Draw the UI onto the screen
+	if ShowFPS {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), 380, 460) // Draw the UI onto the screen
+	}
 	g.ui.Draw(screen)
 	//ebitenutil.DebugPrint(screen, "Hello, World!")
 }
@@ -204,18 +220,13 @@ func main() {
 	}))
 
 	//Select ROM
-	/*toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectedROM = "roms/smb.nes"
-		//Reset the console
-		Reset()
+	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		SelectROM("roms/games/smb.nes")
 	}))
-	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectedROM = "roms/nestest.nes"
-		//Reset the console
-		Reset()
-	}))*/
 
-	Reset()
+	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		SelectROM("roms/nestest.nes")
+	}))
 
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
@@ -239,7 +250,89 @@ func ternary(Condition bool, ValT, ValF uint16) uint16 {
 func Reset() {
 	//var HeaderedROM []byte := os.ReadFile()
 	flag_InterruptDisable = true
+
+	//Reset APU variables
 	apuDMAGetCycle = true
+	// All the bits of $4015 are cleared
+	apuDMCInterrupt = false
+	apuFrameInterrupt = false
+	apuDMCDelayed = false
+	apuEnableDMC = false
+	apuEnableNoise = false
+	apuEnableTriangle = false
+	apuEnablePulse2 = false
+	apuEnablePulse1 = false
+	apuDMC.Length = 0
+	apuNoise.LengthCounter = 0
+	apuTriangle.LengthCounter = 0
+	apuPulse2.LengthCounter = 0
+	apuPulse1.LengthCounter = 0
+	apuFrameCounter = 0 // reset the frame counter
+
+	// PPU registers
+	ppuEnableNMI = false
+	ppuVRAMInc32Mode = false
+	ppuUse8x16Sprites = false
+	ppuSpritePatternTable = false
+	ppuBGPatternTable = false
+	TransferAddress = 0
+
+	//PPU_Mask_Greyscale = false
+	ppuMask_EmphasisRed = false
+	ppuMask_EmphasisGreen = false
+	ppuMask_EmphasisBlue = false
+	ppuMask_8pxMaskBG = false
+	ppuMask_8pxMaskSprites = false
+	ppuMask_RenderBG = false
+	ppuMask_RenderSprites = false
+
+	//PPU_Update2005Delay = 0;
+	ppuScrollFineX = 0
+
+	PPUReadBuffer = 0
+	//PPU_OddFrame = false;
+
+	ppuDot = 0
+	ppuScanline = 0
+
+	//DoDMCDMA = false;
+	//DoOAMDMA = false;
+
+	//Reset CPU cycle count
+	CPU_Cycles = 0
+
+	//Reset ROM Data
+	Header = [0x10]byte{}
+	ROM = [0x8000]byte{}
+	CHRROM = [0x2000]byte{}
+
+	//Reset RAM (Or don't, if I wanna do weird stuff...?)
+	RAM = [0x800]byte{}
+	VRAM = [0x800]byte{}
+	PaletteRAM = [0x20]byte{}
+	CartRAM = [0x2000]byte{}
+
+	LoadROM()
+
+	//copy(CHRData[:], HeaderedROM[0x8010:])
+
+	PCL := Read(0xFFFC)
+	PCH := Read(0xFFFD)
+	ProgramCounter = BuildAddress(PCL, PCH)
+	//ProgramCounter = 0xC000
+	StackPointer -= 3
+	//fmt.Printf("%#x", ProgramCounter)
+	ROMLoaded = true
+}
+
+func BoolToInt(Flag bool) int {
+	if Flag {
+		return 1
+	}
+	return 0
+}
+
+func LoadROM() {
 	HeaderedROM, err := os.ReadFile(filepath)
 	check(err)
 
@@ -249,20 +342,13 @@ func Reset() {
 	if Header[5] != 0 {
 		copy(CHRROM[:], HeaderedROM[(0x0010+(0x4000*size)):])
 	}
-	//copy(CHRData[:], HeaderedROM[0x8010:])
 
-	PCL := Read(0xFFFC)
-	PCH := Read(0xFFFD)
-	ProgramCounter = BuildAddress(PCL, PCH)
-	//ProgramCounter = 0xC000
-	StackPointer -= 3
-	//fmt.Printf("%#x", ProgramCounter)
-	//Run()
 }
 
-func BoolToInt(Flag bool) int {
-	if Flag {
-		return 1
-	}
-	return 0
+func SelectROM(fp string) {
+	filepath = fp
+	ROMExists = true
+
+	ROMLoaded = false
+
 }
