@@ -38,6 +38,17 @@ func Read(Address uint16) byte {
 		default:
 			return 0
 		}
+	} else if Address == 0x4015 { //APU Status
+		apuStatus := byte(0)
+		apuStatus |= byte(ternary(apuDMCInterrupt, 0x80, 0x00))                                                    //DMC Interrupt
+		apuStatus |= byte(ternary(apuFrameInterrupt, 0x40, 0x00))                                                  //Frame Interrupt
+		apuStatus |= byte(ternary(apuDMC.Length > 0, 0x10, 0x00))                                                  //DMC Active
+		apuStatus |= byte(ternary(!(apuNoise.LengthCounter == 0 /*|| apuNoise.LengthCounterHalt*/), 0x08, 0x00))   //Noise Active
+		apuStatus |= byte(ternary(!(apuTriangle.LengthCounter == 0 /*|| apuTriangle.Control*/), 0x04, 0x00))       //Triangle Active
+		apuStatus |= byte(ternary(!(apuPulse2.LengthCounter == 0 /*|| apuPulse2.LengthCounterHalt*/), 0x02, 0x00)) //Pulse 2 Active
+		apuStatus |= byte(ternary(!(apuPulse1.LengthCounter == 0 /*|| apuPulse1.LengthCounterHalt*/), 0x01, 0x00)) //Pulse 1 Active
+		apuFrameInterrupt = false
+		return apuStatus
 	} else if Address == 0x4016 { //Controller 1
 		cBit := byte((Controller1ShiftRegister & 0x80) >> 7)
 		Controller1ShiftRegister <<= 1
@@ -149,7 +160,10 @@ func Write(Address uint16, Value byte) {
 			apuPulse1.Timer = uint16(Value)
 		case 0x4003:
 			apuPulse1.Timer |= (uint16(Value&0x7) << 8)
-			apuPulse1.LengthCounterLoad = ((Value & 0xF8) >> 3)
+			if apuPulse1.Enabled {
+				apuPulse1.LengthCounter = LengthCounterLoad(Value >> 3)
+
+			}
 
 		// Pulse 2
 		case 0x4004:
@@ -166,18 +180,22 @@ func Write(Address uint16, Value byte) {
 			apuPulse2.Timer = uint16(Value)
 		case 0x4007:
 			apuPulse2.Timer |= (uint16(Value&0x7) << 8)
-			apuPulse2.LengthCounterLoad = ((Value & 0xF8) >> 3)
+			if apuPulse2.Enabled {
+				apuPulse2.LengthCounter = LengthCounterLoad(Value >> 3)
+			}
 
 		// Triangle
 		case 0x4008:
-			apuTriangle.LengthCounterControl = ((Value & 0x80) >> 7) != 0
-			apuTriangle.LinearCounterLoad = (Value & 0x7F)
+			apuTriangle.Control = ((Value & 0x80) >> 7) != 0
+			apuTriangle.LinearCounter = (Value & 0x7F)
 		case 0x4009: //Unused
 		case 0x400A:
 			apuTriangle.Timer = uint16(Value)
 		case 0x400B:
 			apuTriangle.Timer |= (uint16(Value&0x7) << 8)
-			apuTriangle.LengthCounterLoad = ((Value & 0xF8) >> 3)
+			if apuTriangle.Enabled {
+				apuTriangle.LengthCounter = LengthCounterLoad(Value >> 3)
+			}
 
 		// Noise
 		case 0x400C:
@@ -189,23 +207,53 @@ func Write(Address uint16, Value byte) {
 			apuNoise.Mode = ((Value & 0x80) >> 7) != 0
 			apuNoise.Period = (Value & 0xF)
 		case 0x400F:
-			apuNoise.LengthCounterLoad = ((Value & 0xF8) >> 3)
+			if apuNoise.Enabled {
+				apuNoise.LengthCounter = LengthCounterLoad(Value >> 3)
+			}
 		// DMC
 		case 0x4010:
 			apuDMC.IRQEnable = ((Value & 0x80) >> 7) != 0
+			apuDMC.Loop = ((Value & 0x40) >> 6) != 0
+			apuDMC.Frequency = (Value & 0xF)
 		case 0x4011:
+			apuDMC.LoadCounter = (Value & 0x7F)
 		case 0x4012:
+			apuDMC.Address = Value
 		case 0x4013:
+			apuDMC.Length = int((Value << 4) + 1)
 
 		case 0x4014: //OAM
 			for i := 0; i < 256; i++ {
 				OAM[i] = Read((uint16(Value) << 8) + uint16(i))
 			}
-		case 0x4015:
+		case 0x4015: //APU Status
+			apuDMC.Length = int((Value & 0x10) >> 4)
+			apuNoise.LengthCounter &= (0xFF * ((Value & 0x08) >> 3))
+			apuTriangle.LengthCounter &= (0xFF * ((Value & 0x04) >> 2))
+			apuPulse2.LengthCounter &= (0xFF * ((Value & 0x02) >> 1))
+			apuPulse1.LengthCounter &= (0xFF * (Value & 0x01))
+
+			apuNoise.Enabled = (Value & 0x08) != 0
+			apuTriangle.Enabled = (Value & 0x04) != 0
+			apuPulse2.Enabled = (Value & 0x02) != 0
+			apuPulse1.Enabled = (Value & 0x01) != 0
+			apuDMCInterrupt = false
 		case 0x4016: //Controller Input
 			Controller1ShiftRegister = uint16(Controller1)
 			Controller2ShiftRegister = uint16(Controller2)
 		case 0x4017: //APU Frame Counter control
+			//modeFlagPrev := apuFrameCounterMode
+			apuFrameCounterMode = ((Value & 0x80) >> 7) != 0
+			apuInhibitIRQ = ((Value & 0x40) >> 6) != 0
+			if apuInhibitIRQ {
+				apuFrameInterrupt = false
+			}
+			if /*!modeFlagPrev &&*/ apuFrameCounterMode {
+				ClockFrameCounterQuarterFrame()
+				ClockFrameCounterHalfFrame()
+			}
+			apu4017ResetTimer = int(ternary(apuDMAGetCycle, 4, 3))
+
 		}
 
 		/*} else if Address == 0x4014 { //OAM

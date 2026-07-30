@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"golang.org/x/image/draw"
+
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/widget"
@@ -13,11 +15,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-var filepath string = "roms/smb.nes"
+//var filepath string = "roms/games/smb.nes"
 
-//var filepath string = "roms/nestest.nes"
+//var filepath string = "roms/nes-test-roms-master/apu_test/rom_singles/4-jitter.nes"
+
+//var filepath string = "roms/nes-test-roms-master/blargg_apu_2005.07.30/04.clock_jitter.nes"
 
 //var filepath string = "roms/AccuracyCoin.nes"
+
+var filepath string = "roms/nestest.nes"
 
 //type App struct{ Clicks int }
 
@@ -26,7 +32,7 @@ var filepath string = "roms/smb.nes"
 const (
 	screenWidth  = 256
 	screenHeight = 240
-	screenScale  = 3
+	screenScale  = 2
 )
 
 type Game struct {
@@ -47,10 +53,70 @@ var CHRROM [0x2000]byte
 var Header [0x10]byte
 var CartRAM [0x2000]byte
 
+// var cpuClock int = 0 // 2A03
+// var ppuClock int = 0 // 2C02
+//var MasterClock int = 0
+
 //var screenScale float32 = 3
 //var nametable *image.RGBA = image.NewRGBA(image.Rect(0, 0, ScreenWidth, ScreenHeight))
 
 func (g *Game) Update() error {
+
+	//For when CPU instruction cycles are more accurately emulated
+
+	//Clock the 2A03 and run CPU / APU
+	//CPU runs every 6 ticks
+	//PPU runs every 2 ticks
+	//APU runs every 12
+	//DMA runs every 6
+	//
+
+	/*MasterClock++
+	switch MasterClock {
+	case 1:
+		Emulate_CPU(g)
+		Emulate_PPU(g)
+		Emulate_APU(g)
+		DMA_Get()
+	case 2:
+	case 3:
+		Emulate_PPU(g)
+	case 4:
+	case 5:
+		Emulate_PPU(g)
+	case 6:
+	case 7:
+		Emulate_CPU(g)
+		Emulate_PPU(g)
+		DMA_Put()
+	case 8:
+	case 9:
+		Emulate_PPU(g)
+	case 10:
+	case 11:
+		Emulate_PPU(g)
+	case 12:
+		MasterClock = 0
+
+	}*/
+
+	/*
+		if cpuClock >= 12 {
+			cpuClock = 0
+			Emulate_CPU(g)
+			Emulate_APU(g)
+		}
+		if cpuClock == 6 {
+			Emulate_APU(g)
+		}
+
+		//Clock the 2C02 and run PPU
+		ppuClock++
+		if ppuClock >= 4 {
+			ppuClock = 0
+			Emulate_PPU(g)
+		}
+	*/
 
 	for /*SelectedROM != ""*/ {
 		UpdateControllers(g)
@@ -79,17 +145,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// This graphics context is used for managing the rendering state.
 
 	//if SelectedROM != "" {
-	screen.WritePixels(g.gameScreen.Pix)
+	//if DrawNewFrame {
+	screenScaled := image.NewRGBA(image.Rect(0, 0, screenWidth*screenScale, screenHeight*screenScale))
+	draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
+	screen.WritePixels(screenScaled.Pix)
 	//DrawNewFrame = false
 	//}
+	//}
 
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), 0, 225) // Draw the UI onto the screen
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), 380, 15) // Draw the UI onto the screen
 	g.ui.Draw(screen)
 	//ebitenutil.DebugPrint(screen, "Hello, World!")
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenWidth, screenHeight
+	return outsideWidth, outsideHeight
 }
 
 func main() {
@@ -169,6 +239,7 @@ func ternary(Condition bool, ValT, ValF uint16) uint16 {
 func Reset() {
 	//var HeaderedROM []byte := os.ReadFile()
 	flag_InterruptDisable = true
+	apuDMAGetCycle = true
 	HeaderedROM, err := os.ReadFile(filepath)
 	check(err)
 
