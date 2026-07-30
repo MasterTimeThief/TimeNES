@@ -26,7 +26,7 @@ import (
 var filepath string = ""
 var ROMExists bool = false
 var ROMLoaded bool = false
-var ShowFPS bool = true
+var ShowFPS bool = false
 
 //type App struct{ Clicks int }
 
@@ -136,11 +136,19 @@ func (g *Game) Update() error {
 			break
 			//return nil
 		}
-		if CPU_Halted || g.exit {
+		if /*CPU_Halted ||*/ g.exit {
 			return ebiten.Termination
 		}
 	}
 	// Update the UI
+
+	mX, _ := ebiten.CursorPosition()
+	if mX > 50 {
+		g.ui.Container.SetLocation(image.Rect(-20, 0, 20, 20))
+	} else {
+		g.ui.Container.SetLocation(image.Rect(0, 0, 20, 20))
+	}
+
 	g.ui.Update()
 
 	//fmt.Println("CPU Paused, Drawing Window")
@@ -155,7 +163,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// This graphics context is used for managing the rendering state.
 
 	if !ROMExists {
-		ebitenutil.DebugPrintAt(screen, "No ROM File loaded!", 5, 460) // Draw the UI onto the screen
+		ebitenutil.DebugPrintAt(screen, "No ROM File loaded!", 5, (240*screenScale)-20)
+	} else if CPU_Halted {
+		ebitenutil.DebugPrintAt(screen, "Game Crashed!", 5, (240*screenScale)-20)
 	} else if ROMLoaded {
 		//if SelectedROM != "" {
 		//if DrawNewFrame {
@@ -168,7 +178,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	if ShowFPS {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), 380, 460) // Draw the UI onto the screen
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*screenScale)-132, (240*screenScale)-20) // Draw the UI onto the screen
 	}
 	g.ui.Draw(screen)
 	//ebitenutil.DebugPrint(screen, "Hello, World!")
@@ -179,6 +189,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
+	if filepath != "" {
+		ROMExists = true
+	}
 	ebiten.SetWindowSize(screenWidth*screenScale, screenHeight*screenScale)
 	ebiten.SetWindowTitle("TimeNES (MasterTimeThief made this :3)")
 	//ebiten.SetTPS(ebiten.SyncWithFPS)
@@ -206,27 +219,7 @@ func main() {
 		ui:         &ui,
 	}
 
-	// Event handling
-	//
-	// Example 1: Configure the "Help" button to display a message in console when it's pressed.
-	//
-	toolbar.helpButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		println("The help button was pressed!")
-	}))
-
-	// Example 2: Configure the "Quit" menu entry to end the program when it's pressed.
-	toolbar.quitButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		g.exit = true
-	}))
-
-	//Select ROM
-	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectROM("roms/games/smb.nes")
-	}))
-
-	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectROM("roms/nestest.nes")
-	}))
+	SetupToolbarOptions(res, g, toolbar)
 
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
@@ -320,8 +313,9 @@ func Reset() {
 	PCH := Read(0xFFFD)
 	ProgramCounter = BuildAddress(PCL, PCH)
 	//ProgramCounter = 0xC000
-	StackPointer -= 3
+	StackPointer = 0xFD
 	//fmt.Printf("%#x", ProgramCounter)
+	CPU_Halted = false
 	ROMLoaded = true
 }
 
@@ -330,6 +324,10 @@ func BoolToInt(Flag bool) int {
 		return 1
 	}
 	return 0
+}
+
+func toggleFPS() {
+	ShowFPS = !ShowFPS
 }
 
 func LoadROM() {
@@ -348,7 +346,37 @@ func LoadROM() {
 func SelectROM(fp string) {
 	filepath = fp
 	ROMExists = true
-
 	ROMLoaded = false
+}
+
+func SetupToolbarOptions(res *resources, g *Game, toolbar *toolbar) {
+	// Event handling
+	toolbar.helpButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		println("The help button was pressed!")
+	}))
+
+	// Example 2: Configure the "Quit" menu entry to end the program when it's pressed.
+	toolbar.quitButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		g.exit = true
+	}))
+
+	//Select ROM
+	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		SelectROM("roms/games/elev.nes")
+	}))
+
+	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		SelectROM("roms/AccuracyCoin.nes")
+		//SelectROM("roms/nestest.nes")
+	}))
+
+	toolbar.selectROMButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		//Add file select
+		openFileSelectWindow(res, g.ui)
+	}))
+
+	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		toggleFPS()
+	}))
 
 }

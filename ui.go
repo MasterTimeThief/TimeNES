@@ -14,8 +14,12 @@ type resources struct {
 	font text.Face
 }
 
+const (
+	uiBGColor = "000000"
+)
+
 func loadResources() (*resources, error) {
-	fnt, err := loadFont("assets/fonts/MinecraftStandard.otf", 6)
+	fnt, err := loadFont("assets/fonts/ClearSans-Regular.ttf", 16)
 	if err != nil {
 		return nil, err
 	}
