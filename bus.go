@@ -19,8 +19,9 @@ func Read(Address uint16) byte {
 			ppuVBlank = false
 			WriteLatch = false
 			return ppustatus
-		case 0x2003:
-		case 0x2004:
+		case 0x2003: //OAM ADDR
+		case 0x2004: //OAMDATA
+			return OAM[ppuOAMAddress]
 		case 0x2005:
 		case 0x2006:
 		case 0x2007: //PPUDATA
@@ -92,7 +93,10 @@ func Write(Address uint16, Value byte) {
 			//ppuMask_EmphasisBlue = (Value & 0x80) != 0
 		case 0x2002: //PPUSTATUS
 		case 0x2003: //OAMADDR
+			ppuOAMAddress = uint16(Value)
 		case 0x2004: //OAMDATA
+			OAM[ppuOAMAddress] = Value
+			ppuOAMAddress++
 		case 0x2005: //PPUSCROLL
 			if !WriteLatch {
 				ppuScrollFineX = byte(Value & 7)
@@ -222,7 +226,7 @@ func Write(Address uint16, Value byte) {
 		case 0x4013:
 			apuDMC.Length = int((Value << 4) + 1)
 
-		case 0x4014: //OAM
+		case 0x4014: //OAMDMA
 			for i := 0; i < 256; i++ {
 				OAM[i] = Read((uint16(Value) << 8) + uint16(i))
 			}

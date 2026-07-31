@@ -189,6 +189,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] != "" {
+		filepath = os.Args[1]
+	}
 	if filepath != "" {
 		ROMExists = true
 	}
@@ -197,10 +200,8 @@ func main() {
 	//ebiten.SetTPS(ebiten.SyncWithFPS)
 
 	res, err := loadResources()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	check(err)
+	//soundLoop()
 	// Construct a new container that serves as the root of the UI hierarchy.
 	root := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
