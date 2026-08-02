@@ -11,23 +11,41 @@ var TempVRAMAddress uint16 //PPU's v register (temporary)
 var PPUReadBuffer byte
 var NMILevelDetector, DoNMI bool
 
+// $2000: PPUCTRL
+var ppuCtrl_NametableSelect byte    // PPUCTRL Bit 1 & 2
+var ppuCtrl_VRAMInc32Mode bool      // PPUCTRL Bit 3
+var ppuCtrl_SpritePatternTable bool // PPUCTRL Bit 4
+var ppuCtrl_BGPatternTable bool     // PPUCTRL Bit 5
+var ppuCtrl_Use8x16Sprites bool     // PPUCTRL Bit 6
+var ppuCtrl_EnableNMI bool          // PPUCTRL Bit 8
+
+// $2001: PPUMASK
+var ppuMask_Greyscale bool      // PPUMASK Bit 0
+var ppuMask_8pxMaskBG bool      // PPUMASK Bit 1
+var ppuMask_8pxMaskSprites bool // PPUMASK Bit 2
+var ppuMask_RenderBG bool       // PPUMASK Bit 3
+var ppuMask_RenderSprites bool  // PPUMASK Bit 4
+var ppuMask_EmphasisRed bool    // PPUMASK Bit 5
+var ppuMask_EmphasisGreen bool  // PPUMASK Bit 6
+var ppuMask_EmphasisBlue bool   // PPUMASK Bit 7
+
+// $2002: PPUSTATUS
+var ppuStatus_Overflow bool      // PPUSTATUS Bit 5
+var ppuStatus_SpriteZeroHit bool // PPUSTATUS Bit 6
+var ppuStatus_VBlank bool        // PPUSTATUS Bit 7
+
 var ppuDot int      //The X position of the scanning beam
 var ppuScanline int //The Y position of the scanning beam
-var ppuVBlank, ppuHBlank bool
-var ppuMask_8pxMaskBG, ppuMask_8pxMaskSprites, ppuMask_RenderBG, ppuMask_RenderSprites bool
-var ppuMask_EmphasisRed, ppuMask_EmphasisGreen, ppuMask_EmphasisBlue bool
-var ppuNametableSelect byte
-var ppuVRAMInc32Mode, ppuSpritePatternTable, ppuBGPatternTable, ppuUse8x16Sprites, ppuEnableNMI bool
 var ppuShiftRegister_patternL, ppuShiftRegister_patternH, ppuShiftRegister_attributeL, ppuShiftRegister_attributeH uint16
 var ppu8Step_patternLowBitPlane, ppu8Step_patternHighBitPlane, ppu8Step_attribute, ppu8Step_NextCharacter, ppu8Step_temp byte
-var ppuScrollFineX byte
+var ppuScrollFineX, ppuScrollFineY byte
 var DrawNewFrame bool = false
 
 var OAM [0x100]byte
 var SecondaryOAM [0x20]byte
 var ppuSpriteEvalTemp byte
 var ppuOAMAddress, ppuSecondaryOAMAddress, ppuSecondaryOAMSize uint16
-var ppuSecondaryOAMFull, ppuStatusOverflow, ppuStatusSprZeroHit, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
+var ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
 var ppuSpriteEvalTick int
 
 var ppu_SpriteShiftRegisterL [8]byte
@@ -38,42 +56,23 @@ var ppu_SpritePattern [8]byte
 var ppu_SpriteXposition [8]byte
 var ppu_SpriteYposition [8]byte
 
-func ReadPPU(Address uint16) byte {
-	if Address < 0x2000 {
-		//Read from pattern table.
-		return CHRROM[Address]
-		//else, nothing happens
-	} else if Address < 0x3F00 {
-		//Read from the Nametables
-		if (Header[6] & 1) == 0 {
-			// Horizontal Mirroring
-			return VRAM[int(Address&0x3FF)|int(Address&0x800)>>1]
-		} else {
-			//Vertical Mirroring
-			return VRAM[int(Address&0x7FF)]
-		}
-	} else {
-		//Read from Palette RAM
-		if (Address & 3) == 0 {
-			return PaletteRAM[Address&0x0F]
-		} else {
-			return PaletteRAM[Address&0x1F]
-		}
-	}
-}
-
 func Emulate_PPU(g *Game) {
 
 	if ppuDot == 1 && ppuScanline == 241 {
-		ppuVBlank = true
+		ppuStatus_VBlank = true
 		DrawNewFrame = true
 	} else if ppuDot == 1 && ppuScanline == 261 {
-		ppuVBlank = false
-		ppuStatusOverflow = false
-		ppuStatusSprZeroHit = false
+		ppuStatus_VBlank = false
+		ppuStatus_Overflow = false
+		ppuStatus_SpriteZeroHit = false
 	}
 
 	SpriteEvaluation()
+
+	if !ppuMask_RenderBG && !ppuMask_RenderSprites {
+		ppuAddressBus = VRAMAddress // the address bus is always v when rendering is disabled.
+	}
+
 	if ppuScanline < 240 || ppuScanline == 261 {
 		if (ppuDot > 0 && ppuDot <= 256) || (ppuDot > 320 && ppuDot <= 336) {
 			//If this is a visible pixel, or preparing the start of the next scanline
@@ -126,6 +125,10 @@ func Emulate_PPU(g *Game) {
 			ppuScanline = 0
 
 		}
+	}
+
+	if ppuBus != 0 {
+		DecayPPUDataBus()
 	}
 }
 
@@ -215,12 +218,16 @@ func DrawScreen(g *Game) {
 				PalHi = 0
 			}
 		}
+
+		if ppuScanline >= 238 && ppuDot == 255 {
+			print("")
+		}
 		var SpritePalHi byte = 0        //Which color palette to use
 		var SpritePalLow byte = 0       //Index into a color palette
 		var SpritePriority bool = false //Is the sprite in front or behind the BG?
 		if ppuMask_RenderSprites && (ppuDot > 8 || ppuMask_8pxMaskSprites) {
 			for i := 0; i < 8; i++ {
-				if ppu_SpriteXposition[i] == 0 && i < int(ppuSecondaryOAMSize/4) { //If the sprite X position == 0 (The x position is decremented every ppu cycle)
+				if ppu_SpriteXposition[i] == 0 && i <= int(ppuSecondaryOAMSize/4) { //If the sprite X position == 0 (The x position is decremented every ppu cycle)
 					SpixelL := ((ppu_SpriteShiftRegisterL[i]) & 0x80) != 0
 					SpixelH := ((ppu_SpriteShiftRegisterH[i]) & 0x80) != 0
 					SpritePalLow = 0
@@ -237,8 +244,10 @@ func DrawScreen(g *Game) {
 					continue
 				}
 				if SpritePalLow != 0 {
-					if i == 0 && ppuScanlineContainsSpriteZero && SpritePalLow != 0 && PalLow != 0 && ppuMask_RenderBG && ppuDot < 256 {
-						ppuStatusSprZeroHit = true
+
+					if i == 0 && ppuScanlineContainsSpriteZero && PalLow != 0 && ppuMask_RenderBG && ppuDot < 256 {
+						ppuScanlineContainsSpriteZero = false
+						ppuStatus_SpriteZeroHit = true
 					}
 					break
 				}
@@ -288,12 +297,12 @@ func PPU8Steps() {
 		ppuShiftRegister_attributeL = ((ppuShiftRegister_attributeL & 0xFF00) | ternary((ppu8Step_attribute&1) == 1, 0xFF, 0x00))
 		ppuShiftRegister_attributeH = ((ppuShiftRegister_attributeH & 0xFF00) | ternary((ppu8Step_attribute&2) == 2, 0xFF, 0x00))
 		ppuAddressBus = (0x2000 + (VRAMAddress & 0x0FFF))
-		ppu8Step_temp = ReadPPU(ppuAddressBus)
+		ppu8Step_temp = ReadPPU()
 	case 1:
 		ppu8Step_NextCharacter = ppu8Step_temp
 	case 2:
 		ppuAddressBus = (0x23C0 | (VRAMAddress & 0x0C00) | ((VRAMAddress >> 4) & 0x38) | ((VRAMAddress >> 2) & 0x07))
-		ppu8Step_temp = ReadPPU(ppuAddressBus)
+		ppu8Step_temp = ReadPPU()
 	case 3:
 		ppu8Step_attribute = ppu8Step_temp
 		//1 byte of attribute data covers 4 tiles. determine which tile this is for
@@ -305,13 +314,13 @@ func PPU8Steps() {
 		}
 		ppu8Step_attribute = byte(ppu8Step_attribute & 3)
 	case 4:
-		ppuAddressBus = (((VRAMAddress & 0b0111000000000000) >> 12) | (uint16(ppu8Step_NextCharacter) * 16) | ternary(ppuBGPatternTable, 0x1000, 0))
-		ppu8Step_temp = ReadPPU(ppuAddressBus)
+		ppuAddressBus = (((VRAMAddress & 0b0111000000000000) >> 12) | (uint16(ppu8Step_NextCharacter) * 16) | ternary(ppuCtrl_BGPatternTable, 0x1000, 0))
+		ppu8Step_temp = ReadPPU()
 	case 5:
 		ppu8Step_patternLowBitPlane = ppu8Step_temp
 		ppuAddressBus += 8
 	case 6:
-		ppu8Step_temp = ReadPPU(ppuAddressBus)
+		ppu8Step_temp = ReadPPU()
 	case 7:
 		ppu8Step_patternHighBitPlane = ppu8Step_temp
 		//Increment VRAM with scrolling
@@ -376,7 +385,7 @@ func SpriteEvaluation() {
 				}
 				if ppuSpriteEvalTick == 0 {
 					//Reading index 0 of an object's set of 4 bytes
-					if (ppuScanline-int(ppuSpriteEvalTemp) >= 0) && (ppuScanline-int(ppuSpriteEvalTemp) < int(ternary(ppuUse8x16Sprites, 16, 8))) {
+					if (ppuScanline-int(ppuSpriteEvalTemp) >= 0) && (ppuScanline-int(ppuSpriteEvalTemp) < int(ternary(ppuCtrl_Use8x16Sprites, 16, 8))) {
 						//This object *is* on this scanline!
 						if !ppuSecondaryOAMFull {
 							ppuSecondaryOAMAddress++ //Increment this for the next write to Secondary OAM
@@ -389,7 +398,7 @@ func SpriteEvaluation() {
 							}
 
 						} else {
-							ppuStatusOverflow = true
+							ppuStatus_Overflow = true
 						}
 						ppuSpriteEvalTick++
 
@@ -441,7 +450,7 @@ func SpriteEvaluation() {
 		case 4:
 			ppuAddressBus = ppuFindSpritePatternData(ppuSecondaryOAMAddress / 4)
 		case 5:
-			ppuSpriteEvalTemp = ReadPPU(ppuAddressBus)
+			ppuSpriteEvalTemp = ReadPPU()
 			if ppuScanline == 261 {
 				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
 			}
@@ -455,7 +464,7 @@ func SpriteEvaluation() {
 		case 6:
 			ppuAddressBus += 8
 		case 7:
-			ppuSpriteEvalTemp = ReadPPU(ppuAddressBus)
+			ppuSpriteEvalTemp = ReadPPU()
 			if ppuScanline == 261 {
 				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
 			}
@@ -475,15 +484,15 @@ func SpriteEvaluation() {
 }
 
 func ppuFindSpritePatternData(SecondaryOAMSlot uint16) uint16 {
-	if !ppuUse8x16Sprites { //8x8 sprites
+	if !ppuCtrl_Use8x16Sprites { //8x8 sprites
 		// The address is $0000 or $1000 depending on the pattern table
 		// plus the pattern value from OAM * 16
 		// plus the number of scanlines from the top of the object
 		// if the attributes are set to flip Y, it's 7 - the number of scanlines from the top of the object
 		if ((ppu_SpriteAttribute[SecondaryOAMSlot] >> 7) & 1) == 0 { //Attributes are not set up to flip Y
-			return uint16(ternary(ppuSpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
+			return uint16(ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
 		} else { //Attributes are set up to flip Y
-			return uint16(ternary(ppuSpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16((7-(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))&7))
+			return uint16(ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16((7-(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))&7))
 
 		}
 

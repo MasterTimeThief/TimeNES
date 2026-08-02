@@ -180,6 +180,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if ShowFPS {
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*screenScale)-132, (240*screenScale)-20) // Draw the UI onto the screen
 	}
+	if outsideCodeRead > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", outsideCodeRead), 5, (240*screenScale)-30)
+	}
+	if outsideCodeWrite > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", outsideCodeWrite), 5, (240*screenScale)-40)
+	}
+
 	g.ui.Draw(screen)
 	//ebitenutil.DebugPrint(screen, "Hello, World!")
 }
@@ -264,21 +271,23 @@ func Reset() {
 	apuFrameCounter = 0 // reset the frame counter
 
 	// PPU registers
-	ppuEnableNMI = false
-	ppuVRAMInc32Mode = false
-	ppuUse8x16Sprites = false
-	ppuSpritePatternTable = false
-	ppuBGPatternTable = false
+	ppuCtrl_EnableNMI = false
+	ppuCtrl_VRAMInc32Mode = false
+	ppuCtrl_Use8x16Sprites = false
+	ppuCtrl_SpritePatternTable = false
+	ppuCtrl_BGPatternTable = false
 	TransferAddress = 0
 
 	//PPU_Mask_Greyscale = false
 	ppuMask_EmphasisRed = false
 	ppuMask_EmphasisGreen = false
 	ppuMask_EmphasisBlue = false
+	ppuMask_Greyscale = false
 	ppuMask_8pxMaskBG = false
 	ppuMask_8pxMaskSprites = false
 	ppuMask_RenderBG = false
 	ppuMask_RenderSprites = false
+	WriteLatch = false
 
 	//PPU_Update2005Delay = 0;
 	ppuScrollFineX = 0
@@ -363,11 +372,11 @@ func SetupToolbarOptions(res *resources, g *Game, toolbar *toolbar) {
 
 	//Select ROM
 	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectROM("roms/games/elev.nes")
+		SelectROM("roms/games/bike.nes")
 	}))
 
 	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectROM("roms/AccuracyCoin.nes")
+		SelectROM("roms/nes-test-roms-master/sprite_hit_tests_2005.10.05/07.screen_bottom.nes")
 		//SelectROM("roms/nestest.nes")
 	}))
 

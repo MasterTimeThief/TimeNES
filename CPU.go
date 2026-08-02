@@ -3,7 +3,6 @@ package main
 import "fmt"
 
 var ProgramCounter uint16
-var AddressBus, ppuAddressBus uint16
 var StackPointer byte
 var A, X, Y byte
 var opcode byte
@@ -290,7 +289,7 @@ func Op_BIT(Value byte) {
 func Emulate_CPU(g *Game) {
 	//Non Maskable Interrupt check
 	prevNMILevelDetector := NMILevelDetector
-	NMILevelDetector = (ppuEnableNMI && ppuVBlank)
+	NMILevelDetector = (ppuCtrl_EnableNMI && ppuStatus_VBlank)
 	if !prevNMILevelDetector && NMILevelDetector {
 		DoNMI = true
 	}

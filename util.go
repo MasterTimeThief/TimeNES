@@ -12,6 +12,8 @@ var traceA, traceX, tracyY, traceSP byte
 var traceFlagC, traceFlagZ, traceFlagI, traceFlagD, traceFlagV, traceFlagN bool
 var traceCycles int
 
+var outsideCodeRead, outsideCodeWrite uint16 = 0, 0
+
 // Sets everything outside of operands for the tracelogger to run later
 func prepTraceLogger() {
 	tracePC = ProgramCounter

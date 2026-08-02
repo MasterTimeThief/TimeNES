@@ -10,22 +10,23 @@ var Controller1ShiftRegister, Controller2ShiftRegister uint16
 
 // Update states of controllers
 func UpdateControllers(g *Game) {
-	/*
-		0 - B
-		1 - A
-		2 - Select
-		3 - Start
-		4 - Up
-		5 - Down
-		6 - Left
-		7 - Right
-	*/
+
+	//	0 - B
+	//	1 - A
+	//	2 - Select
+	//	3 - Start
+	//	4 - Up
+	//	5 - Down
+	//	6 - Left
+	//	7 - Right
+
 	g.keys = inpututil.AppendPressedKeys(g.keys[:0])
 
 	Controller1 = 0
 	Controller2 = 0
 	for _, k := range g.keys {
 		switch k {
+		//Player 1
 		case ebiten.KeyX:
 			Controller1 |= 0x80
 		case ebiten.KeyZ:
@@ -41,6 +42,23 @@ func UpdateControllers(g *Game) {
 		case ebiten.KeyArrowLeft:
 			Controller1 |= 0x2
 		case ebiten.KeyArrowRight:
+			Controller1 |= 0x1
+			//Player 2
+		case ebiten.KeyK:
+			Controller1 |= 0x80
+		case ebiten.KeyL:
+			Controller1 |= 0x40
+		case ebiten.KeyI:
+			Controller1 |= 0x20
+		case ebiten.KeyO:
+			Controller1 |= 0x10
+		case ebiten.KeyW:
+			Controller1 |= 0x8
+		case ebiten.KeyS:
+			Controller1 |= 0x4
+		case ebiten.KeyA:
+			Controller1 |= 0x2
+		case ebiten.KeyD:
 			Controller1 |= 0x1
 		}
 	}
