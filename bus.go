@@ -86,7 +86,7 @@ func Read(Address uint16) byte {
 		returnValue = cBit
 	} else if Address >= 0x8000 {
 		//Read from ROM
-		returnValue = ROM[(Address-0x8000)&((uint16(Header[4])*0x4000)-1)]
+		returnValue = ROM[(Address-0x8000)&((uint16(PRGROM_Size)*0x4000)-1)]
 		//
 	} else {
 		outsideCodeRead = Address
@@ -160,13 +160,13 @@ func Write(Address uint16, Value byte) {
 		case 0x2007: //PPUDATA
 			if VRAMAddress < 0x2000 {
 				//Write to pattern table. (If the cartridge supports it)
-				if Header[5] == 0 {
+				if CHRROM_Size == 0 {
 					CHRROM[VRAMAddress] = Value
 				}
 				//else, nothing happens because it's CHR-ROM
 			} else if VRAMAddress < 0x3F00 {
 				//Write to the Nametables
-				if (Header[6] & 1) == 0 {
+				if IsNametableHorizontal {
 					// Horizontal Mirroring
 					VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
 				} else {
@@ -321,7 +321,7 @@ func ReadPPU( /*Address uint16*/ ) byte {
 		//else, nothing happens
 	} else if ppuAddressBus < 0x3F00 {
 		//Read from the Nametables
-		if (Header[6] & 1) == 0 {
+		if IsNametableHorizontal {
 			// Horizontal Mirroring
 			return VRAM[int(ppuAddressBus&0x3FF)|(int(ppuAddressBus&0x800)>>1)]
 		} else {

@@ -30,6 +30,11 @@ var ROMLoaded bool = false
 var ShowFPS bool = false
 var pauseEmulation bool = false
 
+// Header Variables
+var PRGROM_Size byte
+var CHRROM_Size byte
+var IsNametableHorizontal bool
+
 //type App struct{ Clicks int }
 
 //var SelectedROM string = ""
@@ -271,11 +276,16 @@ func LoadROM() {
 	HeaderedROM, err := os.ReadFile(filepath)
 	check(err)
 
+	//Header info
 	copy(Header[:], HeaderedROM[0x0:])
-	size := uint16(Header[4])
-	copy(ROM[:], HeaderedROM[0x10:])
-	if Header[5] != 0 {
-		copy(CHRROM[:], HeaderedROM[(0x0010+(0x4000*size)):])
+	PRGROM_Size = Header[4]
+	CHRROM_Size = Header[5]
+	IsNametableHorizontal = (Header[6] & 1) == 0
+
+	//size := uint16(Header[4])
+	copy(ROM[:], HeaderedROM[0x10:(PRGROM_Size+0x10)])
+	if CHRROM_Size != 0 {
+		copy(CHRROM[:], HeaderedROM[(0x0010+(0x4000*uint16(PRGROM_Size))):])
 	}
 
 }
