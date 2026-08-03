@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/image/draw"
 
+	"github.com/ebitengine/debugui"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/widget"
@@ -27,6 +28,7 @@ var filepath string = ""
 var ROMExists bool = false
 var ROMLoaded bool = false
 var ShowFPS bool = false
+var pauseEmulation bool = false
 
 //type App struct{ Clicks int }
 
@@ -43,7 +45,10 @@ type Game struct {
 	keys       []ebiten.Key
 	ui         *ebitenui.UI
 	exit       bool
+	debugui    debugui.DebugUI
 }
+
+var g *Game
 
 var RAM [0x800]byte
 var VRAM [0x800]byte
@@ -57,143 +62,10 @@ var CartRAM [0x2000]byte
 
 // var cpuClock int = 0 // 2A03
 // var ppuClock int = 0 // 2C02
-//var MasterClock int = 0
+var MasterClock int = 0
 
 //var screenScale float32 = 3
 //var nametable *image.RGBA = image.NewRGBA(image.Rect(0, 0, ScreenWidth, ScreenHeight))
-
-func (g *Game) Update() error {
-
-	//For when CPU instruction cycles are more accurately emulated
-
-	//Clock the 2A03 and run CPU / APU
-	//CPU runs every 6 ticks
-	//PPU runs every 2 ticks
-	//APU runs every 12
-	//DMA runs every 6
-	//
-
-	/*MasterClock++
-	switch MasterClock {
-	case 1:
-		Emulate_CPU(g)
-		Emulate_PPU(g)
-		Emulate_APU(g)
-		DMA_Get()
-	case 2:
-	case 3:
-		Emulate_PPU(g)
-	case 4:
-	case 5:
-		Emulate_PPU(g)
-	case 6:
-	case 7:
-		Emulate_CPU(g)
-		Emulate_PPU(g)
-		DMA_Put()
-	case 8:
-	case 9:
-		Emulate_PPU(g)
-	case 10:
-	case 11:
-		Emulate_PPU(g)
-	case 12:
-		MasterClock = 0
-
-	}*/
-
-	/*
-		if cpuClock >= 12 {
-			cpuClock = 0
-			Emulate_CPU(g)
-			Emulate_APU(g)
-		}
-		if cpuClock == 6 {
-			Emulate_APU(g)
-		}
-
-		//Clock the 2C02 and run PPU
-		ppuClock++
-		if ppuClock >= 4 {
-			ppuClock = 0
-			Emulate_PPU(g)
-		}
-	*/
-
-	if filepath != "" && !ROMLoaded {
-		Reset()
-		if !ROMLoaded { //Invalid file
-			ROMExists = false
-			filepath = ""
-		}
-	}
-
-	for ROMLoaded {
-		UpdateControllers(g)
-		Emulate_CPU(g)
-		if DrawNewFrame {
-			DrawNewFrame = false
-			break
-			//return nil
-		}
-		if /*CPU_Halted ||*/ g.exit {
-			return ebiten.Termination
-		}
-	}
-	// Update the UI
-
-	mX, _ := ebiten.CursorPosition()
-	if mX > 50 {
-		g.ui.Container.SetLocation(image.Rect(-20, 0, 20, 20))
-	} else {
-		g.ui.Container.SetLocation(image.Rect(0, 0, 20, 20))
-	}
-
-	g.ui.Update()
-
-	//fmt.Println("CPU Paused, Drawing Window")
-
-	//DrawWindow(ops, window)
-
-	return nil
-}
-
-func (g *Game) Draw(screen *ebiten.Image) {
-
-	// This graphics context is used for managing the rendering state.
-
-	if !ROMExists {
-		ebitenutil.DebugPrintAt(screen, "No ROM File loaded!", 5, (240*screenScale)-20)
-	} else if CPU_Halted {
-		ebitenutil.DebugPrintAt(screen, "Game Crashed!", 5, (240*screenScale)-20)
-	} else if ROMLoaded {
-		//if SelectedROM != "" {
-		//if DrawNewFrame {
-		screenScaled := image.NewRGBA(image.Rect(0, 0, screenWidth*screenScale, screenHeight*screenScale))
-		draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
-		screen.WritePixels(screenScaled.Pix)
-		//DrawNewFrame = false
-		//}
-		//}
-	}
-
-	if ShowFPS {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*screenScale)-132, (240*screenScale)-20) // Draw the UI onto the screen
-	}
-	if outsideCodeRead > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", outsideCodeRead), 5, (240*screenScale)-30)
-	}
-	if outsideCodeWrite > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", outsideCodeWrite), 5, (240*screenScale)-40)
-	}
-
-	g.ui.Draw(screen)
-	//ebitenutil.DebugPrint(screen, "Hello, World!")
-}
-
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return outsideWidth, outsideHeight
-}
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] != "" {
@@ -222,7 +94,7 @@ func main() {
 	toolbar := newToolbar(&ui, res)
 	root.AddChild(toolbar.container)
 
-	g := &Game{
+	g = &Game{
 		gameScreen: image.NewRGBA(image.Rect(0, 0, screenWidth, screenHeight)),
 		ui:         &ui,
 	}
@@ -233,19 +105,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-func ternary(Condition bool, ValT, ValF uint16) uint16 {
-	if Condition {
-		return ValT
-	}
-	return ValF
 }
 
 func Reset() {
@@ -329,15 +188,82 @@ func Reset() {
 	ROMLoaded = true
 }
 
-func BoolToInt(Flag bool) int {
-	if Flag {
-		return 1
+func (g *Game) Update() error {
+
+	if filepath != "" && !ROMLoaded {
+		Reset()
+		if !ROMLoaded { //Invalid file
+			ROMExists = false
+			filepath = ""
+		}
 	}
-	return 0
+
+	for ROMLoaded && !pauseEmulation {
+		UpdateControllers(g)
+		Emulate_CPU(g)
+		if DrawNewFrame {
+			DrawNewFrame = false
+			break
+			//return nil
+		}
+	}
+	if /*CPU_Halted ||*/ g.exit {
+		return ebiten.Termination
+	}
+	// Update the UI
+
+	/*mX, _ := ebiten.CursorPosition()
+	if mX > 50 {
+		g.ui.Container.SetLocation(image.Rect(-20, 0, 20, 20))
+	} else {
+		g.ui.Container.SetLocation(image.Rect(0, 0, 20, 20))
+	}*/
+	//DebugLogger(g)
+
+	g.ui.Update()
+
+	//fmt.Println("CPU Paused, Drawing Window")
+
+	//DrawWindow(ops, window)
+
+	return nil
 }
 
-func toggleFPS() {
-	ShowFPS = !ShowFPS
+func (g *Game) Draw(screen *ebiten.Image) {
+
+	// This graphics context is used for managing the rendering state.
+
+	if !ROMExists {
+		ebitenutil.DebugPrintAt(screen, "No ROM File loaded!", 5, (240*screenScale)-20)
+	} else if CPU_Halted {
+		ebitenutil.DebugPrintAt(screen, "Game Crashed!", 5, (240*screenScale)-20)
+	} else if ROMLoaded {
+		//if SelectedROM != "" {
+		//if DrawNewFrame {
+		screenScaled := image.NewRGBA(image.Rect(0, 0, screenWidth*screenScale, screenHeight*screenScale))
+		draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
+		screen.WritePixels(screenScaled.Pix)
+		//DrawNewFrame = false
+		//}
+		//}
+	}
+
+	if ShowFPS {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*screenScale)-132, (240*screenScale)-20) // Draw the UI onto the screen
+	}
+	if outsideCodeRead > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", outsideCodeRead), 5, (240*screenScale)-30)
+	}
+	if outsideCodeWrite > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", outsideCodeWrite), 5, (240*screenScale)-40)
+	}
+
+	g.ui.Draw(screen)
+	//g.debugui.Draw(screen)
+}
+
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return outsideWidth, outsideHeight
 }
 
 func LoadROM() {
@@ -376,7 +302,7 @@ func SetupToolbarOptions(res *resources, g *Game, toolbar *toolbar) {
 	}))
 
 	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectROM("roms/nes-test-roms-master/sprite_hit_tests_2005.10.05/07.screen_bottom.nes")
+		SelectROM("roms/AccuracyCoin.nes")
 		//SelectROM("roms/nestest.nes")
 	}))
 
@@ -388,5 +314,47 @@ func SetupToolbarOptions(res *resources, g *Game, toolbar *toolbar) {
 	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		toggleFPS()
 	}))
+
+}
+
+func MasterClockTick(g *Game) {
+	//Run this everytime a CPU cycle is added, and run the PPU and APU accordingly
+	//For when CPU instruction cycles are more accurately emulated
+
+	//Clock the 2A03 and run CPU / APU
+	//CPU runs every 6 ticks
+	//PPU runs every 2 ticks
+	//APU runs every 12
+	//DMA runs every 6
+	//
+
+	MasterClock++
+	switch MasterClock {
+	case 1:
+		Emulate_CPU(g)
+		Emulate_PPU(g)
+		Emulate_APU(g)
+		DMA_Get()
+	//case 2:
+	case 3:
+		Emulate_PPU(g)
+	//case 4:
+	case 5:
+		Emulate_PPU(g)
+	//case 6:
+	case 7:
+		Emulate_CPU(g)
+		Emulate_PPU(g)
+		DMA_Put()
+	//case 8:
+	case 9:
+		Emulate_PPU(g)
+	//case 10:
+	case 11:
+		Emulate_PPU(g)
+	case 12:
+		MasterClock = 0
+
+	}
 
 }

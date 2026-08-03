@@ -140,7 +140,7 @@ func Write(Address uint16, Value byte) {
 				ppuScrollFineX = byte(Value & 7)
 				TempVRAMAddress = uint16((TempVRAMAddress & 0b0111111111100000) | uint16(Value>>3))
 			} else {
-				TransferAddress = ((TempVRAMAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) | (uint16(ppuCtrl_NametableSelect&1) << 10))
+				TransferAddress = ((TempVRAMAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) /*| (uint16(ppuCtrl_NametableSelect&1) << 10)*/)
 			}
 			WriteLatch = !WriteLatch
 		case 0x2006: //PPUADDR
@@ -204,7 +204,6 @@ func Write(Address uint16, Value byte) {
 			apuPulse1.Timer |= (uint16(Value&0x7) << 8)
 			if apuPulse1.Enabled {
 				apuPulse1.LengthCounter = LengthCounterLoad(Value >> 3)
-
 			}
 
 		// Pulse 2
@@ -252,6 +251,7 @@ func Write(Address uint16, Value byte) {
 			if apuNoise.Enabled {
 				apuNoise.LengthCounter = LengthCounterLoad(Value >> 3)
 			}
+
 		// DMC
 		case 0x4010:
 			apuDMC.IRQEnable = ((Value & 0x80) >> 7) != 0
@@ -298,14 +298,6 @@ func Write(Address uint16, Value byte) {
 			apu4017ResetTimer = int(ternary(apuDMAGetCycle, 4, 3))
 
 		}
-
-		/*} else if Address == 0x4014 { //OAM
-			for i := 0; i < 256; i++ {
-				OAM[i] = Read((uint16(Value) << 8) + uint16(i))
-			}
-		} else if Address == 0x4016 { //Controller Input
-			Controller1ShiftRegister = uint16(Controller1)
-			Controller2ShiftRegister = uint16(Controller2)*/
 	} else if Address < 0x401B {
 		//Audio Processing Unit stuff
 		//$4000 - $4017 is APU and I/O registers

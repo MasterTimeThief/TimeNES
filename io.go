@@ -8,6 +8,8 @@ import (
 var Controller1, Controller2 byte
 var Controller1ShiftRegister, Controller2ShiftRegister uint16
 
+//var enableZapper bool = false
+
 // Update states of controllers
 func UpdateControllers(g *Game) {
 
@@ -34,41 +36,43 @@ func UpdateControllers(g *Game) {
 		case ebiten.KeyShiftRight:
 			Controller1 |= 0x20
 		case ebiten.KeyEnter:
+			//if !enableZapper {
 			Controller1 |= 0x10
+			//}
 		case ebiten.KeyArrowUp:
+			//if !enableZapper {
 			Controller1 |= 0x8
+			//}
 		case ebiten.KeyArrowDown:
 			Controller1 |= 0x4
 		case ebiten.KeyArrowLeft:
 			Controller1 |= 0x2
 		case ebiten.KeyArrowRight:
 			Controller1 |= 0x1
-			//Player 2
+
+		//Player 2
 		case ebiten.KeyK:
-			Controller1 |= 0x80
+			Controller2 |= 0x80
 		case ebiten.KeyL:
-			Controller1 |= 0x40
+			Controller2 |= 0x40
 		case ebiten.KeyI:
-			Controller1 |= 0x20
+			Controller2 |= 0x20
 		case ebiten.KeyO:
-			Controller1 |= 0x10
+			Controller2 |= 0x10
 		case ebiten.KeyW:
-			Controller1 |= 0x8
+			Controller2 |= 0x8
 		case ebiten.KeyS:
-			Controller1 |= 0x4
+			Controller2 |= 0x4
 		case ebiten.KeyA:
-			Controller1 |= 0x2
+			Controller2 |= 0x2
 		case ebiten.KeyD:
-			Controller1 |= 0x1
+			Controller2 |= 0x1
 		}
 	}
 
-	/*Controller2 |= byte(ternary(Controller2State[0], 0x80, 0x00))
-	Controller2 |= byte(ternary(Controller2State[1], 0x40, 0x00))
-	Controller2 |= byte(ternary(Controller2State[2], 0x20, 0x00))
-	Controller2 |= byte(ternary(Controller2State[3], 0x10, 0x00))
-	Controller2 |= byte(ternary(Controller2State[4], 0x08, 0x00))
-	Controller2 |= byte(ternary(Controller2State[5], 0x04, 0x00))
-	Controller2 |= byte(ternary(Controller2State[6], 0x02, 0x00))
-	Controller2 |= byte(ternary(Controller2State[7], 0x01, 0x00))*/
+	//if enableZapper {
+	//	Controller1 |= byte(ternary(inpututil.IsMouseButtonJustPressed(ebiten.MouseButton0), 0x0, 0x10))
+	//	Controller1 |= 0x8
+	//}
+
 }

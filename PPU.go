@@ -56,6 +56,76 @@ var ppu_SpritePattern [8]byte
 var ppu_SpriteXposition [8]byte
 var ppu_SpriteYposition [8]byte
 
+var Palette = [64]color.RGBA{
+	{R: 0x65, G: 0x65, B: 0x65, A: 0xFF},
+	{R: 0x00, G: 0x2A, B: 0x84, A: 0xFF},
+	{R: 0x15, G: 0x13, B: 0xA2, A: 0xFF},
+	{R: 0x3A, G: 0x01, B: 0x9E, A: 0xFF},
+	{R: 0x59, G: 0x00, B: 0x7A, A: 0xFF},
+	{R: 0x6A, G: 0x00, B: 0x3E, A: 0xFF},
+	{R: 0x68, G: 0x08, B: 0x00, A: 0xFF},
+	{R: 0x53, G: 0x1D, B: 0x00, A: 0xFF},
+	{R: 0x32, G: 0x34, B: 0x00, A: 0xFF},
+	{R: 0x0D, G: 0x46, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x4F, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x4C, B: 0x09, A: 0xFF},
+	{R: 0x00, G: 0x3F, B: 0x4B, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+
+	{R: 0xAE, G: 0xAE, B: 0xAE, A: 0xFF},
+	{R: 0x17, G: 0x5F, B: 0xD6, A: 0xFF},
+	{R: 0x43, G: 0x41, B: 0xFF, A: 0xFF},
+	{R: 0x75, G: 0x29, B: 0xFA, A: 0xFF},
+	{R: 0x9E, G: 0x1D, B: 0xCA, A: 0xFF},
+	{R: 0xB4, G: 0x20, B: 0x7B, A: 0xFF},
+	{R: 0xB1, G: 0x33, B: 0x22, A: 0xFF},
+	{R: 0x96, G: 0x4E, B: 0x00, A: 0xFF},
+	{R: 0x6A, G: 0x6C, B: 0x00, A: 0xFF},
+	{R: 0x39, G: 0x84, B: 0x00, A: 0xFF},
+	{R: 0x0F, G: 0x90, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x8D, B: 0x33, A: 0xFF},
+	{R: 0x00, G: 0x7B, B: 0x8C, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+
+	{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
+	{R: 0x66, G: 0xAF, B: 0xFF, A: 0xFF},
+	{R: 0x93, G: 0x90, B: 0xFF, A: 0xFF},
+	{R: 0xC5, G: 0x78, B: 0xFF, A: 0xFF},
+	{R: 0xEE, G: 0x6C, B: 0xFF, A: 0xFF},
+	{R: 0xFF, G: 0x6F, B: 0xCA, A: 0xFF},
+	{R: 0xFF, G: 0x82, B: 0x71, A: 0xFF},
+	{R: 0xE6, G: 0x9E, B: 0x25, A: 0xFF},
+	{R: 0xBA, G: 0xBC, B: 0x00, A: 0xFF},
+	{R: 0x88, G: 0xD5, B: 0x01, A: 0xFF},
+	{R: 0x5E, G: 0xE1, B: 0x32, A: 0xFF},
+	{R: 0x47, G: 0xDD, B: 0x82, A: 0xFF},
+	{R: 0x4A, G: 0xCB, B: 0xDC, A: 0xFF},
+	{R: 0x4E, G: 0x4E, B: 0x4E, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+
+	{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
+	{R: 0xC0, G: 0xDE, B: 0xFF, A: 0xFF},
+	{R: 0xD2, G: 0xD1, B: 0xFF, A: 0xFF},
+	{R: 0xE7, G: 0xC7, B: 0xFF, A: 0xFF},
+	{R: 0xF8, G: 0xC2, B: 0xFF, A: 0xFF},
+	{R: 0xFF, G: 0xC3, B: 0xE9, A: 0xFF},
+	{R: 0xFF, G: 0xCB, B: 0xC4, A: 0xFF},
+	{R: 0xF5, G: 0xD7, B: 0xA5, A: 0xFF},
+	{R: 0xE2, G: 0xE3, B: 0x94, A: 0xFF},
+	{R: 0xCE, G: 0xED, B: 0x96, A: 0xFF},
+	{R: 0xBC, G: 0xF2, B: 0xAA, A: 0xFF},
+	{R: 0xB3, G: 0xF1, B: 0xCB, A: 0xFF},
+	{R: 0xB4, G: 0xE9, B: 0xF0, A: 0xFF},
+	{R: 0xB6, G: 0xB6, B: 0xB6, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+}
+
 func Emulate_PPU(g *Game) {
 
 	if ppuDot == 1 && ppuScanline == 241 {
@@ -73,35 +143,9 @@ func Emulate_PPU(g *Game) {
 		ppuAddressBus = VRAMAddress // the address bus is always v when rendering is disabled.
 	}
 
-	if ppuScanline < 240 || ppuScanline == 261 {
-		if (ppuDot > 0 && ppuDot <= 256) || (ppuDot > 320 && ppuDot <= 336) {
-			//If this is a visible pixel, or preparing the start of the next scanline
-			if ppuMask_RenderBG || ppuMask_RenderSprites {
-				//If rendering is enabled
-				if ppuMask_RenderBG { //If rendering the background, update the shift registers for the background
-					ppuShiftRegister_patternL = ppuShiftRegister_patternL << 1     //Shift 1 bit to the left
-					ppuShiftRegister_patternH = ppuShiftRegister_patternH << 1     //Shift 1 bit to the left
-					ppuShiftRegister_attributeL = ppuShiftRegister_attributeL << 1 //Shift 1 bit to the left
-					ppuShiftRegister_attributeH = ppuShiftRegister_attributeH << 1 //Shift 1 bit to the left
-				}
-				if ppuMask_RenderBG || ppuMask_RenderSprites { //If rendering at all, let's decrement the X position of the objects
-					if ppuDot > 1 && ppuDot <= 256 { //Don't decrement until dot 1
-						for i := 0; i < 8; i++ {
-							if ppu_SpriteXposition[i] > 0 {
-								ppu_SpriteXposition[i]-- //Decrement the position of all objects in secondary OAM. When this is zero, the PPU can draw it
-							} else {
-								ppu_SpriteShiftRegisterL[i] = byte(ppu_SpriteShiftRegisterL[i] << 1) //Shift 1 bit to the left
-								ppu_SpriteShiftRegisterH[i] = byte(ppu_SpriteShiftRegisterH[i] << 1) //Shift 1 bit to the left
-							}
+	PPURender()
 
-						}
-					}
-				}
-				PPU8Steps()
-			}
-		}
-	}
-
+	//Increment / Reset scroll
 	if (ppuScanline < 240 || ppuScanline == 261) && (ppuMask_RenderBG || ppuMask_RenderSprites) {
 		//If this is a visible scanline and rendering sprites / background is enabled
 		if ppuDot == 256 { //The Y Scroll is incremented on dot 256
@@ -123,7 +167,6 @@ func Emulate_PPU(g *Game) {
 		ppuScanline++
 		if ppuScanline > 261 {
 			ppuScanline = 0
-
 		}
 	}
 
@@ -132,76 +175,38 @@ func Emulate_PPU(g *Game) {
 	}
 }
 
-func DrawScreen(g *Game) {
-	Palette := [64]color.RGBA{
-		{R: 0x65, G: 0x65, B: 0x65, A: 0xFF},
-		{R: 0x00, G: 0x2A, B: 0x84, A: 0xFF},
-		{R: 0x15, G: 0x13, B: 0xA2, A: 0xFF},
-		{R: 0x3A, G: 0x01, B: 0x9E, A: 0xFF},
-		{R: 0x59, G: 0x00, B: 0x7A, A: 0xFF},
-		{R: 0x6A, G: 0x00, B: 0x3E, A: 0xFF},
-		{R: 0x68, G: 0x08, B: 0x00, A: 0xFF},
-		{R: 0x53, G: 0x1D, B: 0x00, A: 0xFF},
-		{R: 0x32, G: 0x34, B: 0x00, A: 0xFF},
-		{R: 0x0D, G: 0x46, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x4F, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x4C, B: 0x09, A: 0xFF},
-		{R: 0x00, G: 0x3F, B: 0x4B, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-		{R: 0xAE, G: 0xAE, B: 0xAE, A: 0xFF},
-		{R: 0x17, G: 0x5F, B: 0xD6, A: 0xFF},
-		{R: 0x43, G: 0x41, B: 0xFF, A: 0xFF},
-		{R: 0x75, G: 0x29, B: 0xFA, A: 0xFF},
-		{R: 0x9E, G: 0x1D, B: 0xCA, A: 0xFF},
-		{R: 0xB4, G: 0x20, B: 0x7B, A: 0xFF},
-		{R: 0xB1, G: 0x33, B: 0x22, A: 0xFF},
-		{R: 0x96, G: 0x4E, B: 0x00, A: 0xFF},
-		{R: 0x6A, G: 0x6C, B: 0x00, A: 0xFF},
-		{R: 0x39, G: 0x84, B: 0x00, A: 0xFF},
-		{R: 0x0F, G: 0x90, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x8D, B: 0x33, A: 0xFF},
-		{R: 0x00, G: 0x7B, B: 0x8C, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-		{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-		{R: 0x66, G: 0xAF, B: 0xFF, A: 0xFF},
-		{R: 0x93, G: 0x90, B: 0xFF, A: 0xFF},
-		{R: 0xC5, G: 0x78, B: 0xFF, A: 0xFF},
-		{R: 0xEE, G: 0x6C, B: 0xFF, A: 0xFF},
-		{R: 0xFF, G: 0x6F, B: 0xCA, A: 0xFF},
-		{R: 0xFF, G: 0x82, B: 0x71, A: 0xFF},
-		{R: 0xE6, G: 0x9E, B: 0x25, A: 0xFF},
-		{R: 0xBA, G: 0xBC, B: 0x00, A: 0xFF},
-		{R: 0x88, G: 0xD5, B: 0x01, A: 0xFF},
-		{R: 0x5E, G: 0xE1, B: 0x32, A: 0xFF},
-		{R: 0x47, G: 0xDD, B: 0x82, A: 0xFF},
-		{R: 0x4A, G: 0xCB, B: 0xDC, A: 0xFF},
-		{R: 0x4E, G: 0x4E, B: 0x4E, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-		{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-		{R: 0xC0, G: 0xDE, B: 0xFF, A: 0xFF},
-		{R: 0xD2, G: 0xD1, B: 0xFF, A: 0xFF},
-		{R: 0xE7, G: 0xC7, B: 0xFF, A: 0xFF},
-		{R: 0xF8, G: 0xC2, B: 0xFF, A: 0xFF},
-		{R: 0xFF, G: 0xC3, B: 0xE9, A: 0xFF},
-		{R: 0xFF, G: 0xCB, B: 0xC4, A: 0xFF},
-		{R: 0xF5, G: 0xD7, B: 0xA5, A: 0xFF},
-		{R: 0xE2, G: 0xE3, B: 0x94, A: 0xFF},
-		{R: 0xCE, G: 0xED, B: 0x96, A: 0xFF},
-		{R: 0xBC, G: 0xF2, B: 0xAA, A: 0xFF},
-		{R: 0xB3, G: 0xF1, B: 0xCB, A: 0xFF},
-		{R: 0xB4, G: 0xE9, B: 0xF0, A: 0xFF},
-		{R: 0xB6, G: 0xB6, B: 0xB6, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+func PPURender() {
+	if ppuScanline < 240 || ppuScanline == 261 {
+		if (ppuDot > 0 && ppuDot <= 256) || (ppuDot > 320 && ppuDot <= 336) {
+			//If this is a visible pixel, or preparing the start of the next scanline
+			if ppuMask_RenderBG || ppuMask_RenderSprites {
+				//If rendering is enabled
+				if ppuMask_RenderBG { //If rendering the background, update the shift registers for the background
+					ppuShiftRegister_patternL = ppuShiftRegister_patternL << 1     //Shift 1 bit to the left
+					ppuShiftRegister_patternH = ppuShiftRegister_patternH << 1     //Shift 1 bit to the left
+					ppuShiftRegister_attributeL = ppuShiftRegister_attributeL << 1 //Shift 1 bit to the left
+					ppuShiftRegister_attributeH = ppuShiftRegister_attributeH << 1 //Shift 1 bit to the left
+				}
+				if ppuMask_RenderBG || ppuMask_RenderSprites { //If rendering at all, let's decrement the X position of the objects
+					if ppuDot > 1 && ppuDot <= 256 { //Don't decrement until dot 1
+						for i := 0; i < 8; i++ {
+							if ppu_SpriteXposition[i] > 0 {
+								ppu_SpriteXposition[i]-- //Decrement the position of all objects in secondary OAM. When this is zero, the PPU can draw it
+							} else {
+								ppu_SpriteShiftRegisterL[i] = byte(ppu_SpriteShiftRegisterL[i] << 1) //Shift 1 bit to the left
+								ppu_SpriteShiftRegisterH[i] = byte(ppu_SpriteShiftRegisterH[i] << 1) //Shift 1 bit to the left
+							}
+						}
+					}
+				}
+				PPU8Steps()
+			}
+		}
 	}
+}
+
+func DrawScreen(g *Game) {
+
 	if ppuScanline < 240 && ppuDot > 0 && ppuDot <= 256 {
 		var PalHi byte = 0  //Which color palette to use?
 		var PalLow byte = 0 //Index into a color palette
@@ -268,7 +273,6 @@ func DrawScreen(g *Game) {
 		//RenderNTSCPixel(ppuDot, pixel uint16, ppuCycleCounter int)
 
 		//g.gameScreen.Set(ppuDot-1, ppuScanline, color)
-
 	}
 }
 
@@ -396,12 +400,10 @@ func SpriteEvaluation() {
 								// during ppuDot 66, which would be the PPU cycle evaluating index 0
 								ppuScanlineContainsSpriteZero = true
 							}
-
 						} else {
 							ppuStatus_Overflow = true
 						}
 						ppuSpriteEvalTick++
-
 					} else {
 						ppuOAMAddress += 4
 					}
@@ -479,7 +481,6 @@ func SpriteEvaluation() {
 		}
 		ppuSpriteEvalTick++
 		ppuSpriteEvalTick &= 7 // And reset at 8
-
 	}
 }
 
@@ -493,9 +494,7 @@ func ppuFindSpritePatternData(SecondaryOAMSlot uint16) uint16 {
 			return uint16(ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
 		} else { //Attributes are set up to flip Y
 			return uint16(ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16((7-(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))&7))
-
 		}
-
 	} else { //8x16 sprites
 		// in 8x16 mode, instead of using ppu_SpritePattern to deternime which pattern table to fetch data from...
 		// these sprites instead use bit 0 of the object's pattern information from OAM
