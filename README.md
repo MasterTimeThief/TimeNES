@@ -11,5 +11,15 @@ Things I'll work on implementing:
 - Palette Support
 - Cartridge Mapper Chips
 - Player 2 Input
-- AccuracyCoin tests (23 / 141)
+- AccuracyCoin tests (41 / 141)
 - Better CPU cycle accuracy
+
+My personal checklist for games to get running:
+✅ Super Mario Bros.
+⬜ Super Mario Bros. 2
+⬜ Super Mario Bros. 3
+✅ Donkey Kong
+✅ Excitebike
+⬜ Duck Hunt
+⬜ Metroid
+⬜ The Legend of Zelda

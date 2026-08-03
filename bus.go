@@ -9,9 +9,10 @@ var ppuBusDecayConstant int = 1786830
 
 // Read from Address, and return that byte
 func Read(Address uint16) byte {
+	var returnValue byte
 	if Address < 0x2000 {
 		//Read from RAM (Accounting for RAM Mirroring)
-		return RAM[Address&0x7FF]
+		returnValue = RAM[Address&0x7FF]
 	} else if Address < 0x4000 {
 		//Reading a PPU Register
 		Address &= 0x2007
@@ -35,7 +36,7 @@ func Read(Address uint16) byte {
 				} else if ppuDot > 0 && ppuDot <= 64 {
 					ppuBus = 0xFF
 				} else {
-					return ppuBus
+					returnValue = ppuBus
 				}
 			} else {
 				ppuBus = OAM[OAMBusAddress]
@@ -61,9 +62,9 @@ func Read(Address uint16) byte {
 			VRAMAddress += ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
 			VRAMAddress &= 0x3FFF
 		default:
-			return ppuBus
+			returnValue = ppuBus
 		}
-		return ppuBus
+		returnValue = ppuBus
 	} else if Address == 0x4015 { //APU Status
 		apuStatus := byte(0)
 		apuStatus |= byte(ternary(apuDMCInterrupt, 0x80, 0x00))                                                    //DMC Interrupt
@@ -74,23 +75,24 @@ func Read(Address uint16) byte {
 		apuStatus |= byte(ternary(!(apuPulse2.LengthCounter == 0 /*|| apuPulse2.LengthCounterHalt*/), 0x02, 0x00)) //Pulse 2 Active
 		apuStatus |= byte(ternary(!(apuPulse1.LengthCounter == 0 /*|| apuPulse1.LengthCounterHalt*/), 0x01, 0x00)) //Pulse 1 Active
 		apuFrameInterrupt = false
-		return apuStatus
+		returnValue = apuStatus
 	} else if Address == 0x4016 { //Controller 1
 		cBit := byte((Controller1ShiftRegister & 0x80) >> 7)
 		Controller1ShiftRegister <<= 1
-		return cBit
+		returnValue = cBit
 	} else if Address == 0x4017 { //Controller 2
 		cBit := byte((Controller2ShiftRegister & 0x80) >> 7)
 		Controller2ShiftRegister <<= 1
-		return cBit
+		returnValue = cBit
 	} else if Address >= 0x8000 {
 		//Read from ROM
-		return ROM[(Address-0x8000)&((uint16(Header[4])*0x4000)-1)]
+		returnValue = ROM[(Address-0x8000)&((uint16(Header[4])*0x4000)-1)]
 		//
 	} else {
 		outsideCodeRead = Address
 	}
-	return 0
+	//MasterClockTick("READ")
+	return returnValue
 }
 
 // Write the Value into the Address given (PPU may have extra steps)
@@ -138,19 +140,20 @@ func Write(Address uint16, Value byte) {
 		case 0x2005: //PPUSCROLL
 			if !WriteLatch {
 				ppuScrollFineX = byte(Value & 7)
-				TempVRAMAddress = uint16((TempVRAMAddress & 0b0111111111100000) | uint16(Value>>3))
+				TransferAddress = uint16((TransferAddress & 0b0111111111100000) | uint16(Value>>3))
 			} else {
-				TransferAddress = ((TempVRAMAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) /*| (uint16(ppuCtrl_NametableSelect&1) << 10)*/)
+				TransferAddress = ((TransferAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) /*| (uint16(ppuCtrl_NametableSelect&1) << 10)*/)
 			}
 			WriteLatch = !WriteLatch
 		case 0x2006: //PPUADDR
 			if !WriteLatch {
 				//First write sets the high byte
-				TempVRAMAddress = (uint16(Value&0x7F) << 8)
+				//TempVRAMAddress = (uint16(Value&0x7F) << 8)
+				TransferAddress = uint16((TransferAddress & 0xFF) | uint16(Value&0x3F)<<8)
 				//The actual VRAMAddress isn't changed until the 2nd write
 			} else {
 				//Second write sets the low byte
-				TransferAddress = (TempVRAMAddress | uint16(Value))
+				TransferAddress = ((TransferAddress & 0xFF00) | uint16(Value))
 				VRAMAddress = TransferAddress /*& 0x3FFF*/
 			}
 			WriteLatch = !WriteLatch
@@ -308,6 +311,7 @@ func Write(Address uint16, Value byte) {
 	} else {
 		outsideCodeWrite = Address
 	}
+	//MasterClockTick("WRITE")
 }
 
 func ReadPPU( /*Address uint16*/ ) byte {
@@ -338,8 +342,8 @@ func BuildAddress(Value_Low, Value_High byte) uint16 {
 	//b := []byte{Value_Low, Value_High}
 	//return binary.LittleEndian.Uint16(b[0:])
 
-	return (uint16(Value_High)<<8 | uint16(Value_Low))
-
+	AddressBus = (uint16(Value_High)<<8 | uint16(Value_Low))
+	return AddressBus
 }
 
 func ReadFromPC() byte {

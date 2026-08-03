@@ -17,6 +17,8 @@ var traceA, traceX, tracyY, traceSP byte
 var traceFlagC, traceFlagZ, traceFlagI, traceFlagD, traceFlagV, traceFlagN bool
 var traceCycles int
 
+var cycleTest string
+
 var outsideCodeRead, outsideCodeWrite uint16 = 0, 0
 
 // Sets everything outside of operands for the tracelogger to run later
@@ -184,10 +186,18 @@ func DebugLogger(g *Game) error { //Using ebitengine's built in debug display
 	if _, err := g.debugui.Update(func(ctx *debugui.Context) error {
 		ctx.Window("HSV", image.Rect(10, 10, 260, 160), func(layout debugui.ContainerLayout) {
 			ctx.SetGridLayout([]int{100, -1}, nil)
-			ctx.Text(fmt.Sprintf("VRAM Address: $%04X", VRAMAddress))
-			ctx.Text(fmt.Sprintf("T Register: $%04X", TransferAddress))
-			ctx.Text(fmt.Sprintf("Fine X Scroll: $%02X", ppuScrollFineX))
-			ctx.Text(fmt.Sprintf("Nametable: $%02X", ppuCtrl_NametableSelect))
+			ctx.Text("Instruction Count:")
+			ctx.Text(fmt.Sprintf("$%d", InstructionCount))
+			ctx.Text("VRAM Address:")
+			ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
+			ctx.Text("T Register:")
+			ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
+			ctx.Text("Fine X Scroll:")
+			ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+			ctx.Text("Fine Y Scroll:")
+			ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+			ctx.Text("Nametable:")
+			ctx.Text(fmt.Sprintf("$%02X", ppuCtrl_NametableSelect))
 
 			ctx.Text("Pause")
 			ctx.Button("Pause Emulation").On(func() {

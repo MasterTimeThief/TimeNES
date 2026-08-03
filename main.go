@@ -162,6 +162,7 @@ func Reset() {
 
 	//Reset CPU cycle count
 	CPU_Cycles = 0
+	CPU_Cycles_New = 0
 
 	//Reset ROM Data
 	Header = [0x10]byte{}
@@ -317,7 +318,7 @@ func SetupToolbarOptions(res *resources, g *Game, toolbar *toolbar) {
 
 }
 
-func MasterClockTick(g *Game) {
+func MasterClockTick(location string) {
 	//Run this everytime a CPU cycle is added, and run the PPU and APU accordingly
 	//For when CPU instruction cycles are more accurately emulated
 
@@ -329,7 +330,8 @@ func MasterClockTick(g *Game) {
 	//
 
 	MasterClock++
-	switch MasterClock {
+	CPU_Cycles_New++
+	/*switch MasterClock {
 	case 1:
 		Emulate_CPU(g)
 		Emulate_PPU(g)
@@ -355,6 +357,6 @@ func MasterClockTick(g *Game) {
 	case 12:
 		MasterClock = 0
 
-	}
-
+	}*/
+	//cycleTest += fmt.Sprint("Cycle: " + location + "\n")
 }
