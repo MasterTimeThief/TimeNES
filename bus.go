@@ -47,8 +47,8 @@ func Read(Address uint16) byte {
 		case 0x2005: //PPUSCROLL
 		case 0x2006: //PPUADDR
 		case 0x2007: //PPUDATA
+			ppuAddressBus = VRAMAddress
 			if (VRAMAddress & 0x3FFF) > 0x3F00 {
-				ppuAddressBus = VRAMAddress
 				//Palette data
 				data := ReadPPU()
 				ppuBus = (ppuBus & 0xC0) | (data & byte(ternary(ppuMask_Greyscale, 0x30, 0x3F)))
