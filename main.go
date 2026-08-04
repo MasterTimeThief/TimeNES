@@ -57,6 +57,7 @@ type Game struct {
 	ui         *ebitenui.UI
 	exit       bool
 	debugui    debugui.DebugUI
+	directory  []os.DirEntry
 }
 
 var g *Game
@@ -195,6 +196,9 @@ func Reset() {
 	//ProgramCounter = 0xC000
 	StackPointer = 0xFD
 	//fmt.Printf("%#x", ProgramCounter)
+
+	outsideCodeRead = 0
+	outsideCodeWrite = 0
 	CPU_Halted = false
 	ROMLoaded = true
 }

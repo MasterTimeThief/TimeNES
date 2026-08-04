@@ -9,14 +9,23 @@ import (
 	"fmt"
 	goimage "image"
 	"image/color"
+	"strings"
 
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/input"
+	"github.com/ebitenui/ebitenui/utilities/constantutil"
 	"github.com/ebitenui/ebitenui/widget"
 	"golang.org/x/image/colornames"
 )
+
+var FC_Red color.RGBA = color.RGBA{R: 160, G: 30, B: 37, A: 255}
+var FC_Gold color.RGBA = color.RGBA{R: 185, G: 159, B: 119, A: 255}
+var FC_White color.RGBA = color.RGBA{R: 232, G: 228, B: 224, A: 255}
+var FC_Black color.RGBA = color.RGBA{R: 10, G: 10, B: 10, A: 255}
+
+var currDir string = "./roms"
 
 // NOTE: It's not strictly necessary to store references to all the buttons in the toolbar struct, but this example does
 // so for completeness' sake. When you keep a reference to buttons in the struct, you can later configure them to respond
@@ -31,6 +40,12 @@ type toolbar struct {
 	nestestButton   *widget.Button
 	selectROMButton *widget.Button
 	FPSButton       *widget.Button
+}
+
+type ListEntry struct {
+	id    int
+	isDir bool
+	Name  string
 }
 
 func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
@@ -201,7 +216,7 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 	var window *widget.Window
 
 	titleBar := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(color.RGBA{R: 0, G: 100, B: 0, A: 255})),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(FC_Red)),
 		widget.ContainerOpts.Layout(widget.NewGridLayout(
 			widget.GridLayoutOpts.Columns(3),
 			widget.GridLayoutOpts.Stretch([]bool{true, false, false}, []bool{true}),
@@ -213,22 +228,22 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 			}))))
 
 	titleBar.AddChild(widget.NewText(
-		widget.TextOpts.Text("Modal Window", &res.font, color.RGBA{R: 52, G: 0, B: 78, A: 255}),
+		widget.TextOpts.Text("Select ROM File", &res.font, FC_White),
 		widget.TextOpts.Position(widget.TextPositionStart, widget.TextPositionCenter),
 	))
 
 	titleBar.AddChild(widget.NewButton(
 		widget.ButtonOpts.Image(&widget.ButtonImage{
 			Idle:    image.NewNineSliceColor(color.Transparent),
-			Hover:   image.NewNineSliceColor(colornames.Darkgray),
-			Pressed: image.NewNineSliceColor(colornames.White),
+			Hover:   image.NewNineSliceColor(colornames.Gray),
+			Pressed: image.NewNineSliceColor(colornames.Black),
 		}),
-		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 16, Right: 64}),
+		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 8, Right: 8, Top: 8, Bottom: 8}),
 		widget.ButtonOpts.Text("X", &res.font, &widget.ButtonTextColor{
-			Idle:     color.White,
-			Disabled: colornames.Gray,
-			Hover:    color.White,
-			Pressed:  color.Black,
+			Idle:     color.Black,
+			Disabled: colornames.Darkgray,
+			Hover:    color.Black,
+			Pressed:  color.White,
 		}),
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
 			rw()
@@ -237,7 +252,7 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 	))
 
 	c := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(color.RGBA{R: 0, G: 10, B: 10, A: 255})),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(FC_Gold)),
 		widget.ContainerOpts.Layout(
 			widget.NewGridLayout(
 				widget.GridLayoutOpts.Columns(1),
@@ -290,6 +305,92 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 	textContainer.AddChild(t)
 	c.AddChild(textContainer)*/
 
+	fileList := widget.NewList(
+		// Set how wide the list should be
+		widget.ListOpts.ContainerOpts(widget.ContainerOpts.WidgetOpts(
+			widget.WidgetOpts.MinSize(150, 0),
+			widget.WidgetOpts.LayoutData(widget.AnchorLayoutData{
+				HorizontalPosition: widget.AnchorLayoutPositionCenter,
+				VerticalPosition:   widget.AnchorLayoutPositionEnd,
+				StretchVertical:    true,
+				Padding:            widget.NewInsetsSimple(50),
+			}),
+		)),
+		// Set the entries in the list
+		// widget.ListOpts.Entries(entries),
+		widget.ListOpts.ScrollContainerImage(&widget.ScrollContainerImage{
+			Idle:     image.NewNineSliceColor(color.NRGBA{100, 100, 100, 255}),
+			Disabled: image.NewNineSliceColor(color.NRGBA{100, 100, 100, 255}),
+			Mask:     image.NewNineSliceColor(color.NRGBA{100, 100, 100, 255}),
+		}),
+
+		widget.ListOpts.SliderParams(&widget.SliderParams{
+			// Set the background images/color for the background of the slider track
+			TrackImage: &widget.SliderTrackImage{
+				Idle:  image.NewNineSliceColor(color.NRGBA{100, 100, 100, 255}),
+				Hover: image.NewNineSliceColor(color.NRGBA{100, 100, 100, 255}),
+			},
+			HandleImage: &widget.ButtonImage{
+				Idle:    image.NewNineSliceColor(color.NRGBA{R: 170, G: 170, B: 180, A: 255}),
+				Hover:   image.NewNineSliceColor(color.NRGBA{R: 130, G: 130, B: 150, A: 255}),
+				Pressed: image.NewNineSliceColor(color.NRGBA{R: 255, G: 100, B: 120, A: 255}),
+			},
+			MinHandleSize: constantutil.ConstantToPointer(5),
+			// Set how wide the track should be
+			TrackPadding: widget.NewInsetsSimple(2),
+		}),
+		// Hide the horizontal slider
+		widget.ListOpts.HideHorizontalSlider(),
+		// Set the font for the list options
+		widget.ListOpts.EntryFontFace(&res.font),
+		// Set the colors for the list
+		widget.ListOpts.EntryColor(&widget.ListEntryColor{
+			Selected:                   color.NRGBA{R: 0, G: 255, B: 0, A: 255},     // Foreground color for the unfocused selected entry
+			Unselected:                 color.NRGBA{R: 254, G: 255, B: 255, A: 255}, // Foreground color for the unfocused unselected entry
+			SelectedBackground:         color.NRGBA{R: 130, G: 130, B: 200, A: 255}, // Background color for the unfocused selected entry
+			SelectingBackground:        color.NRGBA{R: 130, G: 130, B: 130, A: 255}, // Background color for the unfocused being selected entry
+			SelectingFocusedBackground: color.NRGBA{R: 130, G: 140, B: 170, A: 255}, // Background color for the focused being selected entry
+			SelectedFocusedBackground:  color.NRGBA{R: 130, G: 130, B: 170, A: 255}, // Background color for the focused selected entry
+			FocusedBackground:          color.NRGBA{R: 170, G: 170, B: 180, A: 255}, // Background color for the focused unselected entry
+			DisabledUnselected:         color.NRGBA{R: 100, G: 100, B: 100, A: 255}, // Foreground color for the disabled unselected entry
+			DisabledSelected:           color.NRGBA{R: 100, G: 100, B: 100, A: 255}, // Foreground color for the disabled selected entry
+			DisabledSelectedBackground: color.NRGBA{R: 100, G: 100, B: 100, A: 255}, // Background color for the disabled selected entry
+		}),
+		// This required function returns the string displayed in the list.
+		widget.ListOpts.EntryLabelFunc(func(e interface{}) string {
+			return e.(ListEntry).Name
+		}),
+		// Padding for each entry
+		widget.ListOpts.EntryTextPadding(widget.NewInsetsSimple(5)),
+		// Text position for each entry
+		widget.ListOpts.EntryTextPosition(widget.TextPositionStart, widget.TextPositionCenter),
+		// This handler defines what function to run when a list item is selected.
+		widget.ListOpts.EntrySelectedHandler(func(args *widget.ListEntrySelectedEventArgs) {
+			entry := args.Entry.(ListEntry)
+			/*if entry.isDir {
+				currDir += entry.Name
+				fileList
+			} else {
+				filepath = currDir + "/" + entry.Name
+				ROMExists = true
+				ROMLoaded = false
+				rw()
+			}*/
+			fmt.Println("Entry Selected: ", entry)
+		}),
+		// This option will select the entry as it is focused
+		// widget.ListOpts.SelectFocus(),
+		// This option will select the entry when pressing the mouse button instead of releasing it
+		// widget.ListOpts.SelectPressed(),
+
+		// This option will disable default keys (up and down)
+		// widget.ListOpts.DisableDefaultKeys(true),
+	)
+
+	fileList.SetEntries(RefreshDirectoryList())
+
+	c.AddChild(fileList)
+
 	bc := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Spacing(15),
@@ -316,126 +417,37 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 	)
 	bc.AddChild(o2b)*/
 
-	// construct a new container that serves as the root of the UI hierarchy
-	/*rootContainer := widget.NewContainer(
-		// the container will use a plain color as its background
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(color.NRGBA{0x13, 0x1a, 0x22, 0xff})),
+	openButton := widget.NewButton(
+		widget.ButtonOpts.Image(&widget.ButtonImage{
+			Idle:    image.NewNineSliceColor(color.Transparent),
+			Hover:   image.NewNineSliceColor(colornames.Darkgray),
+			Pressed: image.NewNineSliceColor(colornames.White),
+		}),
+		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 16, Right: 64}),
+		widget.ButtonOpts.Text("Open", &res.font, &widget.ButtonTextColor{
+			Idle:     color.White,
+			Disabled: colornames.Gray,
+			Hover:    color.White,
+			Pressed:  color.Black,
+		}),
+		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
+			entry := fileList.SelectedEntry()
 
-		// the container will use an grid layout to layout its ScrollableContainer and Slider
-		widget.ContainerOpts.Layout(widget.NewGridLayout(
-			widget.GridLayoutOpts.Columns(2),
-			widget.GridLayoutOpts.Spacing(2, 0),
-			//widget.GridLayoutOpts.Stretch([]bool{true, false}, []bool{true}),
-		)),
-	)
+			if entry.(ListEntry).isDir {
+				currDir += entry.(ListEntry).Name
+				fileList.SetEntries(RefreshDirectoryList())
+			} else {
+				filepath = currDir + "/" + entry.(ListEntry).Name
+				ROMExists = true
+				ROMLoaded = false
+				rw()
+			}
 
-	// Create the container with the content that should be scrolled
-	content := widget.NewContainer(widget.ContainerOpts.Layout(widget.NewRowLayout(
-		widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-		widget.RowLayoutOpts.Spacing(20),
-		widget.RowLayoutOpts.Padding(&widget.Insets{Top: 10, Bottom: 10}),
-	)))
-
-	// Add 20 buttons to the scrollable content container
-	for x := 0; x < 20; x++ {
-		// Capture x for use in callback
-		x := x
-		// construct a button
-		button := widget.NewButton(
-			// set general widget options
-			widget.ButtonOpts.WidgetOpts(
-				// instruct the container's anchor layout to center the button both horizontally and vertically
-				widget.WidgetOpts.LayoutData(widget.RowLayoutData{
-					Position: widget.RowLayoutPositionCenter,
-				}),
-			),
-
-			// specify the images to use
-			widget.ButtonOpts.Image(&widget.ButtonImage{
-				Idle:    image.NewNineSliceColor(color.Transparent),
-				Hover:   image.NewNineSliceColor(colornames.Darkgray),
-				Pressed: image.NewNineSliceColor(colornames.White),
-			}),
-
-			// specify the button's text, the font face, and the color
-			widget.ButtonOpts.Text(fmt.Sprintf("Hello, World! - %d", x), &res.font, &widget.ButtonTextColor{
-				Idle: color.NRGBA{0xdf, 0xf4, 0xff, 0xff},
-			}),
-
-			// specify that the button's text needs some padding for correct display
-			widget.ButtonOpts.TextPadding(&widget.Insets{
-				Left:   30,
-				Right:  30,
-				Top:    5,
-				Bottom: 5,
-			}),
-
-			// add a handler that reacts to clicking the button
-			widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-				println(fmt.Sprintf("Button %d Clicked!", x))
-			}),
-		)
-
-		// add the button as a child of the container
-		content.AddChild(button)
-	}
-
-	// Create the new ScrollContainer object
-	scrollContainer := widget.NewScrollContainer(
-		// Set the content that will be scrolled
-		widget.ScrollContainerOpts.Content(content),
-		// Tell the container to stretch the content width to match available space
-		widget.ScrollContainerOpts.StretchContentWidth(),
-		// Set the background images for the scrollable container
-		widget.ScrollContainerOpts.Image(&widget.ScrollContainerImage{
-			Idle: image.NewNineSliceColor(color.NRGBA{0x13, 0x1a, 0x22, 0xff}),
-			Mask: image.NewNineSliceColor(color.NRGBA{0x13, 0x1a, 0x22, 0xff}),
 		}),
 	)
-	// Add the scrollable container to the left side of the window
-	rootContainer.AddChild(scrollContainer)
+	bc.AddChild(openButton)
 
-	// Create a function to return the page size used by the slider
-	pageSizeFunc := func() int {
-		return int(math.Round(float64(scrollContainer.ViewRect().Dy())/float64(content.GetWidget().Rect.Dy())*1000) / 3)
-	}
-	// Create a vertical Slider bar to control the ScrollableContainer
-	vSlider := widget.NewSlider(
-		widget.SliderOpts.Direction(widget.DirectionVertical),
-		widget.SliderOpts.MinMax(0, 1000),
-		widget.SliderOpts.PageSizeFunc(pageSizeFunc),
-		// On change update scroll location based on the Slider's value
-		widget.SliderOpts.ChangedHandler(func(args *widget.SliderChangedEventArgs) {
-			scrollContainer.ScrollTop = float64(args.Slider.Current) / 1000
-		}),
-		widget.SliderOpts.Images(
-			// Set the track images
-			&widget.SliderTrackImage{
-				Idle:  image.NewNineSliceColor(color.NRGBA{100, 100, 100, 255}),
-				Hover: image.NewNineSliceColor(color.NRGBA{100, 100, 100, 255}),
-			},
-			// Set the handle images
-			&widget.ButtonImage{
-				Idle:    image.NewNineSliceColor(color.NRGBA{255, 100, 100, 255}),
-				Hover:   image.NewNineSliceColor(color.NRGBA{255, 100, 100, 255}),
-				Pressed: image.NewNineSliceColor(color.NRGBA{255, 100, 100, 255}),
-			},
-		),
-	)
-	// Set the slider's position if the scrollContainer is scrolled by other means than the slider
-	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args interface{}) {
-		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
-			vSlider.Current -= int(math.Round(a.Y * float64(pageSizeFunc())))
-		}
-	})
-
-	// Add the slider to the second slot in the root container
-	rootContainer.AddChild(vSlider)
-
-	c.AddChild(rootContainer)
-	*/
-
-	cb := widget.NewButton(
+	closeButton := widget.NewButton(
 		widget.ButtonOpts.Image(&widget.ButtonImage{
 			Idle:    image.NewNineSliceColor(color.Transparent),
 			Hover:   image.NewNineSliceColor(colornames.Darkgray),
@@ -452,7 +464,7 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 			rw()
 		}),
 	)
-	bc.AddChild(cb)
+	bc.AddChild(closeButton)
 
 	window = widget.NewWindow(
 		widget.WindowOpts.Modal(),
@@ -460,8 +472,8 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 		widget.WindowOpts.TitleBar(titleBar, 30),
 		widget.WindowOpts.Draggable(),
 		widget.WindowOpts.Resizeable(),
-		widget.WindowOpts.MinSize(500, 200),
-		widget.WindowOpts.MaxSize(700, 400),
+		widget.WindowOpts.MinSize(100, 100),
+		widget.WindowOpts.MaxSize(500, 450),
 		widget.WindowOpts.ResizeHandler(func(args *widget.WindowChangedEventArgs) {
 			fmt.Println("Resize: ", args.Rect)
 		}),
@@ -470,13 +482,39 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 		}),
 	)
 
-	promptWidth := 200
-	promptHeight := 250
+	promptWidth := 400
+	promptHeight := 300
 
 	windowSize := input.GetWindowSize()
 	r := goimage.Rect(0, 0, promptWidth, promptHeight)
-	r = r.Add(goimage.Point{(screenWidth - promptWidth) / 2, windowSize.Y * 2 / 3 / 2})
+	r = r.Add(goimage.Point{((screenWidth * screenScale) - promptWidth) / 2, windowSize.Y * 2 / 3 / 2})
 	window.SetLocation(r)
 
 	rw = ui.AddWindow(window)
+}
+
+func RefreshDirectoryList() []any {
+	var list []any
+
+	//Get Directory
+	GetCurrentDirectory(currDir)
+
+	list = append(list, ListEntry{0, true, "/.."})
+
+	for i := range g.directory {
+		split := strings.Split(g.directory[i].Name(), ".")
+
+		//isGitFolder := g.directory[i].IsDir() && firstN(g.directory[i].Name(), 1) == "."
+		isNESFile := (!g.directory[i].IsDir() && split[len(split)-1] == "nes")
+
+		if firstN(g.directory[i].Name(), 1) != "." && (g.directory[i].IsDir() || isNESFile) {
+			itemText := g.directory[i].Name()
+			if g.directory[i].IsDir() {
+				itemText = "/" + itemText
+			}
+			list = append(list, ListEntry{i, g.directory[i].IsDir(), itemText})
+		}
+	}
+
+	return list
 }
