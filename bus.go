@@ -1,5 +1,7 @@
 package main
 
+import cnrom "mtt/timenes/mappers"
+
 var AddressBus, ppuAddressBus uint16
 var cpuOpenBus, ppuBus byte
 var OAMBusAddress byte
@@ -309,7 +311,16 @@ func Write(Address uint16, Value byte) {
 	} else if Address < 0x8000 {
 		CartRAM[Address&0x1FFF] = Value
 	} else {
-		outsideCodeWrite = Address
+		//Check what mapper chip we're using
+		switch MapperChipID {
+		case 1: //MMC1
+		case 3: //CNROM
+			prgValue := Read(Address)
+			cnrom.WriteToCNROM(Value & prgValue)
+		case 4: //MMC3
+		default:
+			outsideCodeWrite = Address
+		}
 	}
 	//MasterClockTick("WRITE")
 }
@@ -317,6 +328,9 @@ func Write(Address uint16, Value byte) {
 func ReadPPU( /*Address uint16*/ ) byte {
 	if ppuAddressBus < 0x2000 {
 		//Read from pattern table.
+		if MapperChipID == 3 { //CNROM
+			return CHRROM[cnrom.UpdatePPUAddressBus(ppuAddressBus)]
+		}
 		return CHRROM[ppuAddressBus]
 		//else, nothing happens
 	} else if ppuAddressBus < 0x3F00 {

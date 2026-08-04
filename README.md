@@ -5,14 +5,17 @@ This emulator was built using the guide by [100th_Coin](https://www.patreon.com/
 
 Things I'll work on implementing:
 
-- Support for all 256 Opcodes of the CPU
 - APU Support
 - NTSC Video Rendering
 - Palette Support
 - Cartridge Mapper Chips
-- Player 2 Input
 - AccuracyCoin tests (41 / 141)
 - Better CPU cycle accuracy
+
+Currently supports:
+- CNROM
+- 2 players
+- All official opcodes
 
 My personal checklist for games to get running:
 ✅ Super Mario Bros.

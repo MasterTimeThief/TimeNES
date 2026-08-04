@@ -267,7 +267,7 @@ func DrawScreen(g *Game) {
 			}
 		}
 
-		color := Palette[PaletteRAM[(PalHi*4)+PalLow]]
+		color := Palette[PaletteRAM[(PalHi*4)+PalLow]&0x3F]
 
 		RenderColor(g, color)
 		//RenderNTSCPixel(ppuDot, pixel uint16, ppuCycleCounter int)

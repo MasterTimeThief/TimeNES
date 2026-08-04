@@ -31,9 +31,15 @@ var ShowFPS bool = false
 var pauseEmulation bool = false
 
 // Header Variables
-var PRGROM_Size byte
-var CHRROM_Size byte
+
+var PRGROM_Size byte // Size of PRG ROM in 16 KB units
+var CHRROM_Size byte // Size of CHR ROM in 8 KB units (value 0 means the board uses CHR RAM)
 var IsNametableHorizontal bool
+var HasBatteryRAM bool
+var AltNametableLayout bool
+var NES2_Header bool //Is the header in NES 2.0 format, rather than iNES
+
+var MapperChipID byte
 
 //type App struct{ Clicks int }
 
@@ -60,8 +66,7 @@ var VRAM [0x800]byte
 var PaletteRAM [0x20]byte
 var ROM [0x8000]byte
 
-// var CHRData [0x2000]byte
-var CHRROM [0x2000]byte
+var CHRROM [0x8000]byte
 var Header [0x10]byte
 var CartRAM [0x2000]byte
 
@@ -172,7 +177,7 @@ func Reset() {
 	//Reset ROM Data
 	Header = [0x10]byte{}
 	ROM = [0x8000]byte{}
-	CHRROM = [0x2000]byte{}
+	CHRROM = [0x8000]byte{}
 
 	//Reset RAM (Or don't, if I wanna do weird stuff...?)
 	RAM = [0x800]byte{}
@@ -281,11 +286,20 @@ func LoadROM() {
 	PRGROM_Size = Header[4]
 	CHRROM_Size = Header[5]
 	IsNametableHorizontal = (Header[6] & 1) == 0
+	HasBatteryRAM = (Header[6] & 0x02) != 0
+	AltNametableLayout = (Header[6] & 0x08) != 0
+
+	NES2_Header = ((Header[7] & 0xC) >> 2) == 2
+
+	MapperChipID = (Header[6] >> 4) | (Header[7] & 0xF0)
 
 	//size := uint16(Header[4])
-	copy(ROM[:], HeaderedROM[0x10:(PRGROM_Size+0x10)])
+	ROM_Endpoint := uint32(0x10 + (0x4000 * uint16(PRGROM_Size)))
+	CHR_Endpoint := uint32(ROM_Endpoint + uint32(0x2000*uint16(CHRROM_Size)))
+
+	copy(ROM[:], HeaderedROM[0x10:ROM_Endpoint])
 	if CHRROM_Size != 0 {
-		copy(CHRROM[:], HeaderedROM[(0x0010+(0x4000*uint16(PRGROM_Size))):])
+		copy(CHRROM[:], HeaderedROM[ROM_Endpoint:CHR_Endpoint])
 	}
 
 }
@@ -309,7 +323,7 @@ func SetupToolbarOptions(res *resources, g *Game, toolbar *toolbar) {
 
 	//Select ROM
 	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		SelectROM("roms/games/bike.nes")
+		SelectROM("roms/games/smb.nes")
 	}))
 
 	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {

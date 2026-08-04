@@ -59,7 +59,7 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 	var (
 		selectROM = newToolbarMenuEntry(res, "Select ROM File")
 		smb       = newToolbarMenuEntry(res, "Super Mario Bros.")
-		nestest   = newToolbarMenuEntry(res, "nestest")
+		nestest   = newToolbarMenuEntry(res, "AccuracyCoin")
 		quit      = newToolbarMenuEntry(res, "Quit")
 	)
 
