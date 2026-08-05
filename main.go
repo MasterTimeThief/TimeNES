@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"mtt/timenes/mappers"
 	"os"
 
 	"golang.org/x/image/draw"
@@ -32,8 +33,8 @@ var pauseEmulation bool = false
 
 // Header Variables
 
-var PRGROM_Size byte // Size of PRG ROM in 16 KB units
-var CHRROM_Size byte // Size of CHR ROM in 8 KB units (value 0 means the board uses CHR RAM)
+var PRGROM_Size uint32 // Size of PRG ROM
+var CHRROM_Size uint32 // Size of CHR ROM (value 0 means the board uses CHR RAM)
 var IsNametableHorizontal bool
 var HasBatteryRAM bool
 var AltNametableLayout bool
@@ -65,9 +66,10 @@ var g *Game
 var RAM [0x800]byte
 var VRAM [0x800]byte
 var PaletteRAM [0x20]byte
-var ROM [0x8000]byte
+var ROM [0x80000]byte
 
-var CHRROM [0x8000]byte
+var CHRROM [0x80000]byte
+var isCHRRAM bool
 var Header [0x10]byte
 var CartRAM [0x2000]byte
 
@@ -177,8 +179,9 @@ func Reset() {
 
 	//Reset ROM Data
 	Header = [0x10]byte{}
-	ROM = [0x8000]byte{}
-	CHRROM = [0x8000]byte{}
+	ROM = [0x80000]byte{}
+	CHRROM = [0x80000]byte{}
+	isCHRRAM = false
 
 	//Reset RAM (Or don't, if I wanna do weird stuff...?)
 	RAM = [0x800]byte{}
@@ -233,7 +236,7 @@ func (g *Game) Update() error {
 	} else {
 		g.ui.Container.SetLocation(image.Rect(0, 0, 20, 20))
 	}*/
-	//DebugLogger(g)
+	//DebugWindow(g)
 
 	g.ui.Update()
 
@@ -287,8 +290,8 @@ func LoadROM() {
 
 	//Header info
 	copy(Header[:], HeaderedROM[0x0:])
-	PRGROM_Size = Header[4]
-	CHRROM_Size = Header[5]
+	PRGROM_Size = uint32(Header[4]) * uint32(0x4000)
+	CHRROM_Size = uint32(Header[5]) * uint32(0x2000)
 	IsNametableHorizontal = (Header[6] & 1) == 0
 	HasBatteryRAM = (Header[6] & 0x02) != 0
 	AltNametableLayout = (Header[6] & 0x08) != 0
@@ -298,12 +301,26 @@ func LoadROM() {
 	MapperChipID = (Header[6] >> 4) | (Header[7] & 0xF0)
 
 	//size := uint16(Header[4])
-	ROM_Endpoint := uint32(0x10 + (0x4000 * uint16(PRGROM_Size)))
-	CHR_Endpoint := uint32(ROM_Endpoint + uint32(0x2000*uint16(CHRROM_Size)))
+	ROM_Endpoint := uint32(0x10 + (PRGROM_Size))
+	CHR_Endpoint := uint32(ROM_Endpoint + uint32(CHRROM_Size))
 
 	copy(ROM[:], HeaderedROM[0x10:ROM_Endpoint])
 	if CHRROM_Size != 0 {
 		copy(CHRROM[:], HeaderedROM[ROM_Endpoint:CHR_Endpoint])
+	} else {
+
+	}
+
+	//Initialize any PRG-RAM from mapper chips
+	if HasBatteryRAM {
+		switch MapperChipID {
+		case 1: //MMC1
+			copy(mappers.MMC1_PRGRAM[:], HeaderedROM[0x10:])
+		case 2: //UxROM
+		case 3: //CNROM
+			//Add support for Hayauchi Super Igo?
+		case 4: //MMC3
+		}
 	}
 
 }

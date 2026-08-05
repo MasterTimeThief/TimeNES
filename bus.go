@@ -1,6 +1,6 @@
 package main
 
-import cnrom "mtt/timenes/mappers"
+import "mtt/timenes/mappers"
 
 var AddressBus, ppuAddressBus uint16
 var cpuOpenBus, ppuBus byte
@@ -86,12 +86,26 @@ func Read(Address uint16) byte {
 		cBit := byte((Controller2ShiftRegister & 0x80) >> 7)
 		Controller2ShiftRegister <<= 1
 		returnValue = cBit
+
+	} else if Address < 0x7FFF {
+		//Could be PRG-RAM on the cartridge
+		switch MapperChipID {
+		case 1: //MMC1
+			returnValue = mappers.MMC1_PRGRAM[Address&0x1FFF]
+		default:
+			//outsideCodeRead = Address
+		}
 	} else if Address >= 0x8000 {
 		//Read from ROM
-		returnValue = ROM[(Address-0x8000)&((uint16(PRGROM_Size)*0x4000)-1)]
-		//
-	} else {
-		outsideCodeRead = Address
+		switch MapperChipID {
+		case 1: //MMC1
+			returnValue = ROM[mappers.MMC1_FetchCPUAddress(Address, PRGROM_Size)]
+		case 3: //CNROM
+		case 4: //MMC3
+		default:
+			returnValue = ROM[(Address-0x8000)&uint16(PRGROM_Size-1)]
+			//outsideCodeRead = Address
+		}
 	}
 	//MasterClockTick("READ")
 	return returnValue
@@ -163,7 +177,15 @@ func Write(Address uint16, Value byte) {
 			if VRAMAddress < 0x2000 {
 				//Write to pattern table. (If the cartridge supports it)
 				if CHRROM_Size == 0 {
-					CHRROM[VRAMAddress] = Value
+					switch MapperChipID {
+					case 1: //MMC1
+						CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+					case 3: //CNROM
+						CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
+					case 4: //MMC3
+					default:
+						CHRROM[VRAMAddress] = Value
+					}
 				}
 				//else, nothing happens because it's CHR-ROM
 			} else if VRAMAddress < 0x3F00 {
@@ -308,15 +330,16 @@ func Write(Address uint16, Value byte) {
 		//$4000 - $4017 is APU and I/O registers
 		//$4018 - $401F is APU and I/O functions that are normally disabled
 
-	} else if Address < 0x8000 {
-		CartRAM[Address&0x1FFF] = Value
+		//} else if Address < 0x8000 {
+		//	CartRAM[Address&0x1FFF] = Value
 	} else {
 		//Check what mapper chip we're using
 		switch MapperChipID {
 		case 1: //MMC1
+			mappers.MMC1_Write(Value, Address, CPU_TotalCycles)
 		case 3: //CNROM
 			prgValue := Read(Address)
-			cnrom.WriteToCNROM(Value & prgValue)
+			mappers.CNROM_Write(Value&prgValue, Address)
 		case 4: //MMC3
 		default:
 			outsideCodeWrite = Address
@@ -328,10 +351,17 @@ func Write(Address uint16, Value byte) {
 func ReadPPU( /*Address uint16*/ ) byte {
 	if ppuAddressBus < 0x2000 {
 		//Read from pattern table.
-		if MapperChipID == 3 { //CNROM
-			return CHRROM[cnrom.UpdatePPUAddressBus(ppuAddressBus)]
+		switch MapperChipID {
+		case 1: //MMC1
+			return CHRROM[mappers.MMC1_FetchPPUAddress(ppuAddressBus, CHRROM_Size)]
+		case 3: //CNROM
+			return CHRROM[mappers.CNROM_ReadAddress(ppuAddressBus)]
+		case 4: //MMC3
+			return 0
+		default:
+			return CHRROM[ppuAddressBus]
 		}
-		return CHRROM[ppuAddressBus]
+
 		//else, nothing happens
 	} else if ppuAddressBus < 0x3F00 {
 		//Read from the Nametables

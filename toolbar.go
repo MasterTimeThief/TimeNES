@@ -25,7 +25,7 @@ var FC_Gold color.RGBA = color.RGBA{R: 185, G: 159, B: 119, A: 255}
 var FC_White color.RGBA = color.RGBA{R: 232, G: 228, B: 224, A: 255}
 var FC_Black color.RGBA = color.RGBA{R: 10, G: 10, B: 10, A: 255}
 
-var currDir string = "./roms"
+var currDir string = "./roms/games"
 
 // NOTE: It's not strictly necessary to store references to all the buttons in the toolbar struct, but this example does
 // so for completeness' sake. When you keep a reference to buttons in the struct, you can later configure them to respond
