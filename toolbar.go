@@ -14,7 +14,6 @@ import (
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/image"
-	"github.com/ebitenui/ebitenui/input"
 	"github.com/ebitenui/ebitenui/utilities/constantutil"
 	"github.com/ebitenui/ebitenui/widget"
 	"golang.org/x/image/colornames"
@@ -269,7 +268,7 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 	)
 
 	c.AddChild(widget.NewText(
-		widget.TextOpts.Text("This window blocks all input to widgets below it.", &res.font, color.RGBA{R: 234, G: 194, B: 12, A: 255}),
+		widget.TextOpts.Text("Select a folder / file, and click \"Open\".", &res.font, FC_Black),
 	))
 
 	/*tOpts := []widget.TextInputOpt{
@@ -419,46 +418,46 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 
 	openButton := widget.NewButton(
 		widget.ButtonOpts.Image(&widget.ButtonImage{
-			Idle:    image.NewNineSliceColor(color.Transparent),
+			Idle:    image.NewNineSliceColor(FC_White),
 			Hover:   image.NewNineSliceColor(colornames.Darkgray),
-			Pressed: image.NewNineSliceColor(colornames.White),
+			Pressed: image.NewNineSliceColor(FC_Black),
 		}),
-		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 16, Right: 64}),
+		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 32, Right: 32, Top: 5, Bottom: 5}),
 		widget.ButtonOpts.Text("Open", &res.font, &widget.ButtonTextColor{
-			Idle:     color.White,
+			Idle:     FC_Black,
 			Disabled: colornames.Gray,
-			Hover:    color.White,
-			Pressed:  color.Black,
+			Hover:    FC_Black,
+			Pressed:  FC_White,
 		}),
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
 			entry := fileList.SelectedEntry()
-
-			if entry.(ListEntry).isDir {
-				currDir += entry.(ListEntry).Name
-				fileList.SetEntries(RefreshDirectoryList())
-			} else {
-				filepath = currDir + "/" + entry.(ListEntry).Name
-				ROMExists = true
-				ROMLoaded = false
-				rw()
+			if entry != nil {
+				if entry.(ListEntry).isDir {
+					currDir += entry.(ListEntry).Name
+					fileList.SetEntries(RefreshDirectoryList())
+				} else {
+					filepath = currDir + "/" + entry.(ListEntry).Name
+					ROMExists = true
+					ROMLoaded = false
+					rw()
+				}
 			}
-
 		}),
 	)
 	bc.AddChild(openButton)
 
 	closeButton := widget.NewButton(
 		widget.ButtonOpts.Image(&widget.ButtonImage{
-			Idle:    image.NewNineSliceColor(color.Transparent),
+			Idle:    image.NewNineSliceColor(FC_White),
 			Hover:   image.NewNineSliceColor(colornames.Darkgray),
-			Pressed: image.NewNineSliceColor(colornames.White),
+			Pressed: image.NewNineSliceColor(FC_Black),
 		}),
-		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 16, Right: 64}),
+		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 32, Right: 32, Top: 5, Bottom: 5}),
 		widget.ButtonOpts.Text("Close", &res.font, &widget.ButtonTextColor{
-			Idle:     color.White,
+			Idle:     FC_Black,
 			Disabled: colornames.Gray,
-			Hover:    color.White,
-			Pressed:  color.Black,
+			Hover:    FC_Black,
+			Pressed:  FC_White,
 		}),
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
 			rw()
@@ -485,9 +484,8 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 	promptWidth := 400
 	promptHeight := 300
 
-	windowSize := input.GetWindowSize()
 	r := goimage.Rect(0, 0, promptWidth, promptHeight)
-	r = r.Add(goimage.Point{((screenWidth * screenScale) - promptWidth) / 2, windowSize.Y * 2 / 3 / 2})
+	r = r.Add(goimage.Point{((screenWidth * screenScale) - promptWidth) / 2, ((screenHeight * screenScale) - promptHeight) / 2})
 	window.SetLocation(r)
 
 	rw = ui.AddWindow(window)

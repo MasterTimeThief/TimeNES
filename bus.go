@@ -100,8 +100,8 @@ func Read(Address uint16) byte {
 		switch MapperChipID {
 		case 1: //MMC1
 			returnValue = ROM[mappers.MMC1_FetchCPUAddress(Address, PRGROM_Size)]
-		case 3: //CNROM
-		case 4: //MMC3
+		//case 3: //CNROM
+		//case 4: //MMC3
 		default:
 			returnValue = ROM[(Address-0x8000)&uint16(PRGROM_Size-1)]
 			//outsideCodeRead = Address
@@ -174,15 +174,20 @@ func Write(Address uint16, Value byte) {
 			}
 			WriteLatch = !WriteLatch
 		case 0x2007: //PPUDATA
+			//WritePPU(Value)
 			if VRAMAddress < 0x2000 {
 				//Write to pattern table. (If the cartridge supports it)
 				if CHRROM_Size == 0 {
 					switch MapperChipID {
 					case 1: //MMC1
+						//if AltNametableLayout {
+						//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+						//} else {
 						CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+						//}
 					case 3: //CNROM
 						CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
-					case 4: //MMC3
+					//case 4: //MMC3
 					default:
 						CHRROM[VRAMAddress] = Value
 					}
@@ -190,14 +195,35 @@ func Write(Address uint16, Value byte) {
 				//else, nothing happens because it's CHR-ROM
 			} else if VRAMAddress < 0x3F00 {
 				//Write to the Nametables
-				if IsNametableHorizontal {
-					// Horizontal Mirroring
-					VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
-				} else {
-					//Vertical Mirroring
-					index := int(VRAMAddress & 0x7FF)
-					VRAM[index] = Value
+
+				switch MapperChipID {
+				case 1: //MMC1
+					switch mappers.MMC1_GetNametableArrangement() {
+					case 0: //Screen A only
+						CartVRAM[int(VRAMAddress&0x3FF)] = Value
+					case 1: //Screen B Only
+						CartVRAM[int(VRAMAddress&0x3FF)+0x400] = Value
+					case 2: //Horizontal
+						CartVRAM[int(VRAMAddress&0x7FF)] = Value
+					case 3: //Vertical
+						CartVRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+					}
+					//CartVRAM[VRAMAddress&0xFFF] = Value
+				//case 3: //CNROM
+				//case 4: //MMC3
+				default:
+					if !AltNametableLayout {
+						if IsNametableHorizontal {
+							// Horizontal Mirroring
+							VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+						} else {
+							//Vertical Mirroring
+							index := int(VRAMAddress & 0x7FF)
+							VRAM[index] = Value
+						}
+					}
 				}
+
 			} else {
 				//Write to Palette RAM
 				if (VRAMAddress & 3) == 0 {
@@ -340,7 +366,7 @@ func Write(Address uint16, Value byte) {
 		case 3: //CNROM
 			prgValue := Read(Address)
 			mappers.CNROM_Write(Value&prgValue, Address)
-		case 4: //MMC3
+		//case 4: //MMC3
 		default:
 			outsideCodeWrite = Address
 		}
@@ -356,8 +382,8 @@ func ReadPPU( /*Address uint16*/ ) byte {
 			return CHRROM[mappers.MMC1_FetchPPUAddress(ppuAddressBus, CHRROM_Size)]
 		case 3: //CNROM
 			return CHRROM[mappers.CNROM_ReadAddress(ppuAddressBus)]
-		case 4: //MMC3
-			return 0
+		//case 4: //MMC3
+		//	return 0
 		default:
 			return CHRROM[ppuAddressBus]
 		}
@@ -365,13 +391,24 @@ func ReadPPU( /*Address uint16*/ ) byte {
 		//else, nothing happens
 	} else if ppuAddressBus < 0x3F00 {
 		//Read from the Nametables
-		if IsNametableHorizontal {
-			// Horizontal Mirroring
-			return VRAM[int(ppuAddressBus&0x3FF)|(int(ppuAddressBus&0x800)>>1)]
-		} else {
-			//Vertical Mirroring
-			return VRAM[int(ppuAddressBus&0x7FF)]
+		switch MapperChipID {
+		case 1: //MMC1
+			return CartVRAM[mappers.MMC1_FetchNametable(ppuAddressBus)]
+		//case 3: //CNROM
+		//case 4: //MMC3
+		default:
+			if !AltNametableLayout {
+				if IsNametableHorizontal {
+					// Horizontal Mirroring
+					return VRAM[int(ppuAddressBus&0x3FF)|(int(ppuAddressBus&0x800)>>1)]
+				} else {
+					//Vertical Mirroring
+					return VRAM[int(ppuAddressBus&0x7FF)]
+				}
+			}
 		}
+		return 0
+
 	} else {
 		//Read from Palette RAM
 		if (ppuAddressBus & 3) == 0 {
@@ -380,6 +417,10 @@ func ReadPPU( /*Address uint16*/ ) byte {
 			return PaletteRAM[ppuAddressBus&0x1F]
 		}
 	}
+}
+
+func WritePPU(Value byte) {
+
 }
 
 func BuildAddress(Value_Low, Value_High byte) uint16 {

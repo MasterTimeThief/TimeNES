@@ -65,6 +65,7 @@ var g *Game
 
 var RAM [0x800]byte
 var VRAM [0x800]byte
+var CartVRAM [0x1000]byte //For mapper chips
 var PaletteRAM [0x20]byte
 var ROM [0x80000]byte
 
@@ -188,6 +189,14 @@ func Reset() {
 	VRAM = [0x800]byte{}
 	PaletteRAM = [0x20]byte{}
 	CartRAM = [0x2000]byte{}
+
+	MapperChipID = 0
+
+	PRGROM_Size = 0
+	CHRROM_Size = 0
+	IsNametableHorizontal = false
+	HasBatteryRAM = false
+	AltNametableLayout = false
 
 	LoadROM()
 

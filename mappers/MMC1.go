@@ -93,18 +93,38 @@ func MMC1_FetchPPUAddress(Addr uint16, CHRLength uint32) uint32 {
 		// if the final write for the MMC1 shift register was in the $B000 - $CFFF, this updates Mapper_1_CHR1
 
 		if Addr < 0x1000 {
-			return (uint32(uint16(MMC1_CHRBank0&0x1F)*0x1000) + uint32(Addr)) & uint32(CHRLength-1)
+			return (uint32(uint32(MMC1_CHRBank0&0x1F)*0x1000) + uint32(Addr)) & uint32(CHRLength-1)
 		} else {
 			Addr &= 0xFFF
-			return (uint32(uint16(MMC1_CHRBank1&0x1F)*0x1000) + uint32(Addr)) & uint32(CHRLength-1)
+			return (uint32(uint32(MMC1_CHRBank1&0x1F)*0x1000) + uint32(Addr)) & uint32(CHRLength-1)
 		}
 	} else { // one swappable bank that changes both pattern tables.
 		// this uses the value written to Mapper_1_CHR0
-		return (uint32(uint16(MMC1_CHRBank0&0xFE)*0x2000) + uint32(Addr)) & uint32(CHRLength-1)
+		return (uint32(uint32(MMC1_CHRBank0&0xFE)*0x2000) + uint32(Addr)) & uint32(CHRLength-1)
+	}
+}
+
+func MMC1_FetchNametable(Addr uint16) int {
+	Arrangement := MMC1_Control & 0x3
+	switch Arrangement {
+	case 0: //Screen A only
+		return int(Addr & 0x3FF)
+	case 1: //Screen B Only
+		return int(Addr&0x3FF) + 0x400
+	case 2: //Horizontal
+		return int(Addr & 0x7FF)
+	case 3: //Vertical
+		return int(Addr&0x3FF) | int((Addr&0x800)>>1)
+	default:
+		return int(Addr)
 	}
 }
 
 func MMC1_Reset() {
 	MMC1_ShiftRegister = 0x10
 	MMC1_Control |= 0x0C
+}
+
+func MMC1_GetNametableArrangement() byte {
+	return MMC1_Control & 0x3
 }
