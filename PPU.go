@@ -7,7 +7,6 @@ import (
 var WriteLatch bool        //PPU's w register
 var TransferAddress uint16 //PPU's t register
 var VRAMAddress uint16     //PPU's v register
-var TempVRAMAddress uint16 //PPU's v register (temporary)
 var PPUReadBuffer byte
 var NMILevelDetector, DoNMI bool
 
@@ -124,6 +123,62 @@ var Palette = [64]color.RGBA{
 	{R: 0xB6, G: 0xB6, B: 0xB6, A: 0xFF},
 	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
 	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+}
+
+func ResetPPU() {
+	WriteLatch = false
+	TransferAddress, VRAMAddress, PPUReadBuffer = 0, 0, 0
+	NMILevelDetector, DoNMI = false, false
+
+	// $2000: PPUCTRL
+	ppuCtrl_NametableSelect = 0
+	ppuCtrl_VRAMInc32Mode = false
+	ppuCtrl_SpritePatternTable = false
+	ppuCtrl_BGPatternTable = false
+	ppuCtrl_Use8x16Sprites = false
+	ppuCtrl_EnableNMI = false
+
+	// $2001: PPUMASK
+	ppuMask_Greyscale = false
+	ppuMask_8pxMaskBG = false
+	ppuMask_8pxMaskSprites = false
+	ppuMask_RenderBG = false
+	ppuMask_RenderSprites = false
+	ppuMask_EmphasisRed = false
+	ppuMask_EmphasisGreen = false
+	ppuMask_EmphasisBlue = false
+
+	// $2002: PPUSTATUS
+	ppuStatus_Overflow = false
+	ppuStatus_SpriteZeroHit = false
+	ppuStatus_VBlank = false
+
+	ppuDot, ppuScanline = 0, 0
+
+	ppuShiftRegister_patternL, ppuShiftRegister_patternH, ppuShiftRegister_attributeL, ppuShiftRegister_attributeH = 0, 0, 0, 0
+
+	ppu8Step_patternLowBitPlane = 0
+	ppu8Step_patternHighBitPlane = 0
+	ppu8Step_attribute = 0
+	ppu8Step_NextCharacter = 0
+	ppu8Step_temp = 0
+
+	ppuScrollFineX, ppuScrollFineY = 0, 0
+	DrawNewFrame = false
+
+	OAM = [0x100]byte{}
+	SecondaryOAM = [0x20]byte{}
+	ppuSpriteEvalTemp = 0
+	ppuOAMAddress, ppuSecondaryOAMAddress, ppuSecondaryOAMSize = 0, 0, 0
+	ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed = false, false, false
+	ppuSpriteEvalTick = 0
+
+	ppu_SpriteShiftRegisterL = [8]byte{}
+	ppu_SpriteShiftRegisterH = [8]byte{}
+	ppu_SpriteAttribute = [8]byte{}
+	ppu_SpritePattern = [8]byte{}
+	ppu_SpriteXposition = [8]byte{}
+	ppu_SpriteYposition = [8]byte{}
 }
 
 func Emulate_PPU(g *Game) {

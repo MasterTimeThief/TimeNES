@@ -123,61 +123,9 @@ func main() {
 
 func Reset() {
 	//var HeaderedROM []byte := os.ReadFile()
-	flag_InterruptDisable = true
-
-	//Reset APU variables
-	apuDMAGetCycle = true
-	// All the bits of $4015 are cleared
-	apuDMCInterrupt = false
-	apuFrameInterrupt = false
-	apuDMCDelayed = false
-
-	apuPulse1.Enabled = false
-	apuPulse2.Enabled = false
-	apuTriangle.Enabled = false
-	apuNoise.Enabled = false
-	apuDMC.Enabled = false
-
-	apuNoise.LengthCounter = 0
-	apuTriangle.LengthCounter = 0
-	apuPulse2.LengthCounter = 0
-	apuPulse1.LengthCounter = 0
-	apuFrameCounter = 0 // reset the frame counter
-
-	// PPU registers
-	ppuCtrl_EnableNMI = false
-	ppuCtrl_VRAMInc32Mode = false
-	ppuCtrl_Use8x16Sprites = false
-	ppuCtrl_SpritePatternTable = false
-	ppuCtrl_BGPatternTable = false
-	TransferAddress = 0
-
-	//PPU_Mask_Greyscale = false
-	ppuMask_EmphasisRed = false
-	ppuMask_EmphasisGreen = false
-	ppuMask_EmphasisBlue = false
-	ppuMask_Greyscale = false
-	ppuMask_8pxMaskBG = false
-	ppuMask_8pxMaskSprites = false
-	ppuMask_RenderBG = false
-	ppuMask_RenderSprites = false
-	WriteLatch = false
-
-	//PPU_Update2005Delay = 0;
-	ppuScrollFineX = 0
-
-	PPUReadBuffer = 0
-	//PPU_OddFrame = false;
-
-	ppuDot = 0
-	ppuScanline = 0
-
-	//DoDMCDMA = false;
-	//DoOAMDMA = false;
-
-	//Reset CPU cycle count
-	CPU_Cycles = 0
-	CPU_Cycles_New = 0
+	ResetCPU()
+	ResetPPU()
+	ResetAPU()
 
 	//Reset ROM Data
 	Header = [0x10]byte{}
@@ -206,13 +154,10 @@ func Reset() {
 	PCL := Read(0xFFFC)
 	PCH := Read(0xFFFD)
 	ProgramCounter = BuildAddress(PCL, PCH)
-	//ProgramCounter = 0xC000
-	StackPointer = 0xFD
 	//fmt.Printf("%#x", ProgramCounter)
 
 	outsideCodeRead = 0
 	outsideCodeWrite = 0
-	CPU_Halted = false
 	ROMLoaded = true
 }
 

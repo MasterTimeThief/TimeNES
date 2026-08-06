@@ -307,6 +307,24 @@ func Op_BIT(Value byte) {
 	flag_Overflow = ((Value & 0x40) != 0)
 }
 
+func ResetCPU() {
+
+	StackPointer = 0xFD
+	A, X, Y = 0, 0, 0
+	opcode = 0
+	operands = nil
+	CPU_Cycles, CPU_Cycles_New, CPU_TotalCycles = 0, 0, 0
+	CPU_Halted = false
+
+	flag_Carry = false
+	flag_Zero = false
+	flag_InterruptDisable = true
+	flag_Decimal = false
+	flag_Overflow = false
+	flag_Negative = false
+	flag_B = false
+}
+
 func Emulate_CPU(g *Game) {
 	//Non Maskable Interrupt check
 	prevNMILevelDetector := NMILevelDetector

@@ -35,8 +35,7 @@ type PulseChannel struct {
 	Timer                    uint16
 	Envelope                 Envelope
 	//Channel Specific Variables
-	Duty byte
-	//ConstantVolume   bool
+	Duty             byte
 	SweepUnitEnabled bool
 	Period           byte
 	Negate           bool
@@ -64,7 +63,6 @@ type NoiseChannel struct {
 	Timer                    uint16
 	Envelope                 Envelope
 	//Channel Specific Variables
-	//ConstantVolume bool
 	Mode   bool
 	Period byte
 }
@@ -83,9 +81,6 @@ type DeltaModChannel struct {
 	Shifter              byte
 	ShifterBitsRemaining byte
 	DPCM_Up              bool
-	//Channel Specific Variables
-	//Frequency   byte
-	//LoadCounter byte
 }
 
 var apuDutySequences = [4][8]int{
@@ -102,7 +97,7 @@ var apuNoise NoiseChannel
 var apuDMC DeltaModChannel
 
 // var apuEnablePulse1, apuEnablePulse2, apuEnableTriangle, apuEnableNoise, apuEnableDMC bool
-var apuDMCInterrupt, apuDMCDelayed, apuFrameInterrupt, apuDMAGetCycle, apuInhibitIRQ, apuFrameCounterMode, apuSilent, apuIsHalfFrame bool
+var apuDMCInterrupt, apuDMCDelayed, apuFrameInterrupt, apuInhibitIRQ, apuFrameCounterMode, apuSilent, apuIsHalfFrame bool
 var apuFrameCounter int = 0
 var IRQLevelDetector, DoIRQ bool
 
@@ -110,12 +105,125 @@ var apuEnvelopeStartFlag bool
 var apuEnvelopeDivider bool
 var apuEnvelopeDecay byte
 
-var apuDoDMCDMA, apuDMCDMAHalt bool
+var apuDMAGetCycle, apuDoDMCDMA, apuDMCDMAHalt bool
 var apuDMCDMADelay, apuCannotDMCDMARightNow byte
 
 var apu4017ResetTimer int = 0
 var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
 var apuDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
+
+func ResetAPU() {
+
+	//Reset Pulse 1
+	apuPulse1.Enabled = false
+	apuPulse1.LengthCounter = 0
+	apuPulse1.LengthCounterHalt = false
+	apuPulse1.LengthCounterReload = false
+	apuPulse1.LengthCounterReloadValue = 0
+	apuPulse1.Timer = 0
+
+	apuPulse1.Envelope.ConstantVolume = false
+	apuPulse1.Envelope.Volume = 0
+	apuPulse1.Envelope.StartFlag = false
+	apuPulse1.Envelope.Divider.Counter = 0
+	apuPulse1.Envelope.Divider.Period = 0
+	apuPulse1.Envelope.Counter = 0
+
+	apuPulse1.Duty = 0
+	apuPulse1.SweepUnitEnabled = false
+	apuPulse1.Period = 0
+	apuPulse1.Negate = false
+	apuPulse1.ShiftRegister = 0
+
+	//Reset Pulse 2
+	apuPulse2.Enabled = false
+	apuPulse2.LengthCounter = 0
+	apuPulse2.LengthCounterHalt = false
+	apuPulse2.LengthCounterReload = false
+	apuPulse2.LengthCounterReloadValue = 0
+	apuPulse2.Timer = 0
+
+	apuPulse2.Envelope.ConstantVolume = false
+	apuPulse2.Envelope.Volume = 0
+	apuPulse2.Envelope.StartFlag = false
+	apuPulse2.Envelope.Divider.Counter = 0
+	apuPulse2.Envelope.Divider.Period = 0
+	apuPulse2.Envelope.Counter = 0
+
+	apuPulse2.Duty = 0
+	apuPulse2.SweepUnitEnabled = false
+	apuPulse2.Period = 0
+	apuPulse2.Negate = false
+	apuPulse2.ShiftRegister = 0
+
+	//Reset Triangle
+	apuTriangle.Enabled = false
+	apuTriangle.LengthCounter = 0
+	apuTriangle.LengthCounterHalt = false
+	apuTriangle.LengthCounterReload = false
+	apuTriangle.LengthCounterReloadValue = 0
+	apuTriangle.Timer = 0
+
+	apuTriangle.LinearCounterReload = false
+	apuTriangle.LinearCounter = 0
+
+	//Reset Noise
+	apuNoise.Enabled = false
+	apuNoise.LengthCounter = 0
+	apuNoise.LengthCounterHalt = false
+	apuNoise.LengthCounterReload = false
+	apuNoise.LengthCounterReloadValue = 0
+	apuNoise.Timer = 0
+
+	apuNoise.Envelope.ConstantVolume = false
+	apuNoise.Envelope.Volume = 0
+	apuNoise.Envelope.StartFlag = false
+	apuNoise.Envelope.Divider.Counter = 0
+	apuNoise.Envelope.Divider.Period = 0
+	apuNoise.Envelope.Counter = 0
+
+	apuNoise.Mode = false
+	apuNoise.Period = 0
+
+	//Reset DMC
+	apuDMC.Enabled = false
+	apuDMC.Timer = 0
+	apuDMC.IRQEnable = false
+	apuDMC.Loop = false
+	apuDMC.SampleRate = 0
+	apuDMC.Output = 0
+	apuDMC.SampleAddress = 0
+	apuDMC.SampleLength = 0
+	apuDMC.BytesRemaining = 0
+	apuDMC.Buffer = 0
+	apuDMC.SampleAddressCounter = 0
+	apuDMC.Shifter = 0
+	apuDMC.ShifterBitsRemaining = 0
+	apuDMC.DPCM_Up = false
+
+	//APU Variables
+	apuDMCInterrupt = false
+	apuDMCDelayed = false
+	apuFrameInterrupt = false
+	apuInhibitIRQ = false
+	apuFrameCounterMode = false
+	apuSilent = false
+	apuIsHalfFrame = false
+	apuFrameCounter = 0
+	IRQLevelDetector = false
+	DoIRQ = false
+
+	apuEnvelopeStartFlag = false
+	apuEnvelopeDivider = false
+	apuEnvelopeDecay = 0
+
+	apuDMAGetCycle = true
+	apuDoDMCDMA, apuDMCDMAHalt = false, false
+	apuDMCDMADelay, apuCannotDMCDMARightNow = 0, 0
+
+	apu4017ResetTimer = 0
+
+}
 
 func Emulate_APU(g *Game) {
 	//ClockFrameCounter()
