@@ -1914,7 +1914,7 @@ func Emulate_CPU(g *Game) {
 			if apu4017ResetTimer > 0 {
 				apu4017ResetTimer--
 				if apu4017ResetTimer == 0 {
-					apuFrameCounterCycles = 0
+					apuFrameCounter = 0
 				}
 			}
 			ClockFrameCounter()

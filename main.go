@@ -131,12 +131,13 @@ func Reset() {
 	apuDMCInterrupt = false
 	apuFrameInterrupt = false
 	apuDMCDelayed = false
-	apuEnableDMC = false
-	apuEnableNoise = false
-	apuEnableTriangle = false
-	apuEnablePulse2 = false
-	apuEnablePulse1 = false
-	apuDMC.Length = 0
+
+	apuPulse1.Enabled = false
+	apuPulse2.Enabled = false
+	apuTriangle.Enabled = false
+	apuNoise.Enabled = false
+	apuDMC.Enabled = false
+
 	apuNoise.LengthCounter = 0
 	apuTriangle.LengthCounter = 0
 	apuPulse2.LengthCounter = 0

@@ -71,7 +71,7 @@ func Read(Address uint16) byte {
 		apuStatus := byte(0)
 		apuStatus |= byte(ternary(apuDMCInterrupt, 0x80, 0x00))                                                    //DMC Interrupt
 		apuStatus |= byte(ternary(apuFrameInterrupt, 0x40, 0x00))                                                  //Frame Interrupt
-		apuStatus |= byte(ternary(apuDMC.Length > 0, 0x10, 0x00))                                                  //DMC Active
+		apuStatus |= byte(ternary(apuDMC.BytesRemaining > 0, 0x10, 0x00))                                          //DMC Active
 		apuStatus |= byte(ternary(!(apuNoise.LengthCounter == 0 /*|| apuNoise.LengthCounterHalt*/), 0x08, 0x00))   //Noise Active
 		apuStatus |= byte(ternary(!(apuTriangle.LengthCounter == 0 /*|| apuTriangle.Control*/), 0x04, 0x00))       //Triangle Active
 		apuStatus |= byte(ternary(!(apuPulse2.LengthCounter == 0 /*|| apuPulse2.LengthCounterHalt*/), 0x02, 0x00)) //Pulse 2 Active
@@ -187,8 +187,8 @@ func Write(Address uint16, Value byte) {
 		case 0x4000:
 			apuPulse1.Duty = (Value & 0xC0) >> 6
 			apuPulse1.LengthCounterHalt = ((Value & 0x20) >> 5) != 0
-			apuPulse1.ConstantVolume = ((Value & 0x10) >> 4) != 0
-			apuPulse1.Envelope = (Value & 0xF)
+			apuPulse1.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
+			apuPulse1.Envelope.Volume = (Value & 0xF)
 		case 0x4001:
 			apuPulse1.SweepUnitEnabled = ((Value & 0x80) >> 7) != 0
 			apuPulse1.Period = (Value & 0x70) >> 4
@@ -206,8 +206,8 @@ func Write(Address uint16, Value byte) {
 		case 0x4004:
 			apuPulse2.Duty = (Value & 0xC0)
 			apuPulse2.LengthCounterHalt = ((Value & 0x20) >> 5) != 0
-			apuPulse2.ConstantVolume = ((Value & 0x10) >> 4) != 0
-			apuPulse2.Envelope = (Value & 0xF)
+			apuPulse2.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
+			apuPulse2.Envelope.Volume = (Value & 0xF)
 		case 0x4005:
 			apuPulse2.SweepUnitEnabled = ((Value & 0x80) >> 7) != 0
 			apuPulse2.Period = (Value & 0x70) >> 4
@@ -223,7 +223,7 @@ func Write(Address uint16, Value byte) {
 
 		// Triangle
 		case 0x4008:
-			apuTriangle.Control = ((Value & 0x80) >> 7) != 0
+			apuTriangle.LengthCounterHalt = ((Value & 0x80) >> 7) != 0
 			apuTriangle.LinearCounter = (Value & 0x7F)
 		case 0x4009: //Unused
 		case 0x400A:
@@ -237,8 +237,8 @@ func Write(Address uint16, Value byte) {
 		// Noise
 		case 0x400C:
 			apuNoise.LengthCounterHalt = ((Value & 0x20) >> 5) != 0
-			apuNoise.ConstantVolume = ((Value & 0x10) >> 4) != 0
-			apuNoise.Envelope = (Value & 0xF)
+			apuNoise.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
+			apuNoise.Envelope.Volume = (Value & 0xF)
 		case 0x400D: //Unused
 		case 0x400E:
 			apuNoise.Mode = ((Value & 0x80) >> 7) != 0
@@ -252,13 +252,17 @@ func Write(Address uint16, Value byte) {
 		case 0x4010:
 			apuDMC.IRQEnable = ((Value & 0x80) >> 7) != 0
 			apuDMC.Loop = ((Value & 0x40) >> 6) != 0
-			apuDMC.Frequency = (Value & 0xF)
+			apuDMC.SampleRate = apuDMCSampleRateLUT[Value&0xF]
+			if !apuDMC.IRQEnable {
+				apuDMCInterrupt = false
+				IRQLevelDetector = false
+			}
 		case 0x4011:
-			apuDMC.LoadCounter = (Value & 0x7F)
+			apuDMC.Output = (Value & 0x7F)
 		case 0x4012:
-			apuDMC.Address = Value
+			apuDMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
 		case 0x4013:
-			apuDMC.Length = int((Value << 4) + 1)
+			apuDMC.SampleLength = ((uint16(Value) << 4) | 1)
 
 		case 0x4014: //OAMDMA
 			for i := 0; i < 256; i++ {
@@ -266,17 +270,21 @@ func Write(Address uint16, Value byte) {
 				OAMBusAddress++
 			}
 		case 0x4015: //APU Status
-			apuDMC.Length = int((Value & 0x10) >> 4)
+			//apuDMC.BytesRemaining = int((Value & 0x10) >> 4)
 			apuNoise.LengthCounter &= (0xFF * ((Value & 0x08) >> 3))
 			apuTriangle.LengthCounter &= (0xFF * ((Value & 0x04) >> 2))
 			apuPulse2.LengthCounter &= (0xFF * ((Value & 0x02) >> 1))
 			apuPulse1.LengthCounter &= (0xFF * (Value & 0x01))
 
+			apuDMC.Enabled = (Value & 0x10) != 0
 			apuNoise.Enabled = (Value & 0x08) != 0
 			apuTriangle.Enabled = (Value & 0x04) != 0
 			apuPulse2.Enabled = (Value & 0x02) != 0
 			apuPulse1.Enabled = (Value & 0x01) != 0
+
 			apuDMCInterrupt = false
+			IRQLevelDetector = false
+
 		case 0x4016: //Controller Input
 			Controller1ShiftRegister = uint16(Controller1)
 			Controller2ShiftRegister = uint16(Controller2)
@@ -286,6 +294,7 @@ func Write(Address uint16, Value byte) {
 			apuInhibitIRQ = ((Value & 0x40) >> 6) != 0
 			if apuInhibitIRQ {
 				apuFrameInterrupt = false
+				IRQLevelDetector = false
 			}
 			if /*!modeFlagPrev &&*/ apuFrameCounterMode {
 				ClockFrameCounterQuarterFrame()
