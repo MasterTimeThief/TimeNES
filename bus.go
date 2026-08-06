@@ -174,64 +174,7 @@ func Write(Address uint16, Value byte) {
 			}
 			WriteLatch = !WriteLatch
 		case 0x2007: //PPUDATA
-			//WritePPU(Value)
-			if VRAMAddress < 0x2000 {
-				//Write to pattern table. (If the cartridge supports it)
-				if CHRROM_Size == 0 {
-					switch MapperChipID {
-					case 1: //MMC1
-						//if AltNametableLayout {
-						//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
-						//} else {
-						CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
-						//}
-					case 3: //CNROM
-						CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
-					//case 4: //MMC3
-					default:
-						CHRROM[VRAMAddress] = Value
-					}
-				}
-				//else, nothing happens because it's CHR-ROM
-			} else if VRAMAddress < 0x3F00 {
-				//Write to the Nametables
-
-				switch MapperChipID {
-				case 1: //MMC1
-					switch mappers.MMC1_GetNametableArrangement() {
-					case 0: //Screen A only
-						CartVRAM[int(VRAMAddress&0x3FF)] = Value
-					case 1: //Screen B Only
-						CartVRAM[int(VRAMAddress&0x3FF)+0x400] = Value
-					case 2: //Horizontal
-						CartVRAM[int(VRAMAddress&0x7FF)] = Value
-					case 3: //Vertical
-						CartVRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
-					}
-					//CartVRAM[VRAMAddress&0xFFF] = Value
-				//case 3: //CNROM
-				//case 4: //MMC3
-				default:
-					if !AltNametableLayout {
-						if IsNametableHorizontal {
-							// Horizontal Mirroring
-							VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
-						} else {
-							//Vertical Mirroring
-							index := int(VRAMAddress & 0x7FF)
-							VRAM[index] = Value
-						}
-					}
-				}
-
-			} else {
-				//Write to Palette RAM
-				if (VRAMAddress & 3) == 0 {
-					PaletteRAM[VRAMAddress&0x0F] = Value
-				} else {
-					PaletteRAM[VRAMAddress&0x1F] = Value
-				}
-			}
+			WritePPU(Value)
 
 			VRAMAddress += ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
 			VRAMAddress &= 0x3FFF
@@ -420,7 +363,63 @@ func ReadPPU( /*Address uint16*/ ) byte {
 }
 
 func WritePPU(Value byte) {
+	if VRAMAddress < 0x2000 {
+		//Write to pattern table. (If the cartridge supports it)
+		if CHRROM_Size == 0 {
+			switch MapperChipID {
+			case 1: //MMC1
+				//if AltNametableLayout {
+				//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+				//} else {
+				CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+				//}
+			case 3: //CNROM
+				CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
+			//case 4: //MMC3
+			default:
+				CHRROM[VRAMAddress] = Value
+			}
+		}
+		//else, nothing happens because it's CHR-ROM
+	} else if VRAMAddress < 0x3F00 {
+		//Write to the Nametables
 
+		switch MapperChipID {
+		case 1: //MMC1
+			switch mappers.MMC1_GetNametableArrangement() {
+			case 0: //Screen A only
+				CartVRAM[int(VRAMAddress&0x3FF)] = Value
+			case 1: //Screen B Only
+				CartVRAM[int(VRAMAddress&0x3FF)+0x400] = Value
+			case 2: //Horizontal
+				CartVRAM[int(VRAMAddress&0x7FF)] = Value
+			case 3: //Vertical
+				CartVRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+			}
+			//CartVRAM[VRAMAddress&0xFFF] = Value
+		//case 3: //CNROM
+		//case 4: //MMC3
+		default:
+			if !AltNametableLayout {
+				if IsNametableHorizontal {
+					// Horizontal Mirroring
+					VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+				} else {
+					//Vertical Mirroring
+					index := int(VRAMAddress & 0x7FF)
+					VRAM[index] = Value
+				}
+			}
+		}
+
+	} else {
+		//Write to Palette RAM
+		if (VRAMAddress & 3) == 0 {
+			PaletteRAM[VRAMAddress&0x0F] = Value
+		} else {
+			PaletteRAM[VRAMAddress&0x1F] = Value
+		}
+	}
 }
 
 func BuildAddress(Value_Low, Value_High byte) uint16 {
