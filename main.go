@@ -14,6 +14,7 @@ import (
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
@@ -53,12 +54,14 @@ const (
 )
 
 type Game struct {
-	gameScreen *image.RGBA
-	keys       []ebiten.Key
-	ui         *ebitenui.UI
-	exit       bool
-	debugui    debugui.DebugUI
-	directory  []os.DirEntry
+	gameScreen   *image.RGBA
+	keys         []ebiten.Key
+	ui           *ebitenui.UI
+	exit         bool
+	debugui      debugui.DebugUI
+	directory    []os.DirEntry
+	audioContext *audio.Context
+	player       *audio.Player
 }
 
 var g *Game
@@ -126,6 +129,7 @@ func Reset() {
 	ResetCPU()
 	ResetPPU()
 	ResetAPU()
+	//InitSpeaker()
 
 	//Reset ROM Data
 	Header = [0x10]byte{}
@@ -162,6 +166,7 @@ func Reset() {
 }
 
 func (g *Game) Update() error {
+	InitAPU()
 
 	if filepath != "" && !ROMLoaded {
 		Reset()

@@ -4,22 +4,26 @@ type Envelope struct {
 	ConstantVolume bool
 	Volume         byte
 	StartFlag      bool
-	Divider        Divider
-	Counter        byte
+	LoopFlag       bool
+	Decay          byte
+	Divider
 }
 
 type Sweep struct {
-	Enabled    bool
-	Divider    Divider
-	ReloadFlag bool
+	Enabled bool
+	Divider
+	ReloadFlag   bool
+	Negate       bool
+	Shift        byte
+	TargetPeriod uint16
 }
 
 type Divider struct {
-	Period  byte //P
-	Counter byte
+	Period  uint16
+	Counter uint16
 }
 
-type LengthCounter struct {
+type LengthCounter struct { //TODO: Maybe part of Envelope?
 	Counter     byte
 	HaltFlag    bool
 	ReloadFlag  bool
@@ -27,41 +31,36 @@ type LengthCounter struct {
 }
 
 type PulseChannel struct {
-	Enabled                  bool
-	LengthCounter            byte
-	LengthCounterHalt        bool
-	LengthCounterReload      bool
-	LengthCounterReloadValue byte
-	Timer                    uint16
-	Envelope                 Envelope
+	Enabled bool
+	LengthCounter
+	Timer            uint16
+	TimerReloadValue uint16
+	Envelope
 	//Channel Specific Variables
-	Duty             byte
-	SweepUnitEnabled bool
-	Period           byte
-	Negate           bool
-	ShiftRegister    byte
+	Duty    byte
+	DutyPos byte
+	//SweepEnabled  bool
+	//SweepPeriod   byte
+	//SweepNegate   bool
+	Sweep
+	//ShiftRegister byte
+	Output byte
 }
 
 type TriangleChannel struct {
-	Enabled                  bool
-	LengthCounter            byte
-	LengthCounterHalt        bool
-	LengthCounterReload      bool
-	LengthCounterReloadValue byte
-	Timer                    uint16
+	Enabled bool
+	LengthCounter
+	Timer uint16
 	//Channel Specific Variables
 	LinearCounterReload bool
 	LinearCounter       byte
 }
 
 type NoiseChannel struct {
-	Enabled                  bool
-	LengthCounter            byte
-	LengthCounterHalt        bool
-	LengthCounterReload      bool
-	LengthCounterReloadValue byte
-	Timer                    uint16
-	Envelope                 Envelope
+	Enabled bool
+	LengthCounter
+	Timer uint16
+	Envelope
 	//Channel Specific Variables
 	Mode   bool
 	Period byte
@@ -72,7 +71,7 @@ type DeltaModChannel struct {
 	IRQEnable            bool
 	Loop                 bool
 	SampleRate           uint16 // AKA Frequency
-	Output               byte   //AKA LoadCounter
+	Output               byte   // AKA LoadCounter
 	SampleAddress        uint16
 	SampleLength         uint16
 	BytesRemaining       uint16
@@ -83,7 +82,7 @@ type DeltaModChannel struct {
 	DPCM_Up              bool
 }
 
-var apuDutySequences = [4][8]int{
+var apuDutySequences = [4][8]byte{
 	{0, 0, 0, 0, 0, 0, 0, 1},
 	{0, 0, 0, 0, 0, 0, 1, 1},
 	{0, 0, 0, 0, 1, 1, 1, 1},
@@ -112,56 +111,45 @@ var apu4017ResetTimer int = 0
 var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
 var apuDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
 
+var squareTable [31]float32
+var tndTable [203]float32
+
+const (
+	apuCycleLength        int = 10000
+	apuBitsPerCycle       int = 16
+	apuSampleRate         int = 44100
+	apuMaxSamplesPerFrame int = apuSampleRate / 60 * 4 * 2
+)
+
 func ResetAPU() {
 
 	//Reset Pulse 1
 	apuPulse1.Enabled = false
-	apuPulse1.LengthCounter = 0
-	apuPulse1.LengthCounterHalt = false
-	apuPulse1.LengthCounterReload = false
-	apuPulse1.LengthCounterReloadValue = 0
+	apuPulse1.ResetLengthCounter()
 	apuPulse1.Timer = 0
 
-	apuPulse1.Envelope.ConstantVolume = false
-	apuPulse1.Envelope.Volume = 0
-	apuPulse1.Envelope.StartFlag = false
-	apuPulse1.Envelope.Divider.Counter = 0
-	apuPulse1.Envelope.Divider.Period = 0
-	apuPulse1.Envelope.Counter = 0
+	apuPulse1.ResetEnvelope()
 
 	apuPulse1.Duty = 0
-	apuPulse1.SweepUnitEnabled = false
-	apuPulse1.Period = 0
-	apuPulse1.Negate = false
-	apuPulse1.ShiftRegister = 0
+	apuPulse1.DutyPos = 0
+	apuPulse1.ResetSweep()
+	//apuPulse1.ShiftRegister = 0
 
 	//Reset Pulse 2
 	apuPulse2.Enabled = false
-	apuPulse2.LengthCounter = 0
-	apuPulse2.LengthCounterHalt = false
-	apuPulse2.LengthCounterReload = false
-	apuPulse2.LengthCounterReloadValue = 0
+	apuPulse2.ResetLengthCounter()
 	apuPulse2.Timer = 0
 
-	apuPulse2.Envelope.ConstantVolume = false
-	apuPulse2.Envelope.Volume = 0
-	apuPulse2.Envelope.StartFlag = false
-	apuPulse2.Envelope.Divider.Counter = 0
-	apuPulse2.Envelope.Divider.Period = 0
-	apuPulse2.Envelope.Counter = 0
+	apuPulse2.ResetEnvelope()
 
 	apuPulse2.Duty = 0
-	apuPulse2.SweepUnitEnabled = false
-	apuPulse2.Period = 0
-	apuPulse2.Negate = false
-	apuPulse2.ShiftRegister = 0
+	apuPulse2.DutyPos = 0
+	apuPulse2.ResetSweep()
+	//apuPulse2.ShiftRegister = 0
 
 	//Reset Triangle
 	apuTriangle.Enabled = false
-	apuTriangle.LengthCounter = 0
-	apuTriangle.LengthCounterHalt = false
-	apuTriangle.LengthCounterReload = false
-	apuTriangle.LengthCounterReloadValue = 0
+	apuTriangle.ResetLengthCounter()
 	apuTriangle.Timer = 0
 
 	apuTriangle.LinearCounterReload = false
@@ -169,18 +157,10 @@ func ResetAPU() {
 
 	//Reset Noise
 	apuNoise.Enabled = false
-	apuNoise.LengthCounter = 0
-	apuNoise.LengthCounterHalt = false
-	apuNoise.LengthCounterReload = false
-	apuNoise.LengthCounterReloadValue = 0
+	apuNoise.ResetLengthCounter()
 	apuNoise.Timer = 0
 
-	apuNoise.Envelope.ConstantVolume = false
-	apuNoise.Envelope.Volume = 0
-	apuNoise.Envelope.StartFlag = false
-	apuNoise.Envelope.Divider.Counter = 0
-	apuNoise.Envelope.Divider.Period = 0
-	apuNoise.Envelope.Counter = 0
+	apuNoise.ResetEnvelope()
 
 	apuNoise.Mode = false
 	apuNoise.Period = 0
@@ -222,6 +202,17 @@ func ResetAPU() {
 	apuDMCDMADelay, apuCannotDMCDMARightNow = 0, 0
 
 	apu4017ResetTimer = 0
+	//apuMixerInputBuffer = [apuMaxSamplesPerFrame]uint16{}
+
+}
+
+func InitAPU() {
+	for i := range squareTable {
+		squareTable[i] = float32(95.52 / (8128.0/float64(i) + 100))
+	}
+	for i := range tndTable {
+		tndTable[i] = float32(163.67 / (24329.0/float64(i) + 100))
+	}
 
 }
 
@@ -260,28 +251,34 @@ func Emulate_APU(g *Game) {
 
 	//If this isn't a Frame Counter half-frame
 	if !apuIsHalfFrame {
-		if apuPulse1.LengthCounterReload {
-			apuPulse1.LengthCounter = apuPulse1.LengthCounterReloadValue
+		if apuPulse1.LengthCounter.ReloadFlag {
+			apuPulse1.LengthCounter.Counter = apuPulse1.LengthCounter.ReloadValue
 		}
-		if apuPulse2.LengthCounterReload {
-			apuPulse2.LengthCounter = apuPulse2.LengthCounterReloadValue
+		if apuPulse2.LengthCounter.ReloadFlag {
+			apuPulse2.LengthCounter.Counter = apuPulse2.LengthCounter.ReloadValue
 		}
-		if apuTriangle.LengthCounterReload {
-			apuTriangle.LengthCounter = apuTriangle.LengthCounterReloadValue
+		if apuTriangle.LengthCounter.ReloadFlag {
+			apuTriangle.LengthCounter.Counter = apuTriangle.LengthCounter.ReloadValue
 		}
-		if apuNoise.LengthCounterReload {
-			apuNoise.LengthCounter = apuNoise.LengthCounterReloadValue
+		if apuNoise.LengthCounter.ReloadFlag {
+			apuNoise.LengthCounter.Counter = apuNoise.LengthCounter.ReloadValue
 		}
-		apuPulse1.LengthCounterReload = false
-		apuPulse2.LengthCounterReload = false
-		apuTriangle.LengthCounterReload = false
-		apuNoise.LengthCounterReload = false
+		apuPulse1.LengthCounter.ReloadFlag = false
+		apuPulse2.LengthCounter.ReloadFlag = false
+		apuTriangle.LengthCounter.ReloadFlag = false
+		apuNoise.LengthCounter.ReloadFlag = false
 	}
 }
 
 func DMA_Get() {
 	//Clock timers
-	apuPulse1.Timer--
+	if apuPulse1.Timer == 0 {
+		apuPulse1.DutyPos = (apuPulse1.DutyPos + 1) & 7
+		apuPulse1.Timer = apuPulse1.TimerReloadValue
+	} else {
+		apuPulse1.Timer--
+	}
+
 	apuPulse2.Timer--
 	apuNoise.Timer--
 
@@ -471,8 +468,14 @@ func ClockFrameCounterQuarterFrame() {
 		apuEnvelopeDivider = true
 	}
 
-	apuPulse1.Envelope.Volume--
-	apuPulse2.Envelope.Volume--
+	/*if apuPulse1.Envelope.Volume != 0 {
+		apuPulse1.Envelope.Volume--
+	}
+	if apuPulse2.Envelope.Volume != 0 {
+		apuPulse2.Envelope.Volume--
+	}*/
+	apuPulse1.ClockEnvelope()
+	apuPulse2.ClockEnvelope()
 	apuNoise.Envelope.Volume--
 	apuTriangle.LinearCounter--
 
@@ -480,62 +483,180 @@ func ClockFrameCounterQuarterFrame() {
 
 func ClockFrameCounterHalfFrame() {
 
-	if apuPulse1.LengthCounterReload && apuPulse1.LengthCounter == 0 {
-		apuPulse1.LengthCounter = apuPulse1.LengthCounterReloadValue
-	} else {
-		apuPulse1.LengthCounterReload = false
-	}
-
-	if apuPulse2.LengthCounterReload && apuPulse2.LengthCounter == 0 {
-		apuPulse2.LengthCounter = apuPulse2.LengthCounterReloadValue
-	} else {
-		apuPulse2.LengthCounterReload = false
-	}
-
-	if apuTriangle.LengthCounterReload && apuTriangle.LengthCounter == 0 {
-		apuTriangle.LengthCounter = apuTriangle.LengthCounterReloadValue
-	} else {
-		apuTriangle.LengthCounterReload = false
-	}
-
-	if apuNoise.LengthCounterReload && apuNoise.LengthCounter == 0 {
-		apuNoise.LengthCounter = apuNoise.LengthCounterReloadValue
-	} else {
-		apuNoise.LengthCounterReload = false
-	}
+	//TODO: Split off Clocks into seperate functions for readability
+	apuPulse1.ReloadLengthCounter()
+	apuPulse2.ReloadLengthCounter()
+	apuTriangle.ReloadLengthCounter()
+	apuNoise.ReloadLengthCounter()
 
 	// length counters and sweep
 	if !apuPulse1.Enabled {
-		apuPulse1.LengthCounter = 0
+		apuPulse1.LengthCounter.Counter = 0
 	}
 	if !apuPulse2.Enabled {
-		apuPulse2.LengthCounter = 0
+		apuPulse2.LengthCounter.Counter = 0
 	}
 	if !apuTriangle.Enabled {
-		apuTriangle.LengthCounter = 0
+		apuTriangle.LengthCounter.Counter = 0
 	}
 	if !apuNoise.Enabled {
-		apuNoise.LengthCounter = 0
+		apuNoise.LengthCounter.Counter = 0
 	}
 
-	if apuPulse1.LengthCounter != 0 && !apuPulse1.LengthCounterHalt && !apuPulse1.LengthCounterReload {
-		apuPulse1.LengthCounter--
-	}
-	if apuPulse2.LengthCounter != 0 && !apuPulse2.LengthCounterHalt && !apuPulse2.LengthCounterReload {
-		apuPulse2.LengthCounter--
-	}
-	if apuTriangle.LengthCounter != 0 && !apuTriangle.LengthCounterHalt && !apuTriangle.LengthCounterReload {
-		apuTriangle.LengthCounter--
-	}
-	if apuNoise.LengthCounter != 0 && !apuNoise.LengthCounterHalt && !apuNoise.LengthCounterReload {
-		apuNoise.LengthCounter--
-	}
+	apuPulse1.ClockSweep()
+
+	apuPulse1.ClockLengthCounter()
+	apuPulse2.ClockLengthCounter()
+	apuTriangle.ClockLengthCounter()
+	apuNoise.ClockLengthCounter()
 
 	apuIsHalfFrame = true
 
 }
 
-/*func soundLoop() {
+func (LC *LengthCounter) ResetLengthCounter() {
+	LC.Counter = 0
+	LC.HaltFlag = false
+	LC.ReloadFlag = false
+	LC.ReloadValue = 0
+}
+
+func (LC *LengthCounter) ReloadLengthCounter() {
+	if LC.ReloadFlag && LC.Counter == 0 {
+		LC.Counter = LC.ReloadValue
+	} else {
+		LC.ReloadFlag = false
+	}
+}
+
+func (LC *LengthCounter) ClockLengthCounter() {
+	if LC.Counter != 0 && !LC.HaltFlag && !LC.ReloadFlag {
+		LC.Counter--
+	}
+}
+
+func (Env *Envelope) ResetEnvelope() {
+	Env.ConstantVolume = false
+	Env.Volume = 0
+	Env.StartFlag = false
+	Env.ResetDivider()
+	Env.Decay = 0
+}
+
+func (Env *Envelope) ClockEnvelope() {
+	if !Env.StartFlag {
+		if Env.ClockDivider() {
+			Env.Divider.Counter = uint16(Env.Volume)
+			if Env.Decay != 0 {
+				Env.Decay--
+			} else if Env.LoopFlag {
+				Env.Decay = 15
+			}
+		}
+
+	} else {
+		Env.StartFlag = false
+		Env.Decay = 15
+		Env.Divider.Counter = Env.Divider.Period
+	}
+}
+
+func (Sw *Sweep) ResetSweep() {
+	Sw.Enabled = false
+	Sw.ResetDivider()
+	Sw.ReloadFlag = false
+	Sw.Negate = false
+	Sw.Shift = 0
+}
+
+func (Sw *Sweep) ClockSweep() {
+	if Sw.Counter == 0 {
+		//Sweep is enabled, the shift count is nonzero
+		if Sw.Enabled {
+			//Pulse's period is set to target period
+			Sw.Period = Sw.TargetPeriod
+		} else {
+			//Pulse's period remains unchanged, but the sweep unit's divider continues to count down  and reload the divider's period as normal
+		}
+	}
+
+	if Sw.Counter == 0 || Sw.ReloadFlag {
+		//Divider counter is set to P and the reload flag is cleared
+		Sw.Counter = Sw.Period
+		Sw.ReloadFlag = false
+	} else {
+		//Otherwise, the divider's counter is decremented
+		Sw.Counter--
+	}
+}
+
+func (Sw *Sweep) UpdateTargetPeriod(isPulse1 bool) {
+
+	shift := int(Sw.Period >> Sw.Shift)
+
+	if Sw.Negate {
+		shift *= -1
+		if isPulse1 {
+			shift--
+		}
+	}
+
+	newTarget := int(Sw.Period) + shift
+
+	if newTarget < 0 {
+		newTarget = 0
+	}
+
+	Sw.TargetPeriod = uint16(newTarget)
+
+}
+
+func (Dv *Divider) ResetDivider() {
+	Dv.Counter = 0
+	Dv.Period = 0
+}
+
+func (Dv *Divider) ClockDivider() bool {
+	if Dv.Counter == 0 {
+		Dv.Counter = Dv.Period
+		return true
+	} else {
+		Dv.Counter--
+		return false
+	}
+
+}
+
+func (pulse *PulseChannel) IsPulseMuted() bool {
+	return pulse.Timer < 8 || (!pulse.Sweep.Negate && pulse.Sweep.Period > 0x7FF)
+}
+
+func (pulse *PulseChannel) UpdatePulseOutput() {
+	duty := apuDutySequences[pulse.Duty][pulse.DutyPos]
+	var volume byte
+	if pulse.ConstantVolume {
+		volume = pulse.Volume
+	} else {
+		volume = pulse.Decay
+	}
+
+	if apuSilent || duty == 0 || pulse.LengthCounter.Counter == 0 || pulse.Timer < 8 {
+		pulse.Output = 0
+	} else {
+		pulse.Output = (duty * volume)
+	}
+}
+
+/*func GetPulseOutput(pulse *PulseChannel) uint64 {
+	return uint64(pulse.Output) * uint64(pulse.Volume)
+}*/
+
+/*func InitSpeaker() {
+	speaker.Init(beep.SampleRate(int(apuMaxSampleRate)), int(apuMaxSamplesPerFrame))
+}*/
+
+/*
+func soundLoop() {
 	if len(os.Args) < 2 {
 		usage()
 		os.Exit(0)
@@ -599,7 +720,6 @@ func ClockFrameCounterHalfFrame() {
 	<-ch
 }
 
-
 func usage() {
 	fmt.Printf("usage: %s freq\n", os.Args[0])
 	fmt.Println("where freq must be a float between 1 and 24000")
@@ -612,5 +732,4 @@ func print(s string) func() {
 		fmt.Println(s)
 	}
 }
-
 */

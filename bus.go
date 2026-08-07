@@ -69,13 +69,13 @@ func Read(Address uint16) byte {
 		returnValue = ppuBus
 	} else if Address == 0x4015 { //APU Status
 		apuStatus := byte(0)
-		apuStatus |= byte(ternary(apuDMCInterrupt, 0x80, 0x00))                                                    //DMC Interrupt
-		apuStatus |= byte(ternary(apuFrameInterrupt, 0x40, 0x00))                                                  //Frame Interrupt
-		apuStatus |= byte(ternary(apuDMC.BytesRemaining > 0, 0x10, 0x00))                                          //DMC Active
-		apuStatus |= byte(ternary(!(apuNoise.LengthCounter == 0 /*|| apuNoise.LengthCounterHalt*/), 0x08, 0x00))   //Noise Active
-		apuStatus |= byte(ternary(!(apuTriangle.LengthCounter == 0 /*|| apuTriangle.Control*/), 0x04, 0x00))       //Triangle Active
-		apuStatus |= byte(ternary(!(apuPulse2.LengthCounter == 0 /*|| apuPulse2.LengthCounterHalt*/), 0x02, 0x00)) //Pulse 2 Active
-		apuStatus |= byte(ternary(!(apuPulse1.LengthCounter == 0 /*|| apuPulse1.LengthCounterHalt*/), 0x01, 0x00)) //Pulse 1 Active
+		apuStatus |= byte(ternary(apuDMCInterrupt, 0x80, 0x00))                                                                     //DMC Interrupt
+		apuStatus |= byte(ternary(apuFrameInterrupt, 0x40, 0x00))                                                                   //Frame Interrupt
+		apuStatus |= byte(ternary(apuDMC.BytesRemaining > 0, 0x10, 0x00))                                                           //DMC Active
+		apuStatus |= byte(ternary(!(apuNoise.LengthCounter.Counter == 0 /*|| apuNoise.LengthCounter.HaltFlag*/), 0x08, 0x00))       //Noise Active
+		apuStatus |= byte(ternary(!(apuTriangle.LengthCounter.Counter == 0 /*|| apuTriangle.LengthCounter.HaltFlag*/), 0x04, 0x00)) //Triangle Active
+		apuStatus |= byte(ternary(!(apuPulse2.LengthCounter.Counter == 0 /*|| apuPulse2.LengthCounter.HaltFlag*/), 0x02, 0x00))     //Pulse 2 Active
+		apuStatus |= byte(ternary(!(apuPulse1.LengthCounter.Counter == 0 /*|| apuPulse1.LengthCounter.HaltFlag*/), 0x01, 0x00))     //Pulse 1 Active
 		apuFrameInterrupt = false
 		returnValue = apuStatus
 	} else if Address == 0x4016 { //Controller 1
@@ -186,44 +186,50 @@ func Write(Address uint16, Value byte) {
 		// Pulse 1
 		case 0x4000:
 			apuPulse1.Duty = (Value & 0xC0) >> 6
-			apuPulse1.LengthCounterHalt = ((Value & 0x20) >> 5) != 0
+			apuPulse1.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
 			apuPulse1.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
 			apuPulse1.Envelope.Volume = (Value & 0xF)
+			apuPulse1.LoopFlag = apuPulse1.HaltFlag
 		case 0x4001:
-			apuPulse1.SweepUnitEnabled = ((Value & 0x80) >> 7) != 0
-			apuPulse1.Period = (Value & 0x70) >> 4
-			apuPulse1.Negate = ((Value & 0x8) >> 3) != 0
-			apuPulse1.ShiftRegister = (Value & 0x06)
+			apuPulse1.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
+			apuPulse1.Sweep.Period = uint16(Value&0x70) >> 4
+			apuPulse1.Sweep.Negate = ((Value & 0x8) >> 3) != 0
+			apuPulse1.Shift = (Value & 0x06)
 		case 0x4002:
-			apuPulse1.Timer = uint16(Value)
+			apuPulse1.TimerReloadValue = uint16(Value)
+			apuPulse1.Timer = apuPulse1.TimerReloadValue
 		case 0x4003:
-			apuPulse1.Timer |= (uint16(Value&0x7) << 8)
+			apuPulse1.TimerReloadValue |= (uint16(Value&0x7) << 8)
+			apuPulse1.Timer = apuPulse1.TimerReloadValue
 			if apuPulse1.Enabled {
-				apuPulse1.LengthCounter = LengthCounterLoad(Value >> 3)
+				apuPulse1.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
 			}
 
 		// Pulse 2
 		case 0x4004:
-			apuPulse2.Duty = (Value & 0xC0)
-			apuPulse2.LengthCounterHalt = ((Value & 0x20) >> 5) != 0
+			apuPulse2.Duty = (Value & 0xC0) >> 6
+			apuPulse2.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
 			apuPulse2.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
 			apuPulse2.Envelope.Volume = (Value & 0xF)
+			apuPulse2.LoopFlag = apuPulse2.HaltFlag
 		case 0x4005:
-			apuPulse2.SweepUnitEnabled = ((Value & 0x80) >> 7) != 0
-			apuPulse2.Period = (Value & 0x70) >> 4
-			apuPulse2.Negate = ((Value & 0x8) >> 3) != 0
-			apuPulse2.ShiftRegister = (Value & 0x06)
+			apuPulse2.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
+			apuPulse2.Sweep.Period = uint16(Value&0x70) >> 4
+			apuPulse2.Sweep.Negate = ((Value & 0x8) >> 3) != 0
+			apuPulse2.Shift = (Value & 0x06)
 		case 0x4006:
-			apuPulse2.Timer = uint16(Value)
+			apuPulse2.TimerReloadValue = uint16(Value)
+			apuPulse2.Timer = apuPulse2.TimerReloadValue
 		case 0x4007:
-			apuPulse2.Timer |= (uint16(Value&0x7) << 8)
+			apuPulse2.TimerReloadValue |= (uint16(Value&0x7) << 8)
+			apuPulse2.Timer = apuPulse2.TimerReloadValue
 			if apuPulse2.Enabled {
-				apuPulse2.LengthCounter = LengthCounterLoad(Value >> 3)
+				apuPulse2.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
 			}
 
 		// Triangle
 		case 0x4008:
-			apuTriangle.LengthCounterHalt = ((Value & 0x80) >> 7) != 0
+			apuTriangle.LengthCounter.HaltFlag = ((Value & 0x80) >> 7) != 0
 			apuTriangle.LinearCounter = (Value & 0x7F)
 		case 0x4009: //Unused
 		case 0x400A:
@@ -231,12 +237,12 @@ func Write(Address uint16, Value byte) {
 		case 0x400B:
 			apuTriangle.Timer |= (uint16(Value&0x7) << 8)
 			if apuTriangle.Enabled {
-				apuTriangle.LengthCounter = LengthCounterLoad(Value >> 3)
+				apuTriangle.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
 			}
 
 		// Noise
 		case 0x400C:
-			apuNoise.LengthCounterHalt = ((Value & 0x20) >> 5) != 0
+			apuNoise.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
 			apuNoise.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
 			apuNoise.Envelope.Volume = (Value & 0xF)
 		case 0x400D: //Unused
@@ -245,7 +251,7 @@ func Write(Address uint16, Value byte) {
 			apuNoise.Period = (Value & 0xF)
 		case 0x400F:
 			if apuNoise.Enabled {
-				apuNoise.LengthCounter = LengthCounterLoad(Value >> 3)
+				apuNoise.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
 			}
 
 		// DMC
@@ -271,10 +277,10 @@ func Write(Address uint16, Value byte) {
 			}
 		case 0x4015: //APU Status
 			//apuDMC.BytesRemaining = int((Value & 0x10) >> 4)
-			apuNoise.LengthCounter &= (0xFF * ((Value & 0x08) >> 3))
-			apuTriangle.LengthCounter &= (0xFF * ((Value & 0x04) >> 2))
-			apuPulse2.LengthCounter &= (0xFF * ((Value & 0x02) >> 1))
-			apuPulse1.LengthCounter &= (0xFF * (Value & 0x01))
+			apuNoise.LengthCounter.Counter &= (0xFF * ((Value & 0x08) >> 3))
+			apuTriangle.LengthCounter.Counter &= (0xFF * ((Value & 0x04) >> 2))
+			apuPulse2.LengthCounter.Counter &= (0xFF * ((Value & 0x02) >> 1))
+			apuPulse1.LengthCounter.Counter &= (0xFF * (Value & 0x01))
 
 			apuDMC.Enabled = (Value & 0x10) != 0
 			apuNoise.Enabled = (Value & 0x08) != 0
