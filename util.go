@@ -1,6 +1,11 @@
 package main
 
-import "os"
+import (
+	"fmt"
+	"os"
+
+	"github.com/hajimehoshi/dialog"
+)
 
 func BoolToInt(Flag bool) int {
 	if Flag {
@@ -35,4 +40,15 @@ func firstN(str string, n int) string {
 		return str
 	}
 	return string(v[:n])
+}
+
+func print(s string) func() {
+	return func() {
+		fmt.Println(s)
+	}
+}
+
+func FileSelectDialog() {
+	filepath, _ = dialog.File().Filter("NES", "nes").Load()
+
 }

@@ -114,13 +114,6 @@ var apuDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190
 var squareTable [31]float32
 var tndTable [203]float32
 
-const (
-	apuCycleLength        int = 10000
-	apuBitsPerCycle       int = 16
-	apuSampleRate         int = 44100
-	apuMaxSamplesPerFrame int = apuSampleRate / 60 * 4 * 2
-)
-
 func ResetAPU() {
 
 	//Reset Pulse 1
@@ -217,7 +210,8 @@ func InitAPU() {
 }
 
 func Emulate_APU(g *Game) {
-	//ClockFrameCounter()
+	AudioOutput()
+
 	if apuDMAGetCycle { //DMA Get Cycle
 		DMA_Get()
 	} else { //DMA Put Cycle
@@ -268,6 +262,8 @@ func Emulate_APU(g *Game) {
 		apuTriangle.LengthCounter.ReloadFlag = false
 		apuNoise.LengthCounter.ReloadFlag = false
 	}
+
+	apuDMAGetCycle = !apuDMAGetCycle
 }
 
 func DMA_Get() {
@@ -651,22 +647,9 @@ func (pulse *PulseChannel) UpdatePulseOutput() {
 	return uint64(pulse.Output) * uint64(pulse.Volume)
 }*/
 
-/*func InitSpeaker() {
-	speaker.Init(beep.SampleRate(int(apuMaxSampleRate)), int(apuMaxSamplesPerFrame))
-}*/
-
 /*
 func soundLoop() {
-	if len(os.Args) < 2 {
-		usage()
-		os.Exit(0)
-	}
-
-	f, err := strconv.ParseFloat(os.Args[1], 64)
-	if err != nil {
-		usage()
-		os.Exit(0)
-	}
+	f := float64(20000)
 
 	sr := beep.SampleRate(48000)
 	speaker.Init(sr, 4800)
@@ -718,18 +701,5 @@ func soundLoop() {
 	speaker.Play(beep.Seq(sounds...))
 
 	<-ch
-}
-
-func usage() {
-	fmt.Printf("usage: %s freq\n", os.Args[0])
-	fmt.Println("where freq must be a float between 1 and 24000")
-	fmt.Println("24000 because samplerate of 48000 is hardcoded")
-}
-
-// a simple clousure to wrap fmt.Println
-func print(s string) func() {
-	return func() {
-		fmt.Println(s)
-	}
 }
 */

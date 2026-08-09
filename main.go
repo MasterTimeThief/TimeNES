@@ -85,6 +85,9 @@ var MasterClock int = 0
 //var nametable *image.RGBA = image.NewRGBA(image.Rect(0, 0, ScreenWidth, ScreenHeight))
 
 func main() {
+	InitAPU()
+	//InitAudioOutput()
+
 	if len(os.Args) > 1 && os.Args[1] != "" {
 		filepath = os.Args[1]
 	}
@@ -129,7 +132,6 @@ func Reset() {
 	ResetCPU()
 	ResetPPU()
 	ResetAPU()
-	//InitSpeaker()
 
 	//Reset ROM Data
 	Header = [0x10]byte{}
@@ -166,7 +168,6 @@ func Reset() {
 }
 
 func (g *Game) Update() error {
-	InitAPU()
 
 	if filepath != "" && !ROMLoaded {
 		Reset()

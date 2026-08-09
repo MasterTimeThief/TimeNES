@@ -1919,25 +1919,7 @@ func Emulate_CPU(g *Game) {
 		//Run the APU
 		apuRun = !apuRun
 		if apuRun {
-
-			if apuDMAGetCycle { //Odd cycle
-				DMA_Get()
-				Emulate_APU(g)
-				/*if apu4017ResetTimer == 4 {
-					apu4017ResetTimer--
-				}*/
-			} else { //Even cycle
-				DMA_Put()
-			}
-			if apu4017ResetTimer > 0 {
-				apu4017ResetTimer--
-				if apu4017ResetTimer == 0 {
-					apuFrameCounter = 0
-				}
-			}
-			ClockFrameCounter()
-
-			apuDMAGetCycle = !apuDMAGetCycle
+			Emulate_APU(g)
 		}
 	}
 
