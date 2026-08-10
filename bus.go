@@ -196,10 +196,10 @@ func Write(Address uint16, Value byte) {
 			apuPulse1.Sweep.Negate = ((Value & 0x8) >> 3) != 0
 			apuPulse1.Shift = (Value & 0x06)
 		case 0x4002:
-			apuPulse1.TimerReloadValue = uint16(Value)
+			apuPulse1.TimerReloadValue = SetTimerLow(Value, apuPulse1.TimerReloadValue)
 			apuPulse1.Timer = apuPulse1.TimerReloadValue
 		case 0x4003:
-			apuPulse1.TimerReloadValue |= (uint16(Value&0x7) << 8)
+			apuPulse1.TimerReloadValue = SetTimerHi(Value, apuPulse1.TimerReloadValue)
 			apuPulse1.Timer = apuPulse1.TimerReloadValue
 			if apuPulse1.Enabled {
 				apuPulse1.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
@@ -218,10 +218,10 @@ func Write(Address uint16, Value byte) {
 			apuPulse2.Sweep.Negate = ((Value & 0x8) >> 3) != 0
 			apuPulse2.Shift = (Value & 0x06)
 		case 0x4006:
-			apuPulse2.TimerReloadValue = uint16(Value)
+			apuPulse2.TimerReloadValue = SetTimerLow(Value, apuPulse2.TimerReloadValue)
 			apuPulse2.Timer = apuPulse2.TimerReloadValue
 		case 0x4007:
-			apuPulse2.TimerReloadValue |= (uint16(Value&0x7) << 8)
+			apuPulse2.TimerReloadValue = SetTimerHi(Value, apuPulse2.TimerReloadValue)
 			apuPulse2.Timer = apuPulse2.TimerReloadValue
 			if apuPulse2.Enabled {
 				apuPulse2.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
@@ -230,15 +230,20 @@ func Write(Address uint16, Value byte) {
 		// Triangle
 		case 0x4008:
 			apuTriangle.LengthCounter.HaltFlag = ((Value & 0x80) >> 7) != 0
-			apuTriangle.LinearCounter = (Value & 0x7F)
+			apuTriangle.LinearCounter.Counter = (Value & 0x7F)
 		case 0x4009: //Unused
 		case 0x400A:
-			apuTriangle.Timer = uint16(Value)
+			//apuTriangle.Timer = uint16(Value)
+			apuTriangle.TimerReloadValue = SetTimerLow(Value, apuTriangle.TimerReloadValue)
+			apuTriangle.Timer = apuTriangle.TimerReloadValue
 		case 0x400B:
-			apuTriangle.Timer |= (uint16(Value&0x7) << 8)
+			//apuTriangle.Timer |= (uint16(Value&0x7) << 8)
+			apuTriangle.TimerReloadValue = SetTimerHi(Value, apuTriangle.TimerReloadValue)
+			apuTriangle.Timer = apuTriangle.TimerReloadValue
 			if apuTriangle.Enabled {
 				apuTriangle.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
 			}
+			apuTriangle.LinearCounter.ReloadFlag = true
 
 		// Noise
 		case 0x400C:
@@ -248,7 +253,7 @@ func Write(Address uint16, Value byte) {
 		case 0x400D: //Unused
 		case 0x400E:
 			apuNoise.Mode = ((Value & 0x80) >> 7) != 0
-			apuNoise.Period = (Value & 0xF)
+			apuNoise.SetNoiseTimer(Value & 0xF)
 		case 0x400F:
 			if apuNoise.Enabled {
 				apuNoise.LengthCounter.Counter = LengthCounterLoad(Value >> 3)

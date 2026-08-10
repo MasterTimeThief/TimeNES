@@ -43,6 +43,8 @@ var NES2_Header bool //Is the header in NES 2.0 format, rather than iNES
 
 var MapperChipID byte
 
+const CPU_Frequency int = 1789773
+
 //type App struct{ Clicks int }
 
 //var SelectedROM string = ""
@@ -86,7 +88,6 @@ var MasterClock int = 0
 
 func main() {
 	InitAPU()
-	//InitAudioOutput()
 
 	if len(os.Args) > 1 && os.Args[1] != "" {
 		filepath = os.Args[1]
@@ -118,6 +119,7 @@ func main() {
 		gameScreen: image.NewRGBA(image.Rect(0, 0, screenWidth, screenHeight)),
 		ui:         &ui,
 	}
+	InitAudioOutput()
 
 	SetupToolbarOptions(res, g, toolbar)
 
@@ -186,25 +188,12 @@ func (g *Game) Update() error {
 			//return nil
 		}
 	}
+
 	if /*CPU_Halted ||*/ g.exit {
 		return ebiten.Termination
 	}
 	// Update the UI
-
-	/*mX, _ := ebiten.CursorPosition()
-	if mX > 50 {
-		g.ui.Container.SetLocation(image.Rect(-20, 0, 20, 20))
-	} else {
-		g.ui.Container.SetLocation(image.Rect(0, 0, 20, 20))
-	}*/
-	//DebugWindow(g)
-
 	g.ui.Update()
-
-	//fmt.Println("CPU Paused, Drawing Window")
-
-	//DrawWindow(ops, window)
-
 	return nil
 }
 
@@ -217,14 +206,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else if CPU_Halted {
 		ebitenutil.DebugPrintAt(screen, "Game Crashed!", 5, (240*screenScale)-20)
 	} else if ROMLoaded {
-		//if SelectedROM != "" {
-		//if DrawNewFrame {
 		screenScaled := image.NewRGBA(image.Rect(0, 0, screenWidth*screenScale, screenHeight*screenScale))
 		draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
 		screen.WritePixels(screenScaled.Pix)
-		//DrawNewFrame = false
-		//}
-		//}
 	}
 
 	if ShowFPS {
