@@ -1,6 +1,10 @@
-package main
+package nes
 
-import "mtt/timenes/mappers"
+import (
+	"mtt/timenes/common"
+	"mtt/timenes/mappers"
+	"mtt/timenes/nes/apu"
+)
 
 var AddressBus, ppuAddressBus uint16
 var cpuOpenBus, ppuBus byte
@@ -23,9 +27,9 @@ func Read(Address uint16) byte {
 		case 0x2001: //PPUMASK
 		case 0x2002: //PPUSTATUS
 			ppuBus &= 0x1F
-			ppuBus |= byte(ternary(ppuStatus_VBlank, 0x80, 0x00))
-			ppuBus |= byte(ternary(ppuStatus_SpriteZeroHit, 0x40, 0x00))
-			ppuBus |= byte(ternary(ppuStatus_Overflow, 0x20, 0x00))
+			ppuBus |= byte(common.Ternary(ppuStatus_VBlank, 0x80, 0x00))
+			ppuBus |= byte(common.Ternary(ppuStatus_SpriteZeroHit, 0x40, 0x00))
+			ppuBus |= byte(common.Ternary(ppuStatus_Overflow, 0x20, 0x00))
 			ppuStatus_VBlank = false
 			WriteLatch = false
 			UpdatePPUBus2002(ppuBus)
@@ -51,7 +55,7 @@ func Read(Address uint16) byte {
 			if (VRAMAddress & 0x3FFF) > 0x3F00 {
 				//Palette data
 				data := ReadPPU()
-				ppuBus = (ppuBus & 0xC0) | (data & byte(ternary(ppuMask_Greyscale, 0x30, 0x3F)))
+				ppuBus = (ppuBus & 0xC0) | (data & byte(common.Ternary(ppuMask_Greyscale, 0x30, 0x3F)))
 				//PPUReadBuffer = ReadPPU((VRAMAddress & 0x2F00) | (VRAMAddress & 0xFF))
 				//PPUReadBuffer = ppuBus
 				UpdatePPUBus2007Palette(ppuBus)
@@ -61,7 +65,7 @@ func Read(Address uint16) byte {
 				UpdatePPUBus(ppuBus)
 			}
 
-			VRAMAddress += ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
+			VRAMAddress += common.Ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
 			VRAMAddress &= 0x3FFF
 		default:
 			returnValue = ppuBus
@@ -69,14 +73,14 @@ func Read(Address uint16) byte {
 		returnValue = ppuBus
 	} else if Address == 0x4015 { //APU Status
 		apuStatus := byte(0)
-		apuStatus |= byte(ternary(apuDMCInterrupt, 0x80, 0x00))                                                                     //DMC Interrupt
-		apuStatus |= byte(ternary(apuFrameInterrupt, 0x40, 0x00))                                                                   //Frame Interrupt
-		apuStatus |= byte(ternary(apuDMC.BytesRemaining > 0, 0x10, 0x00))                                                           //DMC Active
-		apuStatus |= byte(ternary(!(apuNoise.LengthCounter.Counter == 0 /*|| apuNoise.LengthCounter.HaltFlag*/), 0x08, 0x00))       //Noise Active
-		apuStatus |= byte(ternary(!(apuTriangle.LengthCounter.Counter == 0 /*|| apuTriangle.LengthCounter.HaltFlag*/), 0x04, 0x00)) //Triangle Active
-		apuStatus |= byte(ternary(!(apuPulse2.LengthCounter.Counter == 0 /*|| apuPulse2.LengthCounter.HaltFlag*/), 0x02, 0x00))     //Pulse 2 Active
-		apuStatus |= byte(ternary(!(apuPulse1.LengthCounter.Counter == 0 /*|| apuPulse1.LengthCounter.HaltFlag*/), 0x01, 0x00))     //Pulse 1 Active
-		apuFrameInterrupt = false
+		apuStatus |= byte(common.Ternary(apu.APUDMCInterrupt, 0x80, 0x00))                                                                  //DMC Interrupt
+		apuStatus |= byte(common.Ternary(apu.APUFrameInterrupt, 0x40, 0x00))                                                                //Frame Interrupt
+		apuStatus |= byte(common.Ternary(apu.DMC.BytesRemaining > 0, 0x10, 0x00))                                                           //DMC Active
+		apuStatus |= byte(common.Ternary(!(apu.Noise.LengthCounter.Counter == 0 /*|| apuNoise.LengthCounter.HaltFlag*/), 0x08, 0x00))       //Noise Active
+		apuStatus |= byte(common.Ternary(!(apu.Triangle.LengthCounter.Counter == 0 /*|| apuTriangle.LengthCounter.HaltFlag*/), 0x04, 0x00)) //Triangle Active
+		apuStatus |= byte(common.Ternary(!(apu.Pulse2.LengthCounter.Counter == 0 /*|| apuPulse2.LengthCounter.HaltFlag*/), 0x02, 0x00))     //Pulse 2 Active
+		apuStatus |= byte(common.Ternary(!(apu.Pulse1.LengthCounter.Counter == 0 /*|| apuPulse1.LengthCounter.HaltFlag*/), 0x01, 0x00))     //Pulse 1 Active
+		apu.APUFrameInterrupt = false
 		returnValue = apuStatus
 	} else if Address == 0x4016 { //Controller 1
 		cBit := byte((Controller1ShiftRegister & 0x80) >> 7)
@@ -176,7 +180,7 @@ func Write(Address uint16, Value byte) {
 		case 0x2007: //PPUDATA
 			WritePPU(Value)
 
-			VRAMAddress += ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
+			VRAMAddress += common.Ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
 			VRAMAddress &= 0x3FFF
 		}
 
@@ -185,95 +189,95 @@ func Write(Address uint16, Value byte) {
 		switch Address {
 		// Pulse 1
 		case 0x4000:
-			apuPulse1.Duty = (Value & 0xC0) >> 6
-			apuPulse1.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
-			apuPulse1.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
-			apuPulse1.Envelope.Volume = (Value & 0xF)
-			apuPulse1.LoopFlag = apuPulse1.HaltFlag
+			apu.Pulse1.Duty = (Value & 0xC0) >> 6
+			apu.Pulse1.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
+			apu.Pulse1.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
+			apu.Pulse1.Envelope.Volume = (Value & 0xF)
+			apu.Pulse1.LoopFlag = apu.Pulse1.HaltFlag
 		case 0x4001:
-			apuPulse1.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
-			apuPulse1.Sweep.Period = uint16(Value&0x70) >> 4
-			apuPulse1.Sweep.Negate = ((Value & 0x8) >> 3) != 0
-			apuPulse1.Shift = (Value & 0x06)
+			apu.Pulse1.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
+			apu.Pulse1.Sweep.Period = uint16(Value&0x70) >> 4
+			apu.Pulse1.Sweep.Negate = ((Value & 0x8) >> 3) != 0
+			apu.Pulse1.Shift = (Value & 0x06)
 		case 0x4002:
-			apuPulse1.TimerReloadValue = SetTimerLow(Value, apuPulse1.TimerReloadValue)
-			apuPulse1.Timer = apuPulse1.TimerReloadValue
+			apu.Pulse1.TimerReloadValue = apu.SetTimerLow(Value, apu.Pulse1.TimerReloadValue)
+			apu.Pulse1.Timer = apu.Pulse1.TimerReloadValue
 		case 0x4003:
-			apuPulse1.TimerReloadValue = SetTimerHi(Value, apuPulse1.TimerReloadValue)
-			apuPulse1.Timer = apuPulse1.TimerReloadValue
-			if apuPulse1.Enabled {
-				apuPulse1.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
+			apu.Pulse1.TimerReloadValue = apu.SetTimerHi(Value, apu.Pulse1.TimerReloadValue)
+			apu.Pulse1.Timer = apu.Pulse1.TimerReloadValue
+			if apu.Pulse1.Enabled {
+				apu.Pulse1.LengthCounter.Counter = apu.LengthCounterLoad(Value >> 3)
 			}
 
 		// Pulse 2
 		case 0x4004:
-			apuPulse2.Duty = (Value & 0xC0) >> 6
-			apuPulse2.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
-			apuPulse2.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
-			apuPulse2.Envelope.Volume = (Value & 0xF)
-			apuPulse2.LoopFlag = apuPulse2.HaltFlag
+			apu.Pulse2.Duty = (Value & 0xC0) >> 6
+			apu.Pulse2.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
+			apu.Pulse2.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
+			apu.Pulse2.Envelope.Volume = (Value & 0xF)
+			apu.Pulse2.LoopFlag = apu.Pulse2.HaltFlag
 		case 0x4005:
-			apuPulse2.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
-			apuPulse2.Sweep.Period = uint16(Value&0x70) >> 4
-			apuPulse2.Sweep.Negate = ((Value & 0x8) >> 3) != 0
-			apuPulse2.Shift = (Value & 0x06)
+			apu.Pulse2.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
+			apu.Pulse2.Sweep.Period = uint16(Value&0x70) >> 4
+			apu.Pulse2.Sweep.Negate = ((Value & 0x8) >> 3) != 0
+			apu.Pulse2.Shift = (Value & 0x06)
 		case 0x4006:
-			apuPulse2.TimerReloadValue = SetTimerLow(Value, apuPulse2.TimerReloadValue)
-			apuPulse2.Timer = apuPulse2.TimerReloadValue
+			apu.Pulse2.TimerReloadValue = apu.SetTimerLow(Value, apu.Pulse2.TimerReloadValue)
+			apu.Pulse2.Timer = apu.Pulse2.TimerReloadValue
 		case 0x4007:
-			apuPulse2.TimerReloadValue = SetTimerHi(Value, apuPulse2.TimerReloadValue)
-			apuPulse2.Timer = apuPulse2.TimerReloadValue
-			if apuPulse2.Enabled {
-				apuPulse2.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
+			apu.Pulse2.TimerReloadValue = apu.SetTimerHi(Value, apu.Pulse2.TimerReloadValue)
+			apu.Pulse2.Timer = apu.Pulse2.TimerReloadValue
+			if apu.Pulse2.Enabled {
+				apu.Pulse2.LengthCounter.Counter = apu.LengthCounterLoad(Value >> 3)
 			}
 
 		// Triangle
 		case 0x4008:
-			apuTriangle.LengthCounter.HaltFlag = ((Value & 0x80) >> 7) != 0
-			apuTriangle.LinearCounter.Counter = (Value & 0x7F)
+			apu.Triangle.LengthCounter.HaltFlag = ((Value & 0x80) >> 7) != 0
+			apu.Triangle.LinearCounter.Counter = (Value & 0x7F)
 		case 0x4009: //Unused
 		case 0x400A:
 			//apuTriangle.Timer = uint16(Value)
-			apuTriangle.TimerReloadValue = SetTimerLow(Value, apuTriangle.TimerReloadValue)
-			apuTriangle.Timer = apuTriangle.TimerReloadValue
+			apu.Triangle.TimerReloadValue = apu.SetTimerLow(Value, apu.Triangle.TimerReloadValue)
+			apu.Triangle.Timer = apu.Triangle.TimerReloadValue
 		case 0x400B:
 			//apuTriangle.Timer |= (uint16(Value&0x7) << 8)
-			apuTriangle.TimerReloadValue = SetTimerHi(Value, apuTriangle.TimerReloadValue)
-			apuTriangle.Timer = apuTriangle.TimerReloadValue
-			if apuTriangle.Enabled {
-				apuTriangle.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
+			apu.Triangle.TimerReloadValue = apu.SetTimerHi(Value, apu.Triangle.TimerReloadValue)
+			apu.Triangle.Timer = apu.Triangle.TimerReloadValue
+			if apu.Triangle.Enabled {
+				apu.Triangle.LengthCounter.Counter = apu.LengthCounterLoad(Value >> 3)
 			}
-			apuTriangle.LinearCounter.ReloadFlag = true
+			apu.Triangle.LinearCounter.ReloadFlag = true
 
 		// Noise
 		case 0x400C:
-			apuNoise.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
-			apuNoise.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
-			apuNoise.Envelope.Volume = (Value & 0xF)
+			apu.Noise.LengthCounter.HaltFlag = ((Value & 0x20) >> 5) != 0
+			apu.Noise.Envelope.ConstantVolume = ((Value & 0x10) >> 4) != 0
+			apu.Noise.Envelope.Volume = (Value & 0xF)
 		case 0x400D: //Unused
 		case 0x400E:
-			apuNoise.Mode = ((Value & 0x80) >> 7) != 0
-			apuNoise.SetNoiseTimer(Value & 0xF)
+			apu.Noise.Mode = ((Value & 0x80) >> 7) != 0
+			apu.Noise.SetNoiseTimer(Value & 0xF)
 		case 0x400F:
-			if apuNoise.Enabled {
-				apuNoise.LengthCounter.Counter = LengthCounterLoad(Value >> 3)
+			if apu.Noise.Enabled {
+				apu.Noise.LengthCounter.Counter = apu.LengthCounterLoad(Value >> 3)
 			}
 
 		// DMC
 		case 0x4010:
-			apuDMC.IRQEnable = ((Value & 0x80) >> 7) != 0
-			apuDMC.Loop = ((Value & 0x40) >> 6) != 0
-			apuDMC.SampleRate = apuDMCSampleRateLUT[Value&0xF]
-			if !apuDMC.IRQEnable {
-				apuDMCInterrupt = false
-				IRQLevelDetector = false
+			apu.DMC.IRQEnable = ((Value & 0x80) >> 7) != 0
+			apu.DMC.Loop = ((Value & 0x40) >> 6) != 0
+			apu.DMC.SampleRate = apu.APUDMCSampleRateLUT[Value&0xF]
+			if !apu.DMC.IRQEnable {
+				apu.APUDMCInterrupt = false
+				apu.IRQLevelDetector = false
 			}
 		case 0x4011:
-			apuDMC.Output = (Value & 0x7F)
+			apu.DMC.Output = (Value & 0x7F)
 		case 0x4012:
-			apuDMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
+			apu.DMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
 		case 0x4013:
-			apuDMC.SampleLength = ((uint16(Value) << 4) | 1)
+			apu.DMC.SampleLength = ((uint16(Value) << 4) | 1)
 
 		case 0x4014: //OAMDMA
 			for i := 0; i < 256; i++ {
@@ -282,36 +286,36 @@ func Write(Address uint16, Value byte) {
 			}
 		case 0x4015: //APU Status
 			//apuDMC.BytesRemaining = int((Value & 0x10) >> 4)
-			apuNoise.LengthCounter.Counter &= (0xFF * ((Value & 0x08) >> 3))
-			apuTriangle.LengthCounter.Counter &= (0xFF * ((Value & 0x04) >> 2))
-			apuPulse2.LengthCounter.Counter &= (0xFF * ((Value & 0x02) >> 1))
-			apuPulse1.LengthCounter.Counter &= (0xFF * (Value & 0x01))
+			apu.Noise.LengthCounter.Counter &= (0xFF * ((Value & 0x08) >> 3))
+			apu.Triangle.LengthCounter.Counter &= (0xFF * ((Value & 0x04) >> 2))
+			apu.Pulse2.LengthCounter.Counter &= (0xFF * ((Value & 0x02) >> 1))
+			apu.Pulse1.LengthCounter.Counter &= (0xFF * (Value & 0x01))
 
-			apuDMC.Enabled = (Value & 0x10) != 0
-			apuNoise.Enabled = (Value & 0x08) != 0
-			apuTriangle.Enabled = (Value & 0x04) != 0
-			apuPulse2.Enabled = (Value & 0x02) != 0
-			apuPulse1.Enabled = (Value & 0x01) != 0
+			apu.DMC.Enabled = (Value & 0x10) != 0
+			apu.Noise.Enabled = (Value & 0x08) != 0
+			apu.Triangle.Enabled = (Value & 0x04) != 0
+			apu.Pulse2.Enabled = (Value & 0x02) != 0
+			apu.Pulse1.Enabled = (Value & 0x01) != 0
 
-			apuDMCInterrupt = false
-			IRQLevelDetector = false
+			apu.APUDMCInterrupt = false
+			apu.IRQLevelDetector = false
 
 		case 0x4016: //Controller Input
 			Controller1ShiftRegister = uint16(Controller1)
 			Controller2ShiftRegister = uint16(Controller2)
 		case 0x4017: //APU Frame Counter control
 			//modeFlagPrev := apuFrameCounterMode
-			apuFrameCounterMode = ((Value & 0x80) >> 7) != 0
-			apuInhibitIRQ = ((Value & 0x40) >> 6) != 0
-			if apuInhibitIRQ {
-				apuFrameInterrupt = false
-				IRQLevelDetector = false
+			apu.APUFrameCounterMode = ((Value & 0x80) >> 7) != 0
+			apu.APUInhibitIRQ = ((Value & 0x40) >> 6) != 0
+			if apu.APUInhibitIRQ {
+				apu.APUFrameInterrupt = false
+				apu.IRQLevelDetector = false
 			}
-			if /*!modeFlagPrev &&*/ apuFrameCounterMode {
-				ClockFrameCounterQuarterFrame()
-				ClockFrameCounterHalfFrame()
+			if /*!modeFlagPrev &&*/ apu.APUFrameCounterMode {
+				apu.ClockFrameCounterQuarterFrame()
+				apu.ClockFrameCounterHalfFrame()
 			}
-			apu4017ResetTimer = int(ternary(apuDMAGetCycle, 4, 3))
+			apu.Set4017ResetTimer()
 
 		}
 	} else if Address < 0x401B {
@@ -331,7 +335,7 @@ func Write(Address uint16, Value byte) {
 			mappers.CNROM_Write(Value&prgValue, Address)
 		//case 4: //MMC3
 		default:
-			outsideCodeWrite = Address
+			OutsideCodeWrite = Address
 		}
 	}
 	//MasterClockTick("WRITE")
@@ -452,9 +456,9 @@ func BuildAddress(Value_Low, Value_High byte) uint16 {
 
 func ReadFromPC() byte {
 	Value := Read(ProgramCounter)
-	if LoggingCPU {
-		operands = append(operands, Value)
-	}
+	//if LoggingCPU {
+	//	operands = append(operands, Value)
+	//}
 	ProgramCounter++
 	return Value
 }

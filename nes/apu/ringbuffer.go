@@ -1,4 +1,4 @@
-package main
+package apu
 
 import (
 	"sync"

@@ -3,12 +3,15 @@
 // Toolbar struct and related functions.
 //
 
-package main
+package ui
 
 import (
 	"fmt"
 	goimage "image"
 	"image/color"
+	"mtt/timenes/common"
+	"mtt/timenes/nes"
+	"os"
 	"strings"
 
 	"github.com/ebitenui/ebitenui"
@@ -25,6 +28,7 @@ var FC_White color.RGBA = color.RGBA{R: 232, G: 228, B: 224, A: 255}
 var FC_Black color.RGBA = color.RGBA{R: 10, G: 10, B: 10, A: 255}
 
 var currDir string = "./roms/games"
+var fullDirectory []os.DirEntry
 
 // NOTE: It's not strictly necessary to store references to all the buttons in the toolbar struct, but this example does
 // so for completeness' sake. When you keep a reference to buttons in the struct, you can later configure them to respond
@@ -436,9 +440,9 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 					currDir += entry.(ListEntry).Name
 					fileList.SetEntries(RefreshDirectoryList())
 				} else {
-					filepath = currDir + "/" + entry.(ListEntry).Name
-					ROMExists = true
-					ROMLoaded = false
+					common.Filepath = currDir + "/" + entry.(ListEntry).Name
+					common.ROMExists = true
+					common.ROMLoaded = false
 					rw()
 				}
 			}
@@ -485,7 +489,7 @@ func openFileSelectWindow(res *resources, ui *ebitenui.UI) {
 	promptHeight := 300
 
 	r := goimage.Rect(0, 0, promptWidth, promptHeight)
-	r = r.Add(goimage.Point{((screenWidth * screenScale) - promptWidth) / 2, ((screenHeight * screenScale) - promptHeight) / 2})
+	r = r.Add(goimage.Point{((common.ScreenWidth * common.ScreenScale) - promptWidth) / 2, ((common.ScreenHeight * common.ScreenScale) - promptHeight) / 2})
 	window.SetLocation(r)
 
 	rw = ui.AddWindow(window)
@@ -499,20 +503,59 @@ func RefreshDirectoryList() []any {
 
 	list = append(list, ListEntry{0, true, "/.."})
 
-	for i := range g.directory {
-		split := strings.Split(g.directory[i].Name(), ".")
+	for i := range fullDirectory {
+		split := strings.Split(fullDirectory[i].Name(), ".")
 
-		//isGitFolder := g.directory[i].IsDir() && firstN(g.directory[i].Name(), 1) == "."
-		isNESFile := (!g.directory[i].IsDir() && split[len(split)-1] == "nes")
+		//isGitFolder := fullDirectory[i].IsDir() && firstN(fullDirectory[i].Name(), 1) == "."
+		isNESFile := (!fullDirectory[i].IsDir() && split[len(split)-1] == "nes")
 
-		if firstN(g.directory[i].Name(), 1) != "." && (g.directory[i].IsDir() || isNESFile) {
-			itemText := g.directory[i].Name()
-			if g.directory[i].IsDir() {
+		if common.FirstN(fullDirectory[i].Name(), 1) != "." && (fullDirectory[i].IsDir() || isNESFile) {
+			itemText := fullDirectory[i].Name()
+			if fullDirectory[i].IsDir() {
 				itemText = "/" + itemText
 			}
-			list = append(list, ListEntry{i, g.directory[i].IsDir(), itemText})
+			list = append(list, ListEntry{i, fullDirectory[i].IsDir(), itemText})
 		}
 	}
 
 	return list
+}
+
+func GetCurrentDirectory(dir string) {
+	dirEntries, err := os.ReadDir(dir)
+	common.Check(err)
+
+	fullDirectory = dirEntries
+}
+
+func SetupToolbarOptions(res *resources, toolbar *toolbar) {
+	// Event handling
+	toolbar.helpButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		println("The help button was pressed!")
+	}))
+
+	// Example 2: Configure the "Quit" menu entry to end the program when it's pressed.
+	toolbar.quitButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		nes.Emulator.Exit = true
+	}))
+
+	//Select ROM
+	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.SelectROM("roms/games/smb.nes")
+	}))
+
+	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.SelectROM("roms/AccuracyCoin.nes")
+		//SelectROM("roms/nestest.nes")
+	}))
+
+	toolbar.selectROMButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		//Add file select
+		openFileSelectWindow(res, nes.Emulator.UI)
+	}))
+
+	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		nes.ShowFPS = !nes.ShowFPS
+	}))
+
 }

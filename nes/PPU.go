@@ -1,7 +1,8 @@
-package main
+package nes
 
 import (
 	"image/color"
+	"mtt/timenes/common"
 )
 
 var WriteLatch bool        //PPU's w register
@@ -214,7 +215,7 @@ func Emulate_PPU(g *Game) {
 	}
 
 	//Drawing
-	DrawScreen(g)
+	DrawScreen()
 
 	ppuDot++
 	if ppuDot > 341 {
@@ -260,7 +261,7 @@ func PPURender() {
 	}
 }
 
-func DrawScreen(g *Game) {
+func DrawScreen( /*g *Game*/ ) {
 
 	if ppuScanline < 240 && ppuDot > 0 && ppuDot <= 256 {
 		var PalHi byte = 0  //Which color palette to use?
@@ -280,7 +281,7 @@ func DrawScreen(g *Game) {
 		}
 
 		if ppuScanline >= 238 && ppuDot == 255 {
-			print("")
+			common.Print("")
 		}
 		var SpritePalHi byte = 0        //Which color palette to use
 		var SpritePalLow byte = 0       //Index into a color palette
@@ -324,26 +325,11 @@ func DrawScreen(g *Game) {
 
 		color := Palette[PaletteRAM[(PalHi*4)+PalLow]&0x3F]
 
-		RenderColor(g, color)
+		RenderPixel(color)
 		//RenderNTSCPixel(ppuDot, pixel uint16, ppuCycleCounter int)
 
 		//g.gameScreen.Set(ppuDot-1, ppuScanline, color)
 	}
-}
-
-func RenderColor(g *Game, color color.RGBA) {
-	pixIndex := uint64((((ppuScanline) * screenWidth) + (ppuDot - 1)) * 4)
-
-	//pixIndex &= 0x3BFFF
-	g.gameScreen.Pix[pixIndex] = color.R
-	g.gameScreen.Pix[pixIndex+1] = color.G
-	g.gameScreen.Pix[pixIndex+2] = color.B
-	g.gameScreen.Pix[pixIndex+3] = color.A
-	/*pixR, pixG, pixB := DecodeNTSC(screenWidth, int(math.Mod(float64(ppuDot*8)+3.9, 12.0)))
-	g.gameScreen.Pix[pixIndex] = pixR
-	g.gameScreen.Pix[pixIndex+1] = pixG
-	g.gameScreen.Pix[pixIndex+2] = pixB
-	g.gameScreen.Pix[pixIndex+3] = 0xFF*/
 }
 
 func PPU8Steps() {
@@ -353,8 +339,8 @@ func PPU8Steps() {
 	case 0:
 		ppuShiftRegister_patternL = ((ppuShiftRegister_patternL & 0xFF00) | uint16(ppu8Step_patternLowBitPlane))
 		ppuShiftRegister_patternH = ((ppuShiftRegister_patternH & 0xFF00) | uint16(ppu8Step_patternHighBitPlane))
-		ppuShiftRegister_attributeL = ((ppuShiftRegister_attributeL & 0xFF00) | ternary((ppu8Step_attribute&1) == 1, 0xFF, 0x00))
-		ppuShiftRegister_attributeH = ((ppuShiftRegister_attributeH & 0xFF00) | ternary((ppu8Step_attribute&2) == 2, 0xFF, 0x00))
+		ppuShiftRegister_attributeL = ((ppuShiftRegister_attributeL & 0xFF00) | common.Ternary((ppu8Step_attribute&1) == 1, 0xFF, 0x00))
+		ppuShiftRegister_attributeH = ((ppuShiftRegister_attributeH & 0xFF00) | common.Ternary((ppu8Step_attribute&2) == 2, 0xFF, 0x00))
 		ppuAddressBus = (0x2000 + (VRAMAddress & 0x0FFF))
 		ppu8Step_temp = ReadPPU()
 	case 1:
@@ -373,7 +359,7 @@ func PPU8Steps() {
 		}
 		ppu8Step_attribute = byte(ppu8Step_attribute & 3)
 	case 4:
-		ppuAddressBus = (((VRAMAddress & 0b0111000000000000) >> 12) | (uint16(ppu8Step_NextCharacter) * 16) | ternary(ppuCtrl_BGPatternTable, 0x1000, 0))
+		ppuAddressBus = (((VRAMAddress & 0b0111000000000000) >> 12) | (uint16(ppu8Step_NextCharacter) * 16) | common.Ternary(ppuCtrl_BGPatternTable, 0x1000, 0))
 		ppu8Step_temp = ReadPPU()
 	case 5:
 		ppu8Step_patternLowBitPlane = ppu8Step_temp
@@ -444,7 +430,7 @@ func SpriteEvaluation() {
 				}
 				if ppuSpriteEvalTick == 0 {
 					//Reading index 0 of an object's set of 4 bytes
-					if (ppuScanline-int(ppuSpriteEvalTemp) >= 0) && (ppuScanline-int(ppuSpriteEvalTemp) < int(ternary(ppuCtrl_Use8x16Sprites, 16, 8))) {
+					if (ppuScanline-int(ppuSpriteEvalTemp) >= 0) && (ppuScanline-int(ppuSpriteEvalTemp) < int(common.Ternary(ppuCtrl_Use8x16Sprites, 16, 8))) {
 						//This object *is* on this scanline!
 						if !ppuSecondaryOAMFull {
 							ppuSecondaryOAMAddress++ //Increment this for the next write to Secondary OAM
@@ -546,9 +532,9 @@ func ppuFindSpritePatternData(SecondaryOAMSlot uint16) uint16 {
 		// plus the number of scanlines from the top of the object
 		// if the attributes are set to flip Y, it's 7 - the number of scanlines from the top of the object
 		if ((ppu_SpriteAttribute[SecondaryOAMSlot] >> 7) & 1) == 0 { //Attributes are not set up to flip Y
-			return uint16(ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
+			return uint16(common.Ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
 		} else { //Attributes are set up to flip Y
-			return uint16(ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16((7-(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))&7))
+			return uint16(common.Ternary(ppuCtrl_SpritePatternTable, 0x1000, 0) + (uint16(ppu_SpritePattern[SecondaryOAMSlot]) << 4) + uint16((7-(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))&7))
 		}
 	} else { //8x16 sprites
 		// in 8x16 mode, instead of using ppu_SpritePattern to deternime which pattern table to fetch data from...
@@ -562,15 +548,15 @@ func ppuFindSpritePatternData(SecondaryOAMSlot uint16) uint16 {
 		//If we're drawing the bottom half of the sprite, add 16
 		if ((ppu_SpriteAttribute[SecondaryOAMSlot] >> 7) & 1) == 0 { //Attributes are not set up to flip Y
 			if ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]) < 8 {
-				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) | (uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
+				return uint16(common.Ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) | (uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + uint16(ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot])))
 			} else {
-				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 16) + uint16((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7))
+				return uint16(common.Ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 16) + uint16((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7))
 			}
 		} else { //Attributes are set up to flip Y
 			if ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]) < 8 {
-				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 16) + uint16(((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7)+7))
+				return uint16(common.Ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 16) + uint16(((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7)+7))
 			} else {
-				return uint16(ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 7) + uint16((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7))
+				return uint16(common.Ternary((ppu_SpritePattern[SecondaryOAMSlot]&1) == 1, 0x1000, 0) + ((uint16(ppu_SpritePattern[SecondaryOAMSlot]&0xFE) << 4) + 7) + uint16((ppuScanline-int(ppu_SpriteYposition[SecondaryOAMSlot]))&7))
 			}
 		}
 	}
@@ -598,7 +584,7 @@ func NTSCSignal(pixColor uint16, phase int) float64 {
 
 	// When de-emphasis bits are set, some parts of the signal are attenuated:
 	// colors 14 .. 15 are not affected by de-emphasis
-	attenuation := ternary((((emphasis&1 > 0) && InColorPhase(0xC, phase)) || ((emphasis&2 > 0) && InColorPhase(0x4, phase)) || ((emphasis&4 > 0) && InColorPhase(0x8, phase))) && (color < 0xE), 8, 0)
+	attenuation := common.Ternary((((emphasis&1 > 0) && InColorPhase(0xC, phase)) || ((emphasis&2 > 0) && InColorPhase(0x4, phase)) || ((emphasis&4 > 0) && InColorPhase(0x8, phase))) && (color < 0xE), 8, 0)
 
 	// The square wave for this color alternates between these two voltages:
 	low := levels[0+level+attenuation]

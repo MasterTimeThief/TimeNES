@@ -1,7 +1,8 @@
-package main
+package apu
 
 import (
 	"math"
+	"mtt/timenes/common"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
@@ -38,23 +39,22 @@ func InitAudioOutput() {
 		ringBuffer: newRingBuffer(apuSampleRate),
 		SampleRate: float64(apuMaxSamplesPerFrame),
 	}
+}
 
-	if g.audioContext == nil {
-		g.audioContext = audio.NewContext(apuSampleRate)
-	}
-	if g.player == nil {
-		// Pass the (infinite) stream to NewPlayer.
-		// After calling Play, the stream never ends as long as the player object lives.
-		var err error
-		g.player, err = g.audioContext.NewPlayerF32(audBuf)
-		check(err)
+func NewAudioContext() *audio.Context {
+	return audio.NewContext(apuSampleRate)
+}
 
-		g.player.SetBufferSize(time.Second / 60)
-		g.player.SetVolume(0.15)
-		go func() {
-			g.player.Play()
-		}()
-	}
+func NewAudioPlayer(context *audio.Context) *audio.Player {
+	player, err := context.NewPlayerF32(audBuf)
+	common.Check(err)
+
+	player.SetBufferSize(time.Second / 60)
+	player.SetVolume(0.15)
+	go func() {
+		player.Play()
+	}()
+	return player
 }
 
 const (
@@ -63,8 +63,8 @@ const (
 	apuSampleRate         int = 60000
 	apuMaxSamplesPerFrame int = apuSampleRate / 60 * 4 * 2
 
-	FrameCounterRate  = float64(CPU_Frequency) / 240.0
-	DefaultSampleRate = float64(CPU_Frequency) / float64(apuSampleRate)
+	FrameCounterRate  = float64(common.CPU_Frequency) / 240.0
+	DefaultSampleRate = float64(common.CPU_Frequency) / float64(apuSampleRate)
 )
 
 func (a *AudioBufferStruct) sendSample() {
@@ -80,14 +80,14 @@ func (a *AudioBufferStruct) sendSample() {
 
 func AudioOutput() {
 	//Pulse channels
-	apuPulse1.UpdatePulseOutput()
-	apuPulse2.UpdatePulseOutput()
-	pulse_out := squareTable[apuPulse1.Output+apuPulse2.Output]
+	Pulse1.UpdatePulseOutput()
+	Pulse2.UpdatePulseOutput()
+	pulse_out := squareTable[Pulse1.Output+Pulse2.Output]
 
-	apuTriangle.UpdateTriangleOutput()
-	apuNoise.UpdateNoiseOutput()
+	Triangle.UpdateTriangleOutput()
+	Noise.UpdateNoiseOutput()
 
-	tnd_out := tndTable[(3*apuTriangle.Output)+(2*apuNoise.Output)+apuDMC.Output]
+	tnd_out := tndTable[(3*Triangle.Output)+(2*Noise.Output)+DMC.Output]
 
 	audBuf.sample += pulse_out + tnd_out
 

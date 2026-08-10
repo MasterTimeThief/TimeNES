@@ -1,6 +1,10 @@
-package main
+package nes
 
-import "fmt"
+import (
+	"fmt"
+	"mtt/timenes/common"
+	"mtt/timenes/nes/apu"
+)
 
 var ProgramCounter uint16
 var StackPointer byte
@@ -157,14 +161,14 @@ func Pull() byte {
 
 func PushFlags() {
 	temp := byte(0)
-	temp += byte(ternary(flag_Carry, 0x01, 0x00))
-	temp += byte(ternary(flag_Zero, 0x02, 0x00))
-	temp += byte(ternary(flag_InterruptDisable, 0x04, 0x00))
-	temp += byte(ternary(flag_Decimal, 0x08, 0x00))
-	temp += byte(ternary(flag_B, 0x10, 0x00)) //B Flag
+	temp += byte(common.Ternary(flag_Carry, 0x01, 0x00))
+	temp += byte(common.Ternary(flag_Zero, 0x02, 0x00))
+	temp += byte(common.Ternary(flag_InterruptDisable, 0x04, 0x00))
+	temp += byte(common.Ternary(flag_Decimal, 0x08, 0x00))
+	temp += byte(common.Ternary(flag_B, 0x10, 0x00)) //B Flag
 	temp += 0x20
-	temp += byte(ternary(flag_Overflow, 0x40, 0x00))
-	temp += byte(ternary(flag_Negative, 0x80, 0x00))
+	temp += byte(common.Ternary(flag_Overflow, 0x40, 0x00))
+	temp += byte(common.Ternary(flag_Negative, 0x80, 0x00))
 	Push(temp)
 
 }
@@ -262,7 +266,7 @@ func Op_EOR(Value byte) {
 
 // Add Value to A with Carry
 func Op_ADC(Value byte) {
-	IntSum := int(A) + int(Value) + BoolToInt(flag_Carry)
+	IntSum := int(A) + int(Value) + common.BoolToInt(flag_Carry)
 	flag_Overflow = (^int(A^Value) & (int(A) ^ IntSum) & 0x80) != 0
 	flag_Carry = IntSum > 0xFF
 	A = byte(IntSum)
@@ -271,7 +275,7 @@ func Op_ADC(Value byte) {
 
 // Subtract Value from A with Carry
 func Op_SBC(Value byte) {
-	IntSum := int(A) - int(Value) - BoolToInt(!flag_Carry)
+	IntSum := int(A) - int(Value) - common.BoolToInt(!flag_Carry)
 	flag_Overflow = (int(A^Value) & (int(A) ^ IntSum) & 0x80) != 0
 	flag_Carry = IntSum >= 0x00
 	A = byte(IntSum)
@@ -339,9 +343,9 @@ func Emulate_CPU(g *Game) {
 	if !DoNMI {
 		//If we're not running an NMI
 		opcode = Read(ProgramCounter)
-		if LoggingCPU {
-			prepTraceLogger()
-		}
+		//if debug.LoggingCPU {
+		//	debug.prepTraceLogger()
+		//}
 		ProgramCounter++
 		//MasterClockTick("OPCODE")
 	} else {
@@ -1196,8 +1200,8 @@ func Emulate_CPU(g *Game) {
 		PushFlags()
 		//flag_InterruptDisable = true
 
-		PCL := Read(ternary(DoNMI, 0xFFFA, 0xFFFE))
-		PCH := Read(ternary(DoNMI, 0xFFFB, 0xFFFF))
+		PCL := Read(common.Ternary(DoNMI, 0xFFFA, 0xFFFE))
+		PCH := Read(common.Ternary(DoNMI, 0xFFFB, 0xFFFF))
 		ProgramCounter = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
 		DoNMI = false
 		CPU_Cycles = 7
@@ -1879,18 +1883,18 @@ func Emulate_CPU(g *Game) {
 	// This will be the second
 	//MasterClockTick(g)
 
-	if LoggingCPU {
-		TraceLogger()
-	}
+	//if LoggingCPU {
+	//	TraceLogger()
+	//}
 
 	if CPU_Cycles != CPU_Cycles_New {
 		//fmt.Print(cycleTest)
 		//fmt.Printf("Cycle Mismatch! [%02X] %d/%d \n", opcode, CPU_Cycles, CPU_Cycles_New)
 	}
-	cycleTest = ""
+	//cycleTest = ""
 
 	//Check for, and perform Interrupt Request (IRQ)
-	if (apuDMCInterrupt || apuFrameInterrupt) && !DoNMI && !flag_InterruptDisable {
+	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !DoNMI && !flag_InterruptDisable {
 		flag_B = false
 		Push(byte(ProgramCounter >> 8))
 		Push(byte(ProgramCounter))
@@ -1901,8 +1905,8 @@ func Emulate_CPU(g *Game) {
 		ProgramCounter = BuildAddress(PCL, PCH)
 
 		//Disable interrupts
-		apuDMCInterrupt = false
-		apuFrameInterrupt = false
+		apu.APUDMCInterrupt = false
+		apu.APUFrameInterrupt = false
 		DoNMI = false
 	}
 
@@ -1919,7 +1923,7 @@ func Emulate_CPU(g *Game) {
 		//Run the APU
 		apuRun = !apuRun
 		if apuRun {
-			Emulate_APU(g)
+			apu.Emulate_APU()
 		}
 	}
 
@@ -1931,5 +1935,5 @@ func Emulate_CPU(g *Game) {
 	//CPU_Halted = true
 	//}
 
-	InstructionCount++
+	//InstructionCount++
 }

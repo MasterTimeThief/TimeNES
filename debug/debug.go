@@ -1,10 +1,8 @@
-package main
+package debug
 
 import (
 	"fmt"
-	"image"
-
-	"github.com/ebitengine/debugui"
+	"mtt/timenes/nes"
 )
 
 var LoggingCPU = false
@@ -19,28 +17,27 @@ var traceCycles int
 
 var cycleTest string
 
-var outsideCodeRead, outsideCodeWrite uint16 = 0, 0
-
 // Sets everything outside of operands for the tracelogger to run later
-func prepTraceLogger() {
-	tracePC = ProgramCounter
-	traceVRAM = VRAMAddress
+func PrepTraceLogger() {
+	tracePC = nes.ProgramCounter
+	traceVRAM = nes.VRAMAddress
 
-	traceA = A
-	traceX = X
-	tracyY = Y
-	traceSP = StackPointer
+	traceA = nes.A
+	traceX = nes.X
+	tracyY = nes.Y
+	traceSP = nes.StackPointer
 
-	traceFlagC = flag_Carry
-	traceFlagZ = flag_Zero
-	traceFlagI = flag_InterruptDisable
-	traceFlagD = flag_Decimal
-	traceFlagV = flag_Overflow
-	traceFlagN = flag_Negative
+	/*traceFlagC = nes.flag_Carry
+	traceFlagZ = nes.flag_Zero
+	traceFlagI = nes.flag_InterruptDisable
+	traceFlagD = nes.flag_Decimal
+	traceFlagV = nes.flag_Overflow
+	traceFlagN = nes.flag_Negative*/
 
-	traceCycles = CPU_TotalCycles
+	traceCycles = nes.CPU_TotalCycles
 }
 
+/*
 func TraceLogger() {
 	OpCodeNames := [...]string{
 		"BRK", "ORA", "HLT", "SLO", "NOP", "ORA", "ASL", "SLO", "PHP", "ORA",
@@ -70,7 +67,7 @@ func TraceLogger() {
 		"BEQ", "SBC", "HLT", "ISC", "NOP", "SBC", "INC", "ISC", "SED", "SBC",
 		"NOP", "ISC", "NOP", "SBC", "INC", "ISC",
 	}
-	if LoggingCPU /*&& InstructionCount > 35000*/ {
+	if LoggingCPU /*&& InstructionCount > 35000* / {
 		Traceline := "$" + fmt.Sprintf("%04X", tracePC)
 
 		Traceline += "\t" + fmt.Sprintf("%02X ", opcode)
@@ -146,10 +143,11 @@ func TraceLogger() {
 		/*LogCount--
 		if LogCount < 0 {
 			CPU_Halted = true
-		}*/
+		}* /
 	}
-}
+}*/
 
+/*
 func TraceLoggerPPU() {
 
 	if LoggingPPU {
@@ -177,11 +175,11 @@ func TraceLoggerPPU() {
 		/*LogCount--
 		if LogCount < 0 {
 			CPU_Halted = true
-		}*/
+		}* /
 	}
-}
-
-func DebugWindow(g *Game) error { //Using ebitengine's built in debug display
+}*/
+/*
+func DebugWindow( g *Game ) error { //Using ebitengine's built in debug display
 
 	if _, err := g.debugui.Update(func(ctx *debugui.Context) error {
 		ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
@@ -204,7 +202,7 @@ func DebugWindow(g *Game) error { //Using ebitengine's built in debug display
 				pauseEmulation = !pauseEmulation
 			})
 			ctx.Button("RESET").On(func() {
-				ROMLoaded = false
+				nes.ROMLoaded = false
 			})
 		})
 		return nil
@@ -213,22 +211,18 @@ func DebugWindow(g *Game) error { //Using ebitengine's built in debug display
 	}
 	return nil
 }
-
+*/
 var CartRamLastString string
 
 func CartRAMLogger() {
-	CartTestStatus := CartRAM[0]
-	CartTestValid := CartRAM[1] == 0xDE && CartRAM[2] == 0xB0 && CartRAM[3] == 0x61
+	CartTestStatus := nes.CartRAM[0]
+	CartTestValid := nes.CartRAM[1] == 0xDE && nes.CartRAM[2] == 0xB0 && nes.CartRAM[3] == 0x61
 
-	newString := string(CartRAM[4:])
+	newString := string(nes.CartRAM[4:])
 
 	if CartTestValid && CartTestStatus == 0x80 && (newString != CartRamLastString) {
 		//Valid Test line
 		CartRamLastString = newString
 		fmt.Print(newString)
 	}
-}
-
-func toggleFPS() {
-	ShowFPS = !ShowFPS
 }

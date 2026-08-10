@@ -1,4 +1,4 @@
-package main
+package apu
 
 type Envelope struct {
 	ConstantVolume bool
@@ -107,114 +107,106 @@ var apuTriangleSequences = [32]byte{
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 }
 
-var apuPulse1 PulseChannel
-var apuPulse2 PulseChannel
-var apuTriangle TriangleChannel
-var apuNoise NoiseChannel
-var apuDMC DeltaModChannel
+var Pulse1 PulseChannel
+var Pulse2 PulseChannel
+var Triangle TriangleChannel
+var Noise NoiseChannel
+var DMC DeltaModChannel
 
 // var apuEnablePulse1, apuEnablePulse2, apuEnableTriangle, apuEnableNoise, apuEnableDMC bool
-var apuDMCInterrupt, apuDMCDelayed, apuFrameInterrupt, apuInhibitIRQ, apuFrameCounterMode, apuIsHalfFrame bool
+var APUDMCInterrupt, apuDMCDelayed, APUFrameInterrupt, APUInhibitIRQ, APUFrameCounterMode, apuIsHalfFrame bool
 var apuFrameCounter int = 0
 var IRQLevelDetector, DoIRQ bool
-
-var apuEnvelopeStartFlag bool
-var apuEnvelopeDivider bool
-var apuEnvelopeDecay byte
 
 var apuDMAGetCycle, apuDoDMCDMA, apuDMCDMAHalt bool
 var apuDMCDMADelay, apuCannotDMCDMARightNow byte
 
 var apu4017ResetTimer int = 0
 var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
-var apuDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
+var APUDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
 var apuNoiseTimerLUT = [16]uint16{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068}
 
 var squareTable [31]float32
 var tndTable [203]float32
 
-var apuSilent bool = true
+var apuEnabled bool = false
 
 func ResetAPU() {
 
 	//Reset Pulse 1
-	apuPulse1.Enabled = false
-	apuPulse1.ResetLengthCounter()
-	apuPulse1.Timer = 0
+	Pulse1.Enabled = false
+	Pulse1.ResetLengthCounter()
+	Pulse1.Timer = 0
 
-	apuPulse1.ResetEnvelope()
+	Pulse1.ResetEnvelope()
 
-	apuPulse1.Duty = 0
-	apuPulse1.DutyPos = 0
-	apuPulse1.ResetSweep()
+	Pulse1.Duty = 0
+	Pulse1.DutyPos = 0
+	Pulse1.ResetSweep()
 	//apuPulse1.ShiftRegister = 0
 
 	//Reset Pulse 2
-	apuPulse2.Enabled = false
-	apuPulse2.ResetLengthCounter()
-	apuPulse2.Timer = 0
+	Pulse2.Enabled = false
+	Pulse2.ResetLengthCounter()
+	Pulse2.Timer = 0
 
-	apuPulse2.ResetEnvelope()
+	Pulse2.ResetEnvelope()
 
-	apuPulse2.Duty = 0
-	apuPulse2.DutyPos = 0
-	apuPulse2.ResetSweep()
+	Pulse2.Duty = 0
+	Pulse2.DutyPos = 0
+	Pulse2.ResetSweep()
 	//apuPulse2.ShiftRegister = 0
 
 	//Reset Triangle
-	apuTriangle.Enabled = false
-	apuTriangle.ResetLengthCounter()
-	apuTriangle.Timer = 0
-	apuTriangle.TimerReloadValue = 0
-	apuTriangle.SeqPos = 0
+	Triangle.Enabled = false
+	Triangle.ResetLengthCounter()
+	Triangle.Timer = 0
+	Triangle.TimerReloadValue = 0
+	Triangle.SeqPos = 0
 
-	apuTriangle.LinearCounter.ReloadFlag = false
-	apuTriangle.LinearCounter.Counter = 0
-	apuTriangle.LinearCounter.ReloadValue = 0
-	apuTriangle.LinearCounter.HaltFlag = false
+	Triangle.LinearCounter.ReloadFlag = false
+	Triangle.LinearCounter.Counter = 0
+	Triangle.LinearCounter.ReloadValue = 0
+	Triangle.LinearCounter.HaltFlag = false
 
 	//Reset Noise
-	apuNoise.Enabled = false
-	apuNoise.ResetLengthCounter()
-	apuNoise.Timer = 0
+	Noise.Enabled = false
+	Noise.ResetLengthCounter()
+	Noise.Timer = 0
 
-	apuNoise.ResetEnvelope()
+	Noise.ResetEnvelope()
 
-	apuNoise.Mode = false
-	apuNoise.Output = 0
-	apuNoise.ShiftRegister = 1
+	Noise.Mode = false
+	Noise.Output = 0
+	Noise.ShiftRegister = 1
 
 	//Reset DMC
-	apuDMC.Enabled = false
-	apuDMC.Timer = 0
-	apuDMC.IRQEnable = false
-	apuDMC.Loop = false
-	apuDMC.SampleRate = 0
-	apuDMC.Output = 0
-	apuDMC.SampleAddress = 0
-	apuDMC.SampleLength = 0
-	apuDMC.BytesRemaining = 0
-	apuDMC.Buffer = 0
-	apuDMC.SampleAddressCounter = 0
-	apuDMC.Shifter = 0
-	apuDMC.ShifterBitsRemaining = 0
-	apuDMC.DPCM_Up = false
+	DMC.Enabled = false
+	DMC.Timer = 0
+	DMC.IRQEnable = false
+	DMC.Loop = false
+	DMC.SampleRate = 0
+	DMC.Output = 0
+	DMC.SampleAddress = 0
+	DMC.SampleLength = 0
+	DMC.BytesRemaining = 0
+	DMC.Buffer = 0
+	DMC.SampleAddressCounter = 0
+	DMC.Shifter = 0
+	DMC.ShifterBitsRemaining = 0
+	DMC.DPCM_Up = false
 
 	//APU Variables
-	apuDMCInterrupt = false
+	APUDMCInterrupt = false
 	apuDMCDelayed = false
-	apuFrameInterrupt = false
-	apuInhibitIRQ = false
-	apuFrameCounterMode = false
+	APUFrameInterrupt = false
+	APUInhibitIRQ = false
+	APUFrameCounterMode = false
 	//apuSilent = false
 	apuIsHalfFrame = false
 	apuFrameCounter = 0
 	IRQLevelDetector = false
 	DoIRQ = false
-
-	apuEnvelopeStartFlag = false
-	apuEnvelopeDivider = false
-	apuEnvelopeDecay = 0
 
 	apuDMAGetCycle = true
 	apuDoDMCDMA, apuDMCDMAHalt = false, false
@@ -235,7 +227,7 @@ func InitAPU() {
 
 }
 
-func Emulate_APU(g *Game) {
+func Emulate_APU() {
 	AudioOutput()
 
 	if apuDMAGetCycle { //DMA Get Cycle
@@ -259,11 +251,11 @@ func Emulate_APU(g *Game) {
 	*/
 
 	//Clock triangle timer every cycle
-	if apuTriangle.Timer == 0 {
-		apuTriangle.SeqPos = (apuTriangle.SeqPos + 1) & 31
-		apuTriangle.Timer = apuTriangle.TimerReloadValue
+	if Triangle.Timer == 0 {
+		Triangle.SeqPos = (Triangle.SeqPos + 1) & 31
+		Triangle.Timer = Triangle.TimerReloadValue
 	} else {
-		apuTriangle.Timer--
+		Triangle.Timer--
 	}
 
 	//Clock sequencer
@@ -301,51 +293,51 @@ func Emulate_APU(g *Game) {
 
 func DMA_Get() {
 	//Clock timers
-	if apuPulse1.Timer == 0 {
-		apuPulse1.DutyPos = (apuPulse1.DutyPos + 1) & 7
-		apuPulse1.Timer = apuPulse1.TimerReloadValue
+	if Pulse1.Timer == 0 {
+		Pulse1.DutyPos = (Pulse1.DutyPos + 1) & 7
+		Pulse1.Timer = Pulse1.TimerReloadValue
 	} else {
-		apuPulse1.Timer--
+		Pulse1.Timer--
 	}
 
-	if apuPulse2.Timer == 0 {
-		apuPulse2.DutyPos = (apuPulse2.DutyPos + 1) & 7
-		apuPulse2.Timer = apuPulse2.TimerReloadValue
+	if Pulse2.Timer == 0 {
+		Pulse2.DutyPos = (Pulse2.DutyPos + 1) & 7
+		Pulse2.Timer = Pulse2.TimerReloadValue
 	} else {
-		apuPulse2.Timer--
+		Pulse2.Timer--
 	}
 
-	if apuNoise.Timer == 0 {
-		apuNoise.ClockShiftRegister()
-		apuNoise.Timer = apuNoise.TimerReloadValue
+	if Noise.Timer == 0 {
+		Noise.ClockShiftRegister()
+		Noise.Timer = Noise.TimerReloadValue
 	} else {
-		apuNoise.Timer--
+		Noise.Timer--
 	}
 
-	apuDMC.Timer--
-	apuDMC.Timer-- // the table is in CPU cycles, but the count is in APU cycles
+	DMC.Timer--
+	DMC.Timer-- // the table is in CPU cycles, but the count is in APU cycles
 
-	if apuDMC.Timer == 0 {
-		apuDMC.Timer = apuDMC.SampleRate
-		apuDMC.DPCM_Up = (apuDMC.Shifter & 1) == 1
-		if apuDMC.DPCM_Up {
-			if apuDMC.Output <= 125 { // this is 7 bit, and cannot go above 127
+	if DMC.Timer == 0 {
+		DMC.Timer = DMC.SampleRate
+		DMC.DPCM_Up = (DMC.Shifter & 1) == 1
+		if DMC.DPCM_Up {
+			if DMC.Output <= 125 { // this is 7 bit, and cannot go above 127
 
-				apuDMC.Output += 2
+				DMC.Output += 2
 			}
 		} else {
-			if apuDMC.Output >= 2 { // this is 7 bit, and cannot go below 0
+			if DMC.Output >= 2 { // this is 7 bit, and cannot go below 0
 
-				apuDMC.Output -= 2
+				DMC.Output -= 2
 			}
 		}
-		apuDMC.Shifter >>= 1                  // shift the bits in the shift register
-		apuDMC.ShifterBitsRemaining--         // and decrement the "bits remaining" counter.
-		if apuDMC.ShifterBitsRemaining == 0 { // If there are no bits left,
+		DMC.Shifter >>= 1                  // shift the bits in the shift register
+		DMC.ShifterBitsRemaining--         // and decrement the "bits remaining" counter.
+		if DMC.ShifterBitsRemaining == 0 { // If there are no bits left,
 
-			apuDMC.ShifterBitsRemaining = 8 // it's time for a DMC DMA!
+			DMC.ShifterBitsRemaining = 8 // it's time for a DMC DMA!
 
-			if apuDMC.BytesRemaining > 0 /*|| APU_SetImplicitAbortDMC4015*/ {
+			if DMC.BytesRemaining > 0 /*|| APU_SetImplicitAbortDMC4015*/ {
 				if !apuDoDMCDMA && apuCannotDMCDMARightNow != 2 {
 					// if playing a sample:
 					apuDoDMCDMA = true
@@ -355,7 +347,7 @@ func DMA_Get() {
 				//	APU_ImplicitAbortDMC4015 = true // check for weird DMA abort behavior
 				//	APU_SetImplicitAbortDMC4015 = false
 				//}
-				apuDMC.Shifter = apuDMC.Buffer // and set up the shifter with the new values.
+				DMC.Shifter = DMC.Buffer // and set up the shifter with the new values.
 				//apuSilent = false              // The APU is not silent.
 
 			} else {
@@ -381,9 +373,17 @@ func DMA_Put() {
 
 			apuDoDMCDMA = true
 			apuDMCDMAHalt = true
-			apuDMC.Shifter = apuDMC.Buffer
-			apuSilent = false
+			DMC.Shifter = DMC.Buffer
+			apuEnabled = true
 		}
+	}
+}
+
+func Set4017ResetTimer() {
+	if apuDMAGetCycle {
+		apu4017ResetTimer = 4
+	} else {
+		apu4017ResetTimer = 3
 	}
 }
 
@@ -453,7 +453,7 @@ func ClockFrameCounter() { //Also called Frame Sequencer
 	apuFrameCounter++
 	apuIsHalfFrame = false
 
-	if !apuFrameCounterMode { //4-Cycle mode
+	if !APUFrameCounterMode { //4-Cycle mode
 		switch apuFrameCounter {
 		case 3728:
 			ClockFrameCounterQuarterFrame()
@@ -467,14 +467,14 @@ func ClockFrameCounter() { //Also called Frame Sequencer
 				ClockFrameCounterQuarterFrame()
 				ClockFrameCounterHalfFrame()
 			}
-			apuFrameInterrupt = true
+			APUFrameInterrupt = true
 			if !IRQLevelDetector {
-				IRQLevelDetector = !apuInhibitIRQ
+				IRQLevelDetector = !APUInhibitIRQ
 			}
 		case 14915:
-			apuFrameInterrupt = !apuInhibitIRQ
+			APUFrameInterrupt = !APUInhibitIRQ
 			if !IRQLevelDetector {
-				IRQLevelDetector = !apuInhibitIRQ
+				IRQLevelDetector = !APUInhibitIRQ
 			}
 			apuFrameCounter = 0
 		}
@@ -501,56 +501,49 @@ func ClockFrameCounter() { //Also called Frame Sequencer
 
 func ClockFrameCounterQuarterFrame() {
 
-	if apuEnvelopeStartFlag {
-		apuEnvelopeStartFlag = false
-		apuEnvelopeDecay = 15
-	} else {
-		apuEnvelopeDivider = true
-	}
-
 	/*if apuPulse1.Envelope.Volume != 0 {
 		apuPulse1.Envelope.Volume--
 	}
 	if apuPulse2.Envelope.Volume != 0 {
 		apuPulse2.Envelope.Volume--
 	}*/
-	apuPulse1.ClockEnvelope()
-	apuPulse2.ClockEnvelope()
-	apuNoise.ClockEnvelope()
+	Pulse1.ClockEnvelope()
+	Pulse2.ClockEnvelope()
+	Noise.ClockEnvelope()
 
-	apuTriangle.ClockLinearCounter(apuTriangle.LengthCounter.HaltFlag)
+	Triangle.ClockLinearCounter(Triangle.LengthCounter.HaltFlag)
 
 }
 
 func ClockFrameCounterHalfFrame() {
 
 	//TODO: Split off Clocks into seperate functions for readability
-	apuPulse1.ReloadLengthCounter()
-	apuPulse2.ReloadLengthCounter()
-	apuTriangle.ReloadLengthCounter()
-	apuNoise.ReloadLengthCounter()
+	Pulse1.ReloadLengthCounter()
+	Pulse2.ReloadLengthCounter()
+	Triangle.ReloadLengthCounter()
+	Noise.ReloadLengthCounter()
 
 	// length counters and sweep
-	if !apuPulse1.Enabled {
-		apuPulse1.LengthCounter.Counter = 0
+	if !Pulse1.Enabled {
+		Pulse1.LengthCounter.Counter = 0
 	}
-	if !apuPulse2.Enabled {
-		apuPulse2.LengthCounter.Counter = 0
+	if !Pulse2.Enabled {
+		Pulse2.LengthCounter.Counter = 0
 	}
-	if !apuTriangle.Enabled {
-		apuTriangle.LengthCounter.Counter = 0
+	if !Triangle.Enabled {
+		Triangle.LengthCounter.Counter = 0
 	}
-	if !apuNoise.Enabled {
-		apuNoise.LengthCounter.Counter = 0
+	if !Noise.Enabled {
+		Noise.LengthCounter.Counter = 0
 	}
 
-	apuPulse1.ClockSweep()
-	apuPulse2.ClockSweep()
+	Pulse1.ClockSweep()
+	Pulse2.ClockSweep()
 
-	apuPulse1.ClockLengthCounter()
-	apuPulse2.ClockLengthCounter()
-	apuTriangle.ClockLengthCounter()
-	apuNoise.ClockLengthCounter()
+	Pulse1.ClockLengthCounter()
+	Pulse2.ClockLengthCounter()
+	Triangle.ClockLengthCounter()
+	Noise.ClockLengthCounter()
 
 	apuIsHalfFrame = true
 
@@ -702,7 +695,7 @@ func (pulse *PulseChannel) UpdatePulseOutput() {
 		volume = pulse.Decay
 	}
 
-	if apuSilent || duty == 0 || pulse.LengthCounter.Counter == 0 || pulse.Timer < 8 {
+	if !apuEnabled || duty == 0 || pulse.LengthCounter.Counter == 0 || pulse.Timer < 8 {
 		pulse.Output = 0
 	} else {
 		pulse.Output = (duty * volume)
@@ -712,7 +705,7 @@ func (pulse *PulseChannel) UpdatePulseOutput() {
 func (triangle *TriangleChannel) UpdateTriangleOutput() {
 	triangle.Output = apuTriangleSequences[triangle.SeqPos]
 
-	if apuSilent || triangle.LengthCounter.Counter == 0 || triangle.LinearCounter.Counter == 0 {
+	if !apuEnabled || triangle.LengthCounter.Counter == 0 || triangle.LinearCounter.Counter == 0 {
 		triangle.Output = 0
 	}
 }
@@ -725,7 +718,12 @@ func (noise *NoiseChannel) SetNoiseTimer(Value byte) {
 func (noise *NoiseChannel) ClockShiftRegister() {
 	//Feedback is calculated as the exclusive-OR of bit 0 and one other bit: bit 6 if Mode flag is set, otherwise bit 1.
 	firstBit := byte(noise.ShiftRegister & 1)
-	secondBit := byte(noise.ShiftRegister&ternary(noise.Mode, 0x40, 0x02)) >> ternary(noise.Mode, 6, 1)
+	var secondBit byte
+	if noise.Mode {
+		secondBit = byte(noise.ShiftRegister&0x40) >> 6
+	} else {
+		secondBit = byte(noise.ShiftRegister&0x02) >> 1
+	}
 	feedback := firstBit ^ secondBit
 
 	//The shift register is shifted right by one bit.
@@ -737,7 +735,7 @@ func (noise *NoiseChannel) ClockShiftRegister() {
 }
 
 func (noise *NoiseChannel) UpdateNoiseOutput() {
-	if apuSilent || !noise.Enabled || (noise.ShiftRegister&1) == 1 || noise.LengthCounter.Counter == 0 {
+	if !apuEnabled || !noise.Enabled || (noise.ShiftRegister&1) == 1 || noise.LengthCounter.Counter == 0 {
 		noise.Output = 0
 	} else {
 		if noise.ConstantVolume {
