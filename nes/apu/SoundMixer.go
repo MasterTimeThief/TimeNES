@@ -11,7 +11,7 @@ import (
 const (
 	//apuCycleLength        int = 10000
 	//apuBitsPerCycle       int = 16
-	apuInputSamples       int = 14934
+	apuInputSamples       int = 14935
 	apuRingBufferSize     int = apuInputSamples * 8
 	apuSampleRate         int = 48000
 	apuMaxSamplesPerFrame int = apuSampleRate / 60
@@ -21,7 +21,6 @@ const (
 )
 
 type AudioBufferStruct struct {
-	//SampleRate  float64
 	ringBuffer  *ringBuffer
 	frameBuffer [][]byte
 	sample      float32
@@ -49,8 +48,8 @@ func InitAudioOutput() {
 		tndTable[i] = float32(163.67 / (24329.0/float64(i) + 100))
 	}
 	audBuf = &AudioBufferStruct{
-		ringBuffer: newRingBuffer(apuRingBufferSize),
-		//SampleRate: float64(apuMaxSamplesPerFrame),
+		ringBuffer:  newRingBuffer(apuRingBufferSize),
+		frameBuffer: make([][]byte, apuInputSamples),
 	}
 }
 
@@ -63,7 +62,7 @@ func NewAudioPlayer(context *audio.Context) *audio.Player {
 	common.Check(err)
 
 	player.SetBufferSize(time.Second / 60)
-	player.SetVolume(0.15)
+	player.SetVolume(0.5)
 	go func() {
 		player.Play()
 	}()
@@ -119,4 +118,8 @@ func TransferBuffer() {
 	}
 
 	audBuf.frameBuffer = nil
+}
+
+func Filter(freq float32, sampleRate int, isHighPass bool, resonance float32) {
+	//Add High / Low Passes
 }

@@ -40,6 +40,8 @@ var ppuShiftRegister_patternL, ppuShiftRegister_patternH, ppuShiftRegister_attri
 var ppu8Step_patternLowBitPlane, ppu8Step_patternHighBitPlane, ppu8Step_attribute, ppu8Step_NextCharacter, ppu8Step_temp byte
 var ppuScrollFineX, ppuScrollFineY byte
 var DrawNewFrame bool = false
+var FrameColorBuffer [61440]color.RGBA
+var FrameColorBufferPos int = 0
 
 var OAM [0x100]byte
 var SecondaryOAM [0x20]byte
@@ -325,7 +327,9 @@ func DrawScreen( /*g *Game*/ ) {
 
 		color := Palette[PaletteRAM[(PalHi*4)+PalLow]&0x3F]
 
-		RenderPixel(color)
+		//RenderPixel(color)
+		FrameColorBuffer[FrameColorBufferPos] = color
+		FrameColorBufferPos++
 		//RenderNTSCPixel(ppuDot, pixel uint16, ppuCycleCounter int)
 
 		//g.gameScreen.Set(ppuDot-1, ppuScanline, color)

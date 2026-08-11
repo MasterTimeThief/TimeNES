@@ -13,38 +13,59 @@ type NoiseChannel struct {
 
 var apuNoiseTimerLUT = [16]uint16{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068}
 
-func (noise *NoiseChannel) SetNoiseTimer(Value byte) {
-	noise.TimerReloadValue = apuNoiseTimerLUT[Value]
-	noise.Timer = noise.TimerReloadValue
+func (n *NoiseChannel) SetNoiseTimer(Value byte) {
+	n.TimerReloadValue = apuNoiseTimerLUT[Value]
+	n.Timer = n.TimerReloadValue
 }
 
-func (noise *NoiseChannel) ClockShiftRegister() {
-	//Feedback is calculated as the exclusive-OR of bit 0 and one other bit: bit 6 if Mode flag is set, otherwise bit 1.
-	firstBit := byte(noise.ShiftRegister & 1)
-	var secondBit byte
-	if noise.Mode {
-		secondBit = byte(noise.ShiftRegister&0x40) >> 6
+func (n *NoiseChannel) ResetNoise() {
+	n.Enabled = false
+	n.ResetLengthCounter()
+	n.Timer = 0
+
+	n.ResetEnvelope()
+
+	n.Mode = false
+	n.Output = 0
+	n.ShiftRegister = 1
+}
+
+func (n *NoiseChannel) ClockNoiseTimer() {
+	if n.Timer == 0 {
+		n.ClockShiftRegister()
+		n.Timer = n.TimerReloadValue
 	} else {
-		secondBit = byte(noise.ShiftRegister&0x02) >> 1
+		n.Timer--
+	}
+}
+
+func (n *NoiseChannel) ClockShiftRegister() {
+	//Feedback is calculated as the exclusive-OR of bit 0 and one other bit: bit 6 if Mode flag is set, otherwise bit 1.
+	firstBit := byte(n.ShiftRegister & 1)
+	var secondBit byte
+	if n.Mode {
+		secondBit = byte(n.ShiftRegister&0x40) >> 6
+	} else {
+		secondBit = byte(n.ShiftRegister&0x02) >> 1
 	}
 	feedback := firstBit ^ secondBit
 
 	//The shift register is shifted right by one bit.
-	noise.ShiftRegister >>= 1
-	noise.ShiftRegister &= 0x7FFF
+	n.ShiftRegister >>= 1
+	n.ShiftRegister &= 0x7FFF
 
 	//Bit 14, the leftmost bit, is set to the feedback calculated earlier.
-	noise.ShiftRegister = (noise.ShiftRegister & 0b0011111111111111) | (uint16(feedback&1) << 14)
+	n.ShiftRegister = (n.ShiftRegister & 0b0011111111111111) | (uint16(feedback&1) << 14)
 }
 
-func (noise *NoiseChannel) UpdateNoiseOutput() {
-	if !apuEnabled || !noise.Enabled || (noise.ShiftRegister&1) == 1 || noise.LengthCounter.Counter == 0 {
-		noise.Output = 0
+func (n *NoiseChannel) UpdateNoiseOutput() {
+	if !apuEnabled || !n.Enabled || (n.ShiftRegister&1) == 1 || n.LengthCounter.Counter == 0 {
+		n.Output = 0
 	} else {
-		if noise.ConstantVolume {
-			noise.Output = noise.Volume
+		if n.ConstantVolume {
+			n.Output = n.Volume
 		} else {
-			noise.Output = noise.Decay
+			n.Output = n.Decay
 		}
 	}
 }

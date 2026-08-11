@@ -20,15 +20,6 @@ import (
 
 // Header Variables
 
-var PRGROM_Size uint32 // Size of PRG ROM
-var CHRROM_Size uint32 // Size of CHR ROM (value 0 means the board uses CHR RAM)
-var IsNametableHorizontal bool
-var HasBatteryRAM bool
-var AltNametableLayout bool
-var NES2_Header bool //Is the header in NES 2.0 format, rather than iNES
-
-var MapperChipID byte
-
 var RAM [0x800]byte
 var VRAM [0x800]byte
 var CartVRAM [0x1000]byte //For mapper chips
@@ -73,7 +64,6 @@ func (g *Game) Update() error {
 	}
 
 	for common.ROMLoaded && !pauseEmulation {
-		UpdateControllers(g)
 		Emulate_CPU(g)
 		if DrawNewFrame {
 			DrawNewFrame = false
@@ -81,6 +71,7 @@ func (g *Game) Update() error {
 			//return nil
 		}
 	}
+	RenderFrame()
 	apu.TransferBuffer()
 
 	if /*CPU_Halted ||*/ g.Exit {
@@ -171,13 +162,13 @@ func Reset() {
 	PaletteRAM = [0x20]byte{}
 	CartRAM = [0x2000]byte{}
 
-	MapperChipID = 0
+	common.MapperChipID = 0
 
-	PRGROM_Size = 0
-	CHRROM_Size = 0
-	IsNametableHorizontal = false
-	HasBatteryRAM = false
-	AltNametableLayout = false
+	common.PRGROM_Size = 0
+	common.CHRROM_Size = 0
+	common.IsNametableHorizontal = false
+	common.HasBatteryRAM = false
+	common.AltNametableLayout = false
 
 	LoadROM()
 
@@ -199,30 +190,30 @@ func LoadROM() {
 
 	//Header info
 	copy(Header[:], HeaderedROM[0x0:])
-	PRGROM_Size = uint32(Header[4]) * uint32(0x4000)
-	CHRROM_Size = uint32(Header[5]) * uint32(0x2000)
-	IsNametableHorizontal = (Header[6] & 1) == 0
-	HasBatteryRAM = (Header[6] & 0x02) != 0
-	AltNametableLayout = (Header[6] & 0x08) != 0
+	common.PRGROM_Size = uint32(Header[4]) * uint32(0x4000)
+	common.CHRROM_Size = uint32(Header[5]) * uint32(0x2000)
+	common.IsNametableHorizontal = (Header[6] & 1) == 0
+	common.HasBatteryRAM = (Header[6] & 0x02) != 0
+	common.AltNametableLayout = (Header[6] & 0x08) != 0
 
-	NES2_Header = ((Header[7] & 0xC) >> 2) == 2
+	common.NES2_Header = ((Header[7] & 0xC) >> 2) == 2
 
-	MapperChipID = (Header[6] >> 4) | (Header[7] & 0xF0)
+	common.MapperChipID = (Header[6] >> 4) | (Header[7] & 0xF0)
 
 	//size := uint16(Header[4])
-	ROM_Endpoint := uint32(0x10 + (PRGROM_Size))
-	CHR_Endpoint := uint32(ROM_Endpoint + uint32(CHRROM_Size))
+	ROM_Endpoint := uint32(0x10 + (common.PRGROM_Size))
+	CHR_Endpoint := uint32(ROM_Endpoint + uint32(common.CHRROM_Size))
 
 	copy(ROM[:], HeaderedROM[0x10:ROM_Endpoint])
-	if CHRROM_Size != 0 {
+	if common.CHRROM_Size != 0 {
 		copy(CHRROM[:], HeaderedROM[ROM_Endpoint:CHR_Endpoint])
 	} else {
 
 	}
 
 	//Initialize any PRG-RAM from mapper chips
-	if HasBatteryRAM {
-		switch MapperChipID {
+	if common.HasBatteryRAM {
+		switch common.MapperChipID {
 		case 1: //MMC1
 			copy(mappers.MMC1_PRGRAM[:], HeaderedROM[0x10:])
 		case 2: //UxROM
@@ -241,6 +232,16 @@ func RenderPixel(color color.RGBA) {
 	Emulator.gameScreen.Pix[pixIndex+1] = color.G
 	Emulator.gameScreen.Pix[pixIndex+2] = color.B
 	Emulator.gameScreen.Pix[pixIndex+3] = color.A
+}
+
+func RenderFrame() {
+	for i, color := range FrameColorBuffer {
+		Emulator.gameScreen.Pix[(i * 4)] = color.R
+		Emulator.gameScreen.Pix[(i*4)+1] = color.G
+		Emulator.gameScreen.Pix[(i*4)+2] = color.B
+		//Emulator.gameScreen.Pix[(i*4)+3] = color.A
+	}
+	FrameColorBufferPos = 0
 }
 
 func MasterClockTick(location string) {

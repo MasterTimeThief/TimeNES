@@ -11,7 +11,7 @@ var Controller1ShiftRegister, Controller2ShiftRegister uint16
 //var enableZapper bool = false
 
 // Update states of controllers
-func UpdateControllers(g *Game) {
+func UpdateControllers() {
 
 	//	0 - B
 	//	1 - A
@@ -22,11 +22,11 @@ func UpdateControllers(g *Game) {
 	//	6 - Left
 	//	7 - Right
 
-	g.keys = inpututil.AppendPressedKeys(g.keys[:0])
+	Emulator.keys = inpututil.AppendPressedKeys(Emulator.keys[:0])
 
 	Controller1 = 0
 	Controller2 = 0
-	for _, k := range g.keys {
+	for _, k := range Emulator.keys {
 		switch k {
 		//Player 1
 		case ebiten.KeyX:

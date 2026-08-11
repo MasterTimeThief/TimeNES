@@ -93,7 +93,7 @@ func Read(Address uint16) byte {
 
 	} else if Address < 0x7FFF {
 		//Could be PRG-RAM on the cartridge
-		switch MapperChipID {
+		switch common.MapperChipID {
 		case 1: //MMC1
 			returnValue = mappers.MMC1_PRGRAM[Address&0x1FFF]
 		default:
@@ -101,13 +101,13 @@ func Read(Address uint16) byte {
 		}
 	} else if Address >= 0x8000 {
 		//Read from ROM
-		switch MapperChipID {
+		switch common.MapperChipID {
 		case 1: //MMC1
-			returnValue = ROM[mappers.MMC1_FetchCPUAddress(Address, PRGROM_Size)]
+			returnValue = ROM[mappers.MMC1_FetchCPUAddress(Address, common.PRGROM_Size)]
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
-			returnValue = ROM[(Address-0x8000)&uint16(PRGROM_Size-1)]
+			returnValue = ROM[(Address-0x8000)&uint16(common.PRGROM_Size-1)]
 			//outsideCodeRead = Address
 		}
 	}
@@ -301,6 +301,7 @@ func Write(Address uint16, Value byte) {
 			apu.IRQLevelDetector = false
 
 		case 0x4016: //Controller Input
+			UpdateControllers()
 			Controller1ShiftRegister = uint16(Controller1)
 			Controller2ShiftRegister = uint16(Controller2)
 		case 0x4017: //APU Frame Counter control
@@ -327,7 +328,7 @@ func Write(Address uint16, Value byte) {
 		//	CartRAM[Address&0x1FFF] = Value
 	} else {
 		//Check what mapper chip we're using
-		switch MapperChipID {
+		switch common.MapperChipID {
 		case 1: //MMC1
 			mappers.MMC1_Write(Value, Address, CPU_TotalCycles)
 		case 3: //CNROM
@@ -344,9 +345,9 @@ func Write(Address uint16, Value byte) {
 func ReadPPU( /*Address uint16*/ ) byte {
 	if ppuAddressBus < 0x2000 {
 		//Read from pattern table.
-		switch MapperChipID {
+		switch common.MapperChipID {
 		case 1: //MMC1
-			return CHRROM[mappers.MMC1_FetchPPUAddress(ppuAddressBus, CHRROM_Size)]
+			return CHRROM[mappers.MMC1_FetchPPUAddress(ppuAddressBus, common.CHRROM_Size)]
 		case 3: //CNROM
 			return CHRROM[mappers.CNROM_ReadAddress(ppuAddressBus)]
 		//case 4: //MMC3
@@ -358,14 +359,14 @@ func ReadPPU( /*Address uint16*/ ) byte {
 		//else, nothing happens
 	} else if ppuAddressBus < 0x3F00 {
 		//Read from the Nametables
-		switch MapperChipID {
+		switch common.MapperChipID {
 		case 1: //MMC1
 			return CartVRAM[mappers.MMC1_FetchNametable(ppuAddressBus)]
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
-			if !AltNametableLayout {
-				if IsNametableHorizontal {
+			if !common.AltNametableLayout {
+				if common.IsNametableHorizontal {
 					// Horizontal Mirroring
 					return VRAM[int(ppuAddressBus&0x3FF)|(int(ppuAddressBus&0x800)>>1)]
 				} else {
@@ -389,13 +390,13 @@ func ReadPPU( /*Address uint16*/ ) byte {
 func WritePPU(Value byte) {
 	if VRAMAddress < 0x2000 {
 		//Write to pattern table. (If the cartridge supports it)
-		if CHRROM_Size == 0 {
-			switch MapperChipID {
+		if common.CHRROM_Size == 0 {
+			switch common.MapperChipID {
 			case 1: //MMC1
 				//if AltNametableLayout {
 				//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
 				//} else {
-				CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+				CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, common.CHRROM_Size)] = Value
 				//}
 			case 3: //CNROM
 				CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
@@ -408,7 +409,7 @@ func WritePPU(Value byte) {
 	} else if VRAMAddress < 0x3F00 {
 		//Write to the Nametables
 
-		switch MapperChipID {
+		switch common.MapperChipID {
 		case 1: //MMC1
 			switch mappers.MMC1_GetNametableArrangement() {
 			case 0: //Screen A only
@@ -424,8 +425,8 @@ func WritePPU(Value byte) {
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
-			if !AltNametableLayout {
-				if IsNametableHorizontal {
+			if !common.AltNametableLayout {
+				if common.IsNametableHorizontal {
 					// Horizontal Mirroring
 					VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
 				} else {

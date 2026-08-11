@@ -15,10 +15,28 @@ var apuTriangleSequences = [32]byte{
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 }
 
-func (triangle *TriangleChannel) UpdateTriangleOutput() {
-	triangle.Output = apuTriangleSequences[triangle.SeqPos]
+func (t *TriangleChannel) ResetTriangle() {
+	t.Enabled = false
+	t.LengthCounter.ResetLengthCounter()
+	t.LinearCounter.ResetLengthCounter()
+	t.Timer = 0
+	t.TimerReloadValue = 0
+	t.SeqPos = 0
+}
 
-	if !apuEnabled || triangle.LengthCounter.Counter == 0 || triangle.LinearCounter.Counter == 0 {
-		triangle.Output = 0
+func (t *TriangleChannel) ClockTriangleTimer() {
+	if t.Timer == 0 && t.LengthCounter.Counter != 0 && t.LinearCounter.Counter != 0 {
+		t.SeqPos = (t.SeqPos + 1) & 31
+		t.Timer = t.TimerReloadValue
+	} else {
+		t.Timer--
+	}
+}
+
+func (t *TriangleChannel) UpdateTriangleOutput() {
+	t.Output = apuTriangleSequences[t.SeqPos]
+
+	if !apuEnabled || !t.Enabled || t.LengthCounter.Counter == 0 || t.LinearCounter.Counter == 0 {
+		t.Output = 0
 	}
 }

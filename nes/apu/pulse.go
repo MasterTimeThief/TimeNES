@@ -19,22 +19,43 @@ var apuDutySequences = [4][8]byte{
 	{1, 1, 1, 1, 1, 1, 0, 0},
 }
 
-func (pulse *PulseChannel) IsPulseMuted() bool {
-	return pulse.Timer < 8 || (!pulse.Sweep.Negate && pulse.Sweep.Period > 0x7FF)
+func (p *PulseChannel) IsPulseMuted() bool {
+	return p.Timer < 8 || (!p.Sweep.Negate && p.Sweep.Period > 0x7FF)
 }
 
-func (pulse *PulseChannel) UpdatePulseOutput() {
-	duty := apuDutySequences[pulse.Duty][pulse.DutyPos]
-	var volume byte
-	if pulse.ConstantVolume {
-		volume = pulse.Volume
+func (p *PulseChannel) ResetPulse() {
+	p.Enabled = false
+	p.ResetLengthCounter()
+	p.Timer = 0
+
+	p.ResetEnvelope()
+
+	p.Duty = 0
+	p.DutyPos = 0
+	p.ResetSweep()
+}
+
+func (p *PulseChannel) ClockPulseTimer() {
+	if p.Timer == 0 {
+		p.DutyPos = (p.DutyPos + 1) & 7
+		p.Timer = p.TimerReloadValue
 	} else {
-		volume = pulse.Decay
+		p.Timer--
+	}
+}
+
+func (p *PulseChannel) UpdatePulseOutput() {
+	duty := apuDutySequences[p.Duty][p.DutyPos]
+	var volume byte
+	if p.ConstantVolume {
+		volume = p.Volume
+	} else {
+		volume = p.Decay
 	}
 
-	if !apuEnabled || duty == 0 || pulse.LengthCounter.Counter == 0 || pulse.Timer < 8 {
-		pulse.Output = 0
+	if !apuEnabled || duty == 0 || p.LengthCounter.Counter == 0 || p.Timer < 8 {
+		p.Output = 0
 	} else {
-		pulse.Output = (duty * volume)
+		p.Output = (duty * volume)
 	}
 }
