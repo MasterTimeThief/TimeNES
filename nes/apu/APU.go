@@ -1,112 +1,5 @@
 package apu
 
-type Envelope struct {
-	ConstantVolume bool
-	Volume         byte
-	StartFlag      bool
-	LoopFlag       bool
-	Decay          byte
-	Divider
-}
-
-type Sweep struct {
-	Enabled bool
-	Divider
-	ReloadFlag   bool
-	Negate       bool
-	Shift        byte
-	TargetPeriod uint16
-}
-
-type Divider struct {
-	Period  uint16
-	Counter uint16
-}
-
-type LengthCounter struct { //TODO: Maybe part of Envelope?
-	Counter     byte
-	HaltFlag    bool
-	ReloadFlag  bool
-	ReloadValue byte
-}
-
-type LinearCounter struct { //TODO: Maybe part of Envelope?
-	Counter     byte
-	HaltFlag    bool
-	ReloadFlag  bool
-	ReloadValue byte
-}
-
-type PulseChannel struct {
-	Enabled bool
-	LengthCounter
-	Timer            uint16
-	TimerReloadValue uint16
-	Envelope
-	//Channel Specific Variables
-	Duty    byte
-	DutyPos byte
-	//SweepEnabled  bool
-	//SweepPeriod   byte
-	//SweepNegate   bool
-	Sweep
-	//ShiftRegister byte
-	Output byte
-}
-
-type TriangleChannel struct {
-	Enabled bool
-	LengthCounter
-	Timer            uint16
-	TimerReloadValue uint16
-	//Channel Specific Variables
-	LinearCounter
-	SeqPos byte
-	Output byte
-	//LinearCounterReload bool
-	//LinearCounter       byte
-}
-
-type NoiseChannel struct {
-	Enabled bool
-	LengthCounter
-	Timer            uint16
-	TimerReloadValue uint16
-	Envelope
-	//Channel Specific Variables
-	Mode          bool
-	ShiftRegister uint16
-	Output        byte
-}
-type DeltaModChannel struct {
-	Enabled              bool
-	Timer                uint16
-	IRQEnable            bool
-	Loop                 bool
-	SampleRate           uint16 // AKA Frequency
-	Output               byte   // AKA LoadCounter
-	SampleAddress        uint16
-	SampleLength         uint16
-	BytesRemaining       uint16
-	Buffer               byte
-	SampleAddressCounter uint16
-	Shifter              byte
-	ShifterBitsRemaining byte
-	DPCM_Up              bool
-}
-
-var apuDutySequences = [4][8]byte{
-	{0, 0, 0, 0, 0, 0, 0, 1},
-	{0, 0, 0, 0, 0, 0, 1, 1},
-	{0, 0, 0, 0, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 0, 0},
-}
-
-var apuTriangleSequences = [32]byte{
-	15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-}
-
 var Pulse1 PulseChannel
 var Pulse2 PulseChannel
 var Triangle TriangleChannel
@@ -123,13 +16,8 @@ var apuDMCDMADelay, apuCannotDMCDMARightNow byte
 
 var apu4017ResetTimer int = 0
 var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
-var APUDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
-var apuNoiseTimerLUT = [16]uint16{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068}
 
-var squareTable [31]float32
-var tndTable [203]float32
-
-var apuEnabled bool = false
+var apuEnabled bool = true
 
 func ResetAPU() {
 
@@ -218,20 +106,33 @@ func ResetAPU() {
 }
 
 func InitAPU() {
-	for i := range squareTable {
-		squareTable[i] = float32(95.52 / (8128.0/float64(i) + 100))
-	}
-	for i := range tndTable {
-		tndTable[i] = float32(163.67 / (24329.0/float64(i) + 100))
-	}
+	InitAudioOutput()
 
 }
 
 func Emulate_APU() {
-	AudioOutput()
 
 	if apuDMAGetCycle { //DMA Get Cycle
+		AudioOutput()
 		DMA_Get()
+
+		//Clock triangle timer every cycle
+		if Triangle.Timer == 0 {
+			Triangle.SeqPos = (Triangle.SeqPos + 1) & 31
+			Triangle.Timer = Triangle.TimerReloadValue
+		} else {
+			Triangle.Timer--
+		}
+
+		//Clock sequencer
+		if (apu4017ResetTimer & 0x80) == 0 {
+			apu4017ResetTimer--
+			if (apu4017ResetTimer & 0x80) != 0 {
+				apuFrameCounter = 0
+			}
+		}
+
+		ClockFrameCounter()
 	} else { //DMA Put Cycle
 		DMA_Put()
 	}
@@ -249,24 +150,6 @@ func Emulate_APU() {
 			}
 		}
 	*/
-
-	//Clock triangle timer every cycle
-	if Triangle.Timer == 0 {
-		Triangle.SeqPos = (Triangle.SeqPos + 1) & 31
-		Triangle.Timer = Triangle.TimerReloadValue
-	} else {
-		Triangle.Timer--
-	}
-
-	//Clock sequencer
-	if (apu4017ResetTimer & 0x80) == 0 {
-		apu4017ResetTimer--
-		if (apu4017ResetTimer & 0x80) != 0 {
-			apuFrameCounter = 0
-		}
-	}
-
-	ClockFrameCounter()
 
 	//If this isn't a Frame Counter half-frame
 	/*if !apuIsHalfFrame {
@@ -549,201 +432,12 @@ func ClockFrameCounterHalfFrame() {
 
 }
 
-func (LC *LengthCounter) ResetLengthCounter() {
-	LC.Counter = 0
-	LC.HaltFlag = false
-	LC.ReloadFlag = false
-	LC.ReloadValue = 0
-}
-
-func (LC *LengthCounter) ReloadLengthCounter() {
-	if LC.ReloadFlag && LC.Counter == 0 {
-		LC.Counter = LC.ReloadValue
-	} else {
-		LC.ReloadFlag = false
-	}
-}
-
-func (LC *LengthCounter) ClockLengthCounter() {
-	if LC.Counter != 0 && !LC.HaltFlag && !LC.ReloadFlag {
-		LC.Counter--
-	}
-}
-
-func (LC *LinearCounter) ClockLinearCounter(control bool) {
-	if LC.ReloadFlag {
-		LC.Counter = LC.ReloadValue
-	} else if LC.Counter != 0 {
-		LC.Counter--
-	}
-
-	if !control {
-		LC.ReloadFlag = false
-	}
-}
-
-func (Env *Envelope) ResetEnvelope() {
-	Env.ConstantVolume = false
-	Env.Volume = 0
-	Env.StartFlag = false
-	Env.ResetDivider()
-	Env.Decay = 0
-}
-
-func (Env *Envelope) ClockEnvelope() {
-	if !Env.StartFlag {
-		if Env.ClockDivider() {
-			Env.Divider.Counter = uint16(Env.Volume)
-			if Env.Decay != 0 {
-				Env.Decay--
-			} else if Env.LoopFlag {
-				Env.Decay = 15
-			}
-		}
-
-	} else {
-		Env.StartFlag = false
-		Env.Decay = 15
-		Env.Divider.Counter = Env.Divider.Period
-	}
-}
-
-func (Sw *Sweep) ResetSweep() {
-	Sw.Enabled = false
-	Sw.ResetDivider()
-	Sw.ReloadFlag = false
-	Sw.Negate = false
-	Sw.Shift = 0
-}
-
-func (Sw *Sweep) ClockSweep() {
-	if Sw.Counter == 0 {
-		//Sweep is enabled, the shift count is nonzero
-		if Sw.Enabled {
-			//Pulse's period is set to target period
-			Sw.Period = Sw.TargetPeriod
-		} else {
-			//Pulse's period remains unchanged, but the sweep unit's divider continues to count down  and reload the divider's period as normal
-		}
-	}
-
-	if Sw.Counter == 0 || Sw.ReloadFlag {
-		//Divider counter is set to P and the reload flag is cleared
-		Sw.Counter = Sw.Period
-		Sw.ReloadFlag = false
-	} else {
-		//Otherwise, the divider's counter is decremented
-		Sw.Counter--
-	}
-}
-
-func (Sw *Sweep) UpdateTargetPeriod(isPulse1 bool) {
-
-	shift := int(Sw.Period >> Sw.Shift)
-
-	if Sw.Negate {
-		shift *= -1
-		if isPulse1 {
-			shift--
-		}
-	}
-
-	newTarget := int(Sw.Period) + shift
-
-	if newTarget < 0 {
-		newTarget = 0
-	}
-
-	Sw.TargetPeriod = uint16(newTarget)
-
-}
-
-func (Dv *Divider) ResetDivider() {
-	Dv.Counter = 0
-	Dv.Period = 0
-}
-
-func (Dv *Divider) ClockDivider() bool {
-	if Dv.Counter == 0 {
-		Dv.Counter = Dv.Period
-		return true
-	} else {
-		Dv.Counter--
-		return false
-	}
-
-}
-
-func (pulse *PulseChannel) IsPulseMuted() bool {
-	return pulse.Timer < 8 || (!pulse.Sweep.Negate && pulse.Sweep.Period > 0x7FF)
-}
-
 func SetTimerLow(Value byte, currTimer uint16) uint16 {
 	return (currTimer & 0x700) | uint16(Value)
 }
 
 func SetTimerHi(Value byte, currTimer uint16) uint16 {
 	return (currTimer & 0xFF) | (uint16(Value&0x7) << 8)
-}
-
-func (pulse *PulseChannel) UpdatePulseOutput() {
-	duty := apuDutySequences[pulse.Duty][pulse.DutyPos]
-	var volume byte
-	if pulse.ConstantVolume {
-		volume = pulse.Volume
-	} else {
-		volume = pulse.Decay
-	}
-
-	if !apuEnabled || duty == 0 || pulse.LengthCounter.Counter == 0 || pulse.Timer < 8 {
-		pulse.Output = 0
-	} else {
-		pulse.Output = (duty * volume)
-	}
-}
-
-func (triangle *TriangleChannel) UpdateTriangleOutput() {
-	triangle.Output = apuTriangleSequences[triangle.SeqPos]
-
-	if !apuEnabled || triangle.LengthCounter.Counter == 0 || triangle.LinearCounter.Counter == 0 {
-		triangle.Output = 0
-	}
-}
-
-func (noise *NoiseChannel) SetNoiseTimer(Value byte) {
-	noise.TimerReloadValue = apuNoiseTimerLUT[Value]
-	noise.Timer = noise.TimerReloadValue
-}
-
-func (noise *NoiseChannel) ClockShiftRegister() {
-	//Feedback is calculated as the exclusive-OR of bit 0 and one other bit: bit 6 if Mode flag is set, otherwise bit 1.
-	firstBit := byte(noise.ShiftRegister & 1)
-	var secondBit byte
-	if noise.Mode {
-		secondBit = byte(noise.ShiftRegister&0x40) >> 6
-	} else {
-		secondBit = byte(noise.ShiftRegister&0x02) >> 1
-	}
-	feedback := firstBit ^ secondBit
-
-	//The shift register is shifted right by one bit.
-	noise.ShiftRegister >>= 1
-	noise.ShiftRegister &= 0x7FFF
-
-	//Bit 14, the leftmost bit, is set to the feedback calculated earlier.
-	noise.ShiftRegister = (noise.ShiftRegister & 0b0011111111111111) | (uint16(feedback&1) << 14)
-}
-
-func (noise *NoiseChannel) UpdateNoiseOutput() {
-	if !apuEnabled || !noise.Enabled || (noise.ShiftRegister&1) == 1 || noise.LengthCounter.Counter == 0 {
-		noise.Output = 0
-	} else {
-		if noise.ConstantVolume {
-			noise.Output = noise.Volume
-		} else {
-			noise.Output = noise.Decay
-		}
-	}
 }
 
 /*

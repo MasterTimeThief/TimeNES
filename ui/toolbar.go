@@ -27,7 +27,7 @@ var FC_Gold color.RGBA = color.RGBA{R: 185, G: 159, B: 119, A: 255}
 var FC_White color.RGBA = color.RGBA{R: 232, G: 228, B: 224, A: 255}
 var FC_Black color.RGBA = color.RGBA{R: 10, G: 10, B: 10, A: 255}
 
-var currDir string = "./roms/games"
+var currDir string = "./roms"
 var fullDirectory []os.DirEntry
 
 // NOTE: It's not strictly necessary to store references to all the buttons in the toolbar struct, but this example does
@@ -541,12 +541,12 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 
 	//Select ROM
 	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		common.SelectROM("roms/games/smb.nes")
+		common.SelectROM("roms/smb.nes")
 	}))
 
 	toolbar.nestestButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		common.SelectROM("roms/AccuracyCoin.nes")
-		//SelectROM("roms/nestest.nes")
+		common.SelectROM("roms/tests/AccuracyCoin.nes")
+		//SelectROM("roms/tests/nestest.nes")
 	}))
 
 	toolbar.selectROMButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {

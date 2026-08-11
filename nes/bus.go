@@ -198,7 +198,7 @@ func Write(Address uint16, Value byte) {
 			apu.Pulse1.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
 			apu.Pulse1.Sweep.Period = uint16(Value&0x70) >> 4
 			apu.Pulse1.Sweep.Negate = ((Value & 0x8) >> 3) != 0
-			apu.Pulse1.Shift = (Value & 0x06)
+			apu.Pulse1.Shift = (Value & 0x07)
 		case 0x4002:
 			apu.Pulse1.TimerReloadValue = apu.SetTimerLow(Value, apu.Pulse1.TimerReloadValue)
 			apu.Pulse1.Timer = apu.Pulse1.TimerReloadValue
@@ -220,7 +220,7 @@ func Write(Address uint16, Value byte) {
 			apu.Pulse2.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
 			apu.Pulse2.Sweep.Period = uint16(Value&0x70) >> 4
 			apu.Pulse2.Sweep.Negate = ((Value & 0x8) >> 3) != 0
-			apu.Pulse2.Shift = (Value & 0x06)
+			apu.Pulse2.Shift = (Value & 0x07)
 		case 0x4006:
 			apu.Pulse2.TimerReloadValue = apu.SetTimerLow(Value, apu.Pulse2.TimerReloadValue)
 			apu.Pulse2.Timer = apu.Pulse2.TimerReloadValue

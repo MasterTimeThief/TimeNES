@@ -1921,10 +1921,10 @@ func Emulate_CPU(g *Game) {
 		Emulate_PPU(g)
 
 		//Run the APU
-		apuRun = !apuRun
-		if apuRun {
-			apu.Emulate_APU()
-		}
+		//apuRun = !apuRun
+		//if apuRun {
+		apu.Emulate_APU()
+		//}
 	}
 
 	//Force Stop, just in case

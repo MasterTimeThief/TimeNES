@@ -8,21 +8,28 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/audio"
 )
 
-// var apuMixerInputBuffer [apuMaxSamplesPerFrame]uint16
-// var apuMixerOutputBuffer [apuMaxSampleRate]uint16
-// var apuClockRate, apuSampleRate uint32
-//var apuSample float32
-//var apuBuffer bytes.Buffer
+const (
+	//apuCycleLength        int = 10000
+	//apuBitsPerCycle       int = 16
+	apuInputSamples       int = 14934
+	apuRingBufferSize     int = apuInputSamples * 8
+	apuSampleRate         int = 48000
+	apuMaxSamplesPerFrame int = apuSampleRate / 60
 
-//var audioBuffer chan byte
+	//FrameCounterRate  = float64(common.CPU_Frequency) / 240.0
+	//DefaultSampleRate = (common.CPU_Frequency) / (apuSampleRate)
+)
 
 type AudioBufferStruct struct {
-	SampleRate float64
-	ringBuffer *ringBuffer
-	sample     float32
+	//SampleRate  float64
+	ringBuffer  *ringBuffer
+	frameBuffer [][]byte
+	sample      float32
 }
 
 var audBuf *AudioBufferStruct
+var squareTable [31]float32
+var tndTable [203]float32
 
 func (abs *AudioBufferStruct) Read(p []byte) (int, error) {
 
@@ -35,9 +42,15 @@ func (abs *AudioBufferStruct) Read(p []byte) (int, error) {
 }
 
 func InitAudioOutput() {
+	for i := range squareTable {
+		squareTable[i] = float32(95.52 / (8128.0/float64(i) + 100))
+	}
+	for i := range tndTable {
+		tndTable[i] = float32(163.67 / (24329.0/float64(i) + 100))
+	}
 	audBuf = &AudioBufferStruct{
-		ringBuffer: newRingBuffer(apuSampleRate),
-		SampleRate: float64(apuMaxSamplesPerFrame),
+		ringBuffer: newRingBuffer(apuRingBufferSize),
+		//SampleRate: float64(apuMaxSamplesPerFrame),
 	}
 }
 
@@ -57,16 +70,6 @@ func NewAudioPlayer(context *audio.Context) *audio.Player {
 	return player
 }
 
-const (
-	apuCycleLength        int = 10000
-	apuBitsPerCycle       int = 16
-	apuSampleRate         int = 60000
-	apuMaxSamplesPerFrame int = apuSampleRate / 60 * 4 * 2
-
-	FrameCounterRate  = float64(common.CPU_Frequency) / 240.0
-	DefaultSampleRate = float64(common.CPU_Frequency) / float64(apuSampleRate)
-)
-
 func (a *AudioBufferStruct) sendSample() {
 	result := a.sample /*/ float32(a.SampleRate)*/
 	a.sample = 0
@@ -75,7 +78,8 @@ func (a *AudioBufferStruct) sendSample() {
 		byte(b), byte(b >> 8), byte(b >> 16), byte(b >> 24),
 		byte(b), byte(b >> 8), byte(b >> 16), byte(b >> 24),
 	}
-	a.ringBuffer.Write(newSample)
+	a.frameBuffer = append(a.frameBuffer, newSample)
+	//a.ringBuffer.Write(newSample)
 }
 
 func AudioOutput() {
@@ -89,9 +93,30 @@ func AudioOutput() {
 
 	tnd_out := tndTable[(3*Triangle.Output)+(2*Noise.Output)+DMC.Output]
 
-	audBuf.sample += pulse_out + tnd_out
-
 	if apuDMAGetCycle {
+		audBuf.sample += pulse_out + tnd_out
 		audBuf.sendSample()
 	}
+}
+
+func TransferBuffer() {
+
+	inputBufferSize := len(audBuf.frameBuffer)
+	NearestNeighborRatio := float32(inputBufferSize) / float32(apuMaxSamplesPerFrame)
+	NearestNeighborIndex := float32(0)
+
+	//7466-7468
+	//fmt.Printf("Buffer size: %d\n", inputBufferSize)
+
+	for i := 0; i < apuMaxSamplesPerFrame; i++ {
+		NearestNeighborIndex += NearestNeighborRatio
+
+		newIndex := int(NearestNeighborIndex)
+
+		if int(NearestNeighborIndex) < inputBufferSize {
+			audBuf.ringBuffer.Write(audBuf.frameBuffer[newIndex])
+		}
+	}
+
+	audBuf.frameBuffer = nil
 }

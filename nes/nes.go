@@ -81,6 +81,7 @@ func (g *Game) Update() error {
 			//return nil
 		}
 	}
+	apu.TransferBuffer()
 
 	if /*CPU_Halted ||*/ g.Exit {
 		return ebiten.Termination
@@ -139,7 +140,6 @@ func InitGame(newUI *ebitenui.UI) {
 		gameScreen: image.NewRGBA(image.Rect(0, 0, common.ScreenWidth, common.ScreenHeight)),
 		UI:         newUI,
 	}
-	apu.InitAudioOutput()
 
 	if Emulator.audioContext == nil {
 		Emulator.audioContext = apu.NewAudioContext()
@@ -237,16 +237,10 @@ func LoadROM() {
 func RenderPixel(color color.RGBA) {
 	pixIndex := uint64((((ppuScanline) * common.ScreenWidth) + (ppuDot - 1)) * 4)
 
-	//pixIndex &= 0x3BFFF
 	Emulator.gameScreen.Pix[pixIndex] = color.R
 	Emulator.gameScreen.Pix[pixIndex+1] = color.G
 	Emulator.gameScreen.Pix[pixIndex+2] = color.B
 	Emulator.gameScreen.Pix[pixIndex+3] = color.A
-	/*pixR, pixG, pixB := DecodeNTSC(screenWidth, int(math.Mod(float64(ppuDot*8)+3.9, 12.0)))
-	g.gameScreen.Pix[pixIndex] = pixR
-	g.gameScreen.Pix[pixIndex+1] = pixG
-	g.gameScreen.Pix[pixIndex+2] = pixB
-	g.gameScreen.Pix[pixIndex+3] = 0xFF*/
 }
 
 func MasterClockTick(location string) {
