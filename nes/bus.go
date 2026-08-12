@@ -6,10 +6,10 @@ import (
 	"mtt/timenes/nes/cartridge"
 	"mtt/timenes/nes/cartridge/mappers"
 	"mtt/timenes/nes/input"
+	"mtt/timenes/nes/ppu"
 )
 
-var PPUAddressBus uint16
-var cpuOpenBus, PPUBus byte
+var cpuOpenBus byte
 var OAMBusAddress byte
 
 // Read from Address, and return that byte
@@ -25,51 +25,51 @@ func Read(Address uint16) byte {
 		case 0x2000: //PPUCTRL
 		case 0x2001: //PPUMASK
 		case 0x2002: //PPUSTATUS
-			PPUBus &= 0x1F
-			PPUBus |= byte(common.Ternary(PPUSTATUS_VBlank, 0x80, 0x00))
-			PPUBus |= byte(common.Ternary(PPUSTATUS_SpriteZeroHit, 0x40, 0x00))
-			PPUBus |= byte(common.Ternary(PPUSTATUS_Overflow, 0x20, 0x00))
-			PPUSTATUS_VBlank = false
-			WriteLatch = false
-			UpdatePPUBus2002(PPUBus)
+			ppu.PPUBus &= 0x1F
+			ppu.PPUBus |= byte(common.Ternary(ppu.PPUSTATUS_VBlank, 0x80, 0x00))
+			ppu.PPUBus |= byte(common.Ternary(ppu.PPUSTATUS_SpriteZeroHit, 0x40, 0x00))
+			ppu.PPUBus |= byte(common.Ternary(ppu.PPUSTATUS_Overflow, 0x20, 0x00))
+			ppu.PPUSTATUS_VBlank = false
+			ppu.WriteLatch = false
+			ppu.UpdatePPUBus2002(ppu.PPUBus)
 		case 0x2003: //OAM ADDR
 		case 0x2004: //OAMDATA
-			if PPUScanline < 240 && (PPUMASK_RenderBG || PPUMASK_RenderSprites) {
+			if ppu.PPUScanline < 240 && (ppu.PPUMASK_RenderBG || ppu.PPUMASK_RenderSprites) {
 				//Return buffer?
-				if PPUDot == 0 || PPUDot > 320 {
-					PPUBus = SecondaryOAM[0]
-				} else if PPUDot > 0 && PPUDot <= 64 {
-					PPUBus = 0xFF
+				if ppu.PPUDot == 0 || ppu.PPUDot > 320 {
+					ppu.PPUBus = ppu.SecondaryOAM[0]
+				} else if ppu.PPUDot > 0 && ppu.PPUDot <= 64 {
+					ppu.PPUBus = 0xFF
 				} else {
-					returnValue = PPUBus
+					returnValue = ppu.PPUBus
 				}
 			} else {
-				PPUBus = OAM[OAMBusAddress]
+				ppu.PPUBus = ppu.OAM[OAMBusAddress]
 			}
-			UpdatePPUBus(PPUBus)
+			ppu.UpdatePPUBus(ppu.PPUBus)
 		case 0x2005: //PPUSCROLL
 		case 0x2006: //PPUADDR
 		case 0x2007: //PPUDATA
-			PPUAddressBus = VRAMAddress
-			if (VRAMAddress & 0x3FFF) > 0x3F00 {
+			ppu.PPUAddressBus = ppu.VRAMAddress
+			if (ppu.VRAMAddress & 0x3FFF) > 0x3F00 {
 				//Palette data
-				data := ReadPPU()
-				PPUBus = (PPUBus & 0xC0) | (data & byte(common.Ternary(PPUMASK_Greyscale, 0x30, 0x3F)))
-				//PPUReadBuffer = ReadPPU((VRAMAddress & 0x2F00) | (VRAMAddress & 0xFF))
-				//PPUReadBuffer = ppuBus
-				UpdatePPUBus2007Palette(PPUBus)
+				data := ppu.ReadPPU()
+				ppu.PPUBus = (ppu.PPUBus & 0xC0) | (data & byte(common.Ternary(ppu.PPUMASK_Greyscale, 0x30, 0x3F)))
+				//ppu.PPUReadBuffer = ReadPPU((ppu.VRAMAddress & 0x2F00) | (ppu.VRAMAddress & 0xFF))
+				//ppu.PPUReadBuffer = ppu.PPUBus
+				ppu.UpdatePPUBus2007Palette(ppu.PPUBus)
 			} else {
-				PPUBus = PPUReadBuffer
-				PPUReadBuffer = ReadPPU()
-				UpdatePPUBus(PPUBus)
+				ppu.PPUBus = ppu.PPUReadBuffer
+				ppu.PPUReadBuffer = ppu.ReadPPU()
+				ppu.UpdatePPUBus(ppu.PPUBus)
 			}
 
-			VRAMAddress += common.Ternary(PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
-			VRAMAddress &= 0x3FFF
+			ppu.VRAMAddress += common.Ternary(ppu.PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
+			ppu.VRAMAddress &= 0x3FFF
 		default:
-			returnValue = PPUBus
+			returnValue = ppu.PPUBus
 		}
-		returnValue = PPUBus
+		returnValue = ppu.PPUBus
 	} else if Address == 0x4015 { //APU Status
 		apuStatus := byte(0)
 		apuStatus |= byte(common.Ternary(apu.APUDMCInterrupt, 0x80, 0x00))                                                                  //DMC Interrupt
@@ -120,67 +120,67 @@ func Write(Address uint16, Value byte) {
 		cartridge.RAM[Address&0x7FF] = Value
 	} else if Address < 0x4000 {
 		//Write to PPU Register
-		UpdatePPUBus(Value)
+		ppu.UpdatePPUBus(Value)
 		Address &= 0x2007
 		switch Address {
 		case 0x2000: //PPUCTRL
-			PPUCTRL_NametableSelect = Value & 0x03
-			PPUCTRL_VRAMInc32Mode = (Value & 0x04) != 0
-			PPUCTRL_SpritePatternTable = (Value & 0x08) != 0
-			PPUCTRL_BGPatternTable = (Value & 0x10) != 0
-			PPUCTRL_Use8x16Sprites = (Value & 0x20) != 0
-			PPUCTRL_EnableNMI = (Value & 0x80) != 0
+			ppu.PPUCTRL_NametableSelect = Value & 0x03
+			ppu.PPUCTRL_VRAMInc32Mode = (Value & 0x04) != 0
+			ppu.PPUCTRL_SpritePatternTable = (Value & 0x08) != 0
+			ppu.PPUCTRL_BGPatternTable = (Value & 0x10) != 0
+			ppu.PPUCTRL_Use8x16Sprites = (Value & 0x20) != 0
+			ppu.PPUCTRL_EnableNMI = (Value & 0x80) != 0
 
-			TransferAddress = (uint16(PPUCTRL_NametableSelect) << 10) | (uint16(TransferAddress) & 0x73FF)
+			ppu.TransferAddress = (uint16(ppu.PPUCTRL_NametableSelect) << 10) | (uint16(ppu.TransferAddress) & 0x73FF)
 		case 0x2001: //PPUMASK
-			PPUMASK_Greyscale = (Value & 0x01) != 0
-			PPUMASK_8pxMaskBG = (Value & 0x02) != 0
-			PPUMASK_8pxMaskSprites = (Value & 0x04) != 0
-			PPUMASK_RenderBG = (Value & 0x08) != 0
-			PPUMASK_RenderSprites = (Value & 0x10) != 0
+			ppu.PPUMASK_Greyscale = (Value & 0x01) != 0
+			ppu.PPUMASK_8pxMaskBG = (Value & 0x02) != 0
+			ppu.PPUMASK_8pxMaskSprites = (Value & 0x04) != 0
+			ppu.PPUMASK_RenderBG = (Value & 0x08) != 0
+			ppu.PPUMASK_RenderSprites = (Value & 0x10) != 0
 			//NTSC scanline stuff
-			PPUMASK_EmphasisRed = (Value & 0x20) != 0
-			PPUMASK_EmphasisGreen = (Value & 0x40) != 0
-			PPUMASK_EmphasisBlue = (Value & 0x80) != 0
+			ppu.PPUMASK_EmphasisRed = (Value & 0x20) != 0
+			ppu.PPUMASK_EmphasisGreen = (Value & 0x40) != 0
+			ppu.PPUMASK_EmphasisBlue = (Value & 0x80) != 0
 		case 0x2002: //PPUSTATUS
 		case 0x2003: //OAMADDR
 			OAMBusAddress = Value
 		case 0x2004: //OAMDATA
-			if ((PPUScanline >= 240 && PPUScanline < 261) && (PPUMASK_RenderBG || PPUMASK_RenderSprites)) || (!PPUMASK_RenderBG && !PPUMASK_RenderSprites) {
+			if ((ppu.PPUScanline >= 240 && ppu.PPUScanline < 261) && (ppu.PPUMASK_RenderBG || ppu.PPUMASK_RenderSprites)) || (!ppu.PPUMASK_RenderBG && !ppu.PPUMASK_RenderSprites) {
 				if (OAMBusAddress & 3) == 2 {
 					Value &= 0xE3
 				}
-				OAM[OAMBusAddress] = Value
+				ppu.OAM[OAMBusAddress] = Value
 				OAMBusAddress++
 			} else {
 				OAMBusAddress += 4
 				OAMBusAddress &= 0xFC
 			}
 		case 0x2005: //PPUSCROLL
-			if !WriteLatch {
-				PPUScrollFineX = byte(Value & 7)
-				TransferAddress = uint16((TransferAddress & 0b0111111111100000) | uint16(Value>>3))
+			if !ppu.WriteLatch {
+				ppu.PPUScrollFineX = byte(Value & 7)
+				ppu.TransferAddress = uint16((ppu.TransferAddress & 0b0111111111100000) | uint16(Value>>3))
 			} else {
-				TransferAddress = ((TransferAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) /*| (uint16(PPUCTRL_NametableSelect&1) << 10)*/)
+				ppu.TransferAddress = ((ppu.TransferAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) /*| (uint16(ppu.PPUCTRL_NametableSelect&1) << 10)*/)
 			}
-			WriteLatch = !WriteLatch
+			ppu.WriteLatch = !ppu.WriteLatch
 		case 0x2006: //PPUADDR
-			if !WriteLatch {
+			if !ppu.WriteLatch {
 				//First write sets the high byte
-				//TempVRAMAddress = (uint16(Value&0x7F) << 8)
-				TransferAddress = uint16((TransferAddress & 0xFF) | uint16(Value&0x3F)<<8)
-				//The actual VRAMAddress isn't changed until the 2nd write
+				//Tempppu.VRAMAddress = (uint16(Value&0x7F) << 8)
+				ppu.TransferAddress = uint16((ppu.TransferAddress & 0xFF) | uint16(Value&0x3F)<<8)
+				//The actual ppu.VRAMAddress isn't changed until the 2nd write
 			} else {
 				//Second write sets the low byte
-				TransferAddress = ((TransferAddress & 0xFF00) | uint16(Value))
-				VRAMAddress = TransferAddress /*& 0x3FFF*/
+				ppu.TransferAddress = ((ppu.TransferAddress & 0xFF00) | uint16(Value))
+				ppu.VRAMAddress = ppu.TransferAddress /*& 0x3FFF*/
 			}
-			WriteLatch = !WriteLatch
+			ppu.WriteLatch = !ppu.WriteLatch
 		case 0x2007: //PPUDATA
 			WritePPU(Value)
 
-			VRAMAddress += common.Ternary(PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
-			VRAMAddress &= 0x3FFF
+			ppu.VRAMAddress += common.Ternary(ppu.PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
+			ppu.VRAMAddress &= 0x3FFF
 		}
 
 	} else if Address < 0x4018 { //APU and I/O
@@ -286,7 +286,7 @@ func Write(Address uint16, Value byte) {
 
 		case 0x4014: //OAMDMA
 			for i := 0; i < 256; i++ {
-				OAM[OAMBusAddress] = Read((uint16(Value) << 8) + uint16(i))
+				ppu.OAM[OAMBusAddress] = Read((uint16(Value) << 8) + uint16(i))
 				OAMBusAddress++
 			}
 		case 0x4015: //APU Status
@@ -347,50 +347,50 @@ func Write(Address uint16, Value byte) {
 }
 
 func WritePPU(Value byte) {
-	if VRAMAddress < 0x2000 {
+	if ppu.VRAMAddress < 0x2000 {
 		//Write to pattern table. (If the cartridge supports it)
 		if cartridge.CHRROM_Size == 0 {
 			switch cartridge.MapperChipID {
 			case 1: //MMC1
 				//if AltNametableLayout {
-				//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+				//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(ppu.VRAMAddress, CHRROM_Size)] = Value
 				//} else {
-				cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, cartridge.CHRROM_Size)] = Value
+				cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(ppu.VRAMAddress, cartridge.CHRROM_Size)] = Value
 				//}
 			case 3: //CNROM
-				cartridge.CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
+				cartridge.CHRROM[mappers.CNROM_ReadAddress(ppu.VRAMAddress)] = Value
 			//case 4: //MMC3
 			default:
-				cartridge.CHRROM[VRAMAddress] = Value
+				cartridge.CHRROM[ppu.VRAMAddress] = Value
 			}
 		}
 		//else, nothing happens because it's CHR-ROM
-	} else if VRAMAddress < 0x3F00 {
+	} else if ppu.VRAMAddress < 0x3F00 {
 		//Write to the Nametables
 
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			switch mappers.MMC1_GetNametableArrangement() {
 			case 0: //Screen A only
-				cartridge.CartVRAM[int(VRAMAddress&0x3FF)] = Value
+				cartridge.CartVRAM[int(ppu.VRAMAddress&0x3FF)] = Value
 			case 1: //Screen B Only
-				cartridge.CartVRAM[int(VRAMAddress&0x3FF)+0x400] = Value
+				cartridge.CartVRAM[int(ppu.VRAMAddress&0x3FF)+0x400] = Value
 			case 2: //Horizontal
-				cartridge.CartVRAM[int(VRAMAddress&0x7FF)] = Value
+				cartridge.CartVRAM[int(ppu.VRAMAddress&0x7FF)] = Value
 			case 3: //Vertical
-				cartridge.CartVRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+				cartridge.CartVRAM[int(ppu.VRAMAddress&0x3FF)|int(ppu.VRAMAddress&0x800)>>1] = Value
 			}
-			//cartridge.CartVRAM[VRAMAddress&0xFFF] = Value
+			//cartridge.CartVRAM[ppu.VRAMAddress&0xFFF] = Value
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
 			if !cartridge.AltNametableLayout {
 				if cartridge.IsNametableHorizontal {
 					// Horizontal Mirroring
-					cartridge.VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+					cartridge.VRAM[int(ppu.VRAMAddress&0x3FF)|int(ppu.VRAMAddress&0x800)>>1] = Value
 				} else {
 					//Vertical Mirroring
-					index := int(VRAMAddress & 0x7FF)
+					index := int(ppu.VRAMAddress & 0x7FF)
 					cartridge.VRAM[index] = Value
 				}
 			}
@@ -398,10 +398,10 @@ func WritePPU(Value byte) {
 
 	} else {
 		//Write to Palette RAM
-		if (VRAMAddress & 3) == 0 {
-			cartridge.PaletteRAM[VRAMAddress&0x0F] = Value
+		if (ppu.VRAMAddress & 3) == 0 {
+			cartridge.PaletteRAM[ppu.VRAMAddress&0x0F] = Value
 		} else {
-			cartridge.PaletteRAM[VRAMAddress&0x1F] = Value
+			cartridge.PaletteRAM[ppu.VRAMAddress&0x1F] = Value
 		}
 	}
 }

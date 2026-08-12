@@ -5,6 +5,7 @@ import (
 	"mtt/timenes/common"
 	"mtt/timenes/nes"
 	"mtt/timenes/nes/cartridge"
+	"mtt/timenes/nes/ppu"
 )
 
 var LoggingCPU = false
@@ -22,7 +23,7 @@ var cycleTest string
 // Sets everything outside of operands for the tracelogger to run later
 func PrepTraceLogger() {
 	tracePC = nes.ProgramCounter
-	traceVRAM = nes.VRAMAddress
+	traceVRAM = ppu.VRAMAddress
 
 	traceA = nes.A
 	traceX = nes.X

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mtt/timenes/common"
 	"mtt/timenes/nes/apu"
+	"mtt/timenes/nes/ppu"
 )
 
 var ProgramCounter uint16
@@ -349,16 +350,16 @@ func ReadFromPC() byte {
 
 func Emulate_CPU( /*g *Game*/ ) {
 	//Non Maskable Interrupt check
-	prevNMILevelDetector := NMILevelDetector
-	NMILevelDetector = (PPUCTRL_EnableNMI && PPUSTATUS_VBlank)
-	if !prevNMILevelDetector && NMILevelDetector {
-		DoNMI = true
+	prevNMILevelDetector := ppu.NMILevelDetector
+	ppu.NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
+	if !prevNMILevelDetector && ppu.NMILevelDetector {
+		ppu.DoNMI = true
 	}
 	CPU_Cycles_New = 0
 
 	//Get the opcode
 	//var opcode byte
-	if !DoNMI {
+	if !ppu.DoNMI {
 		//If we're not running an NMI
 		opcode = Read(ProgramCounter)
 		//if debug.LoggingCPU {
@@ -1209,7 +1210,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x00: //BRK
 		flag_B = false
-		if !DoNMI {
+		if !ppu.DoNMI {
 			ProgramCounter++
 			flag_B = true
 		}
@@ -1218,10 +1219,10 @@ func Emulate_CPU( /*g *Game*/ ) {
 		PushFlags()
 		//flag_InterruptDisable = true
 
-		PCL := Read(common.Ternary(DoNMI, 0xFFFA, 0xFFFE))
-		PCH := Read(common.Ternary(DoNMI, 0xFFFB, 0xFFFF))
+		PCL := Read(common.Ternary(ppu.DoNMI, 0xFFFA, 0xFFFE))
+		PCH := Read(common.Ternary(ppu.DoNMI, 0xFFFB, 0xFFFF))
 		ProgramCounter = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
-		DoNMI = false
+		ppu.DoNMI = false
 		CPU_Cycles = 7
 
 	//	RTI: Return from Interrupt
@@ -1912,7 +1913,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//cycleTest = ""
 
 	//Check for, and perform Interrupt Request (IRQ)
-	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !DoNMI && !flag_InterruptDisable {
+	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !ppu.DoNMI && !flag_InterruptDisable {
 		flag_B = false
 		Push(byte(ProgramCounter >> 8))
 		Push(byte(ProgramCounter))
@@ -1925,7 +1926,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 		//Disable interrupts
 		apu.APUDMCInterrupt = false
 		apu.APUFrameInterrupt = false
-		DoNMI = false
+		ppu.DoNMI = false
 	}
 
 	//CartRAMLogger()
@@ -1934,9 +1935,9 @@ func Emulate_CPU( /*g *Game*/ ) {
 	common.CPU_TotalCycles += CPU_Cycles
 	for CPU_Cycles > 0 {
 		CPU_Cycles--
-		Emulate_PPU()
-		Emulate_PPU()
-		Emulate_PPU()
+		ppu.Emulate_PPU()
+		ppu.Emulate_PPU()
+		ppu.Emulate_PPU()
 
 		//Run the APU
 		//apuRun = !apuRun

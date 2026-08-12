@@ -103,25 +103,26 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 	default:
 		//TODO: Stall for 1-4 CPU cycles (?)
 		//d.Buffer = nes.Read(d.SampleAddress)
-		if len(d.SampleBuffer) > 0 {
-			d.Buffer = d.SampleBuffer[d.SampleBufferPos]
-			d.SampleBufferPos++
-
-			//Advance the address, even if technically we don't need to
-			d.CurrentAddress++
-			if d.CurrentAddress < 0x8000 { //We hit 0xFFFF and wrapped around
-				d.CurrentAddress += 0x8000
-			}
-			d.BytesRemaining--
-			if d.BytesRemaining == 0 && d.Loop {
-				d.SampleBufferPos = 0
-				d.CurrentAddress = d.SampleAddress
-				d.BytesRemaining = d.SampleLength
-			} else if d.BytesRemaining == 0 && d.IRQEnable {
-				APUDMCInterrupt = true
-			}
-		} else {
-			d.Buffer = 0
-		}
+		//
+		//if len(d.SampleBuffer) > 0 {
+		//	d.Buffer = d.SampleBuffer[d.SampleBufferPos]
+		//	d.SampleBufferPos++
+		//
+		//	//Advance the address, even if technically we don't need to
+		//	d.CurrentAddress++
+		//	if d.CurrentAddress < 0x8000 { //We hit 0xFFFF and wrapped around
+		//		d.CurrentAddress += 0x8000
+		//	}
+		//	d.BytesRemaining--
+		//	if d.BytesRemaining == 0 && d.Loop {
+		//		d.SampleBufferPos = 0
+		//		d.CurrentAddress = d.SampleAddress
+		//		d.BytesRemaining = d.SampleLength
+		//	} else if d.BytesRemaining == 0 && d.IRQEnable {
+		//		APUDMCInterrupt = true
+		//	}
+		//} else {
+		d.Buffer = 0
+		//}
 	}
 }

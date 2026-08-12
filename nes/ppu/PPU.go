@@ -1,4 +1,4 @@
-package nes
+package ppu
 
 import (
 	"image/color"
@@ -60,75 +60,8 @@ var ppu_SpritePattern [8]byte
 var ppu_SpriteXposition [8]byte
 var ppu_SpriteYposition [8]byte
 
-var Palette = [64]color.RGBA{
-	{R: 0x65, G: 0x65, B: 0x65, A: 0xFF},
-	{R: 0x00, G: 0x2A, B: 0x84, A: 0xFF},
-	{R: 0x15, G: 0x13, B: 0xA2, A: 0xFF},
-	{R: 0x3A, G: 0x01, B: 0x9E, A: 0xFF},
-	{R: 0x59, G: 0x00, B: 0x7A, A: 0xFF},
-	{R: 0x6A, G: 0x00, B: 0x3E, A: 0xFF},
-	{R: 0x68, G: 0x08, B: 0x00, A: 0xFF},
-	{R: 0x53, G: 0x1D, B: 0x00, A: 0xFF},
-	{R: 0x32, G: 0x34, B: 0x00, A: 0xFF},
-	{R: 0x0D, G: 0x46, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x4F, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x4C, B: 0x09, A: 0xFF},
-	{R: 0x00, G: 0x3F, B: 0x4B, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-	{R: 0xAE, G: 0xAE, B: 0xAE, A: 0xFF},
-	{R: 0x17, G: 0x5F, B: 0xD6, A: 0xFF},
-	{R: 0x43, G: 0x41, B: 0xFF, A: 0xFF},
-	{R: 0x75, G: 0x29, B: 0xFA, A: 0xFF},
-	{R: 0x9E, G: 0x1D, B: 0xCA, A: 0xFF},
-	{R: 0xB4, G: 0x20, B: 0x7B, A: 0xFF},
-	{R: 0xB1, G: 0x33, B: 0x22, A: 0xFF},
-	{R: 0x96, G: 0x4E, B: 0x00, A: 0xFF},
-	{R: 0x6A, G: 0x6C, B: 0x00, A: 0xFF},
-	{R: 0x39, G: 0x84, B: 0x00, A: 0xFF},
-	{R: 0x0F, G: 0x90, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x8D, B: 0x33, A: 0xFF},
-	{R: 0x00, G: 0x7B, B: 0x8C, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-	{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-	{R: 0x66, G: 0xAF, B: 0xFF, A: 0xFF},
-	{R: 0x93, G: 0x90, B: 0xFF, A: 0xFF},
-	{R: 0xC5, G: 0x78, B: 0xFF, A: 0xFF},
-	{R: 0xEE, G: 0x6C, B: 0xFF, A: 0xFF},
-	{R: 0xFF, G: 0x6F, B: 0xCA, A: 0xFF},
-	{R: 0xFF, G: 0x82, B: 0x71, A: 0xFF},
-	{R: 0xE6, G: 0x9E, B: 0x25, A: 0xFF},
-	{R: 0xBA, G: 0xBC, B: 0x00, A: 0xFF},
-	{R: 0x88, G: 0xD5, B: 0x01, A: 0xFF},
-	{R: 0x5E, G: 0xE1, B: 0x32, A: 0xFF},
-	{R: 0x47, G: 0xDD, B: 0x82, A: 0xFF},
-	{R: 0x4A, G: 0xCB, B: 0xDC, A: 0xFF},
-	{R: 0x4E, G: 0x4E, B: 0x4E, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-
-	{R: 0xFE, G: 0xFE, B: 0xFE, A: 0xFF},
-	{R: 0xC0, G: 0xDE, B: 0xFF, A: 0xFF},
-	{R: 0xD2, G: 0xD1, B: 0xFF, A: 0xFF},
-	{R: 0xE7, G: 0xC7, B: 0xFF, A: 0xFF},
-	{R: 0xF8, G: 0xC2, B: 0xFF, A: 0xFF},
-	{R: 0xFF, G: 0xC3, B: 0xE9, A: 0xFF},
-	{R: 0xFF, G: 0xCB, B: 0xC4, A: 0xFF},
-	{R: 0xF5, G: 0xD7, B: 0xA5, A: 0xFF},
-	{R: 0xE2, G: 0xE3, B: 0x94, A: 0xFF},
-	{R: 0xCE, G: 0xED, B: 0x96, A: 0xFF},
-	{R: 0xBC, G: 0xF2, B: 0xAA, A: 0xFF},
-	{R: 0xB3, G: 0xF1, B: 0xCB, A: 0xFF},
-	{R: 0xB4, G: 0xE9, B: 0xF0, A: 0xFF},
-	{R: 0xB6, G: 0xB6, B: 0xB6, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-	{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-}
+var PPUAddressBus uint16
+var PPUBus byte
 
 func ResetPPU() {
 	WriteLatch = false
@@ -203,23 +136,14 @@ func Emulate_PPU( /*g *Game*/ ) {
 		PPUAddressBus = VRAMAddress // the address bus is always v when rendering is disabled.
 	}
 
-	PPURender()
+	//Get tile data for buffering
+	RenderTileData()
 
 	//Increment / Reset scroll
-	if (PPUScanline < 240 || PPUScanline == 261) && (PPUMASK_RenderBG || PPUMASK_RenderSprites) {
-		//If this is a visible scanline and rendering sprites / background is enabled
-		if PPUDot == 256 { //The Y Scroll is incremented on dot 256
-			PPU_IncrementScrollY()
-		} else if PPUDot == 257 { //The X scroll is reset on dot 257
-			PPU_ResetXScroll()
-		}
-		if PPUDot >= 280 && PPUDot <= 304 && PPUScanline == 261 { //numbers from the nesdev wiki
-			PPU_ResetYScroll() //The Y scroll is reset on every dot from 280 through 304 on the pre-render scanline
-		}
-	}
+	UpdateScroll()
 
-	//Drawing
-	DrawScreen()
+	//Drawing the next pixel
+	RenderNextPixel()
 
 	PPUDot++
 	if PPUDot > 341 {
@@ -232,109 +156,6 @@ func Emulate_PPU( /*g *Game*/ ) {
 
 	if PPUBus != 0 {
 		DecayPPUDataBus()
-	}
-}
-
-func PPURender() {
-	if PPUScanline < 240 || PPUScanline == 261 {
-		if (PPUDot > 0 && PPUDot <= 256) || (PPUDot > 320 && PPUDot <= 336) {
-			//If this is a visible pixel, or preparing the start of the next scanline
-			if PPUMASK_RenderBG || PPUMASK_RenderSprites {
-				//If rendering is enabled
-				if PPUMASK_RenderBG { //If rendering the background, update the shift registers for the background
-					ppuShiftRegister_patternL = ppuShiftRegister_patternL << 1     //Shift 1 bit to the left
-					ppuShiftRegister_patternH = ppuShiftRegister_patternH << 1     //Shift 1 bit to the left
-					ppuShiftRegister_attributeL = ppuShiftRegister_attributeL << 1 //Shift 1 bit to the left
-					ppuShiftRegister_attributeH = ppuShiftRegister_attributeH << 1 //Shift 1 bit to the left
-				}
-				if PPUMASK_RenderBG || PPUMASK_RenderSprites { //If rendering at all, let's decrement the X position of the objects
-					if PPUDot > 1 && PPUDot <= 256 { //Don't decrement until dot 1
-						for i := 0; i < 8; i++ {
-							if ppu_SpriteXposition[i] > 0 {
-								ppu_SpriteXposition[i]-- //Decrement the position of all objects in secondary OAM. When this is zero, the PPU can draw it
-							} else {
-								ppu_SpriteShiftRegisterL[i] = byte(ppu_SpriteShiftRegisterL[i] << 1) //Shift 1 bit to the left
-								ppu_SpriteShiftRegisterH[i] = byte(ppu_SpriteShiftRegisterH[i] << 1) //Shift 1 bit to the left
-							}
-						}
-					}
-				}
-				PPU8Steps()
-			}
-		}
-	}
-}
-
-func DrawScreen( /*g *Game*/ ) {
-
-	if PPUScanline < 240 && PPUDot > 0 && PPUDot <= 256 {
-		var PalHi byte = 0  //Which color palette to use?
-		var PalLow byte = 0 //Index into a color palette
-		if PPUMASK_RenderBG && (PPUDot > 8 || PPUMASK_8pxMaskBG) {
-			col0 := byte((ppuShiftRegister_patternL >> (15 - PPUScrollFineX)) & 1)
-			col1 := byte((ppuShiftRegister_patternH >> (15 - PPUScrollFineX)) & 1)
-			PalLow = byte(uint16(col1)<<1 | uint16(col0))
-
-			pal0 := byte((ppuShiftRegister_attributeL >> (15 - PPUScrollFineX)) & 1)
-			pal1 := byte((ppuShiftRegister_attributeH >> (15 - PPUScrollFineX)) & 1)
-			PalHi = byte(uint16(pal1)<<1 | uint16(pal0))
-
-			if PalLow == 0 && PalHi != 0 { //Color 0 of all palettes are mirrors of color 0 of palette 0
-				PalHi = 0
-			}
-		}
-
-		if PPUScanline >= 238 && PPUDot == 255 {
-			common.Print("")
-		}
-		var SpritePalHi byte = 0        //Which color palette to use
-		var SpritePalLow byte = 0       //Index into a color palette
-		var SpritePriority bool = false //Is the sprite in front or behind the BG?
-		if PPUMASK_RenderSprites && (PPUDot > 8 || PPUMASK_8pxMaskSprites) {
-			for i := 0; i < 8; i++ {
-				if ppu_SpriteXposition[i] == 0 && i <= int(ppuSecondaryOAMSize/4) { //If the sprite X position == 0 (The x position is decremented every ppu cycle)
-					SpixelL := ((ppu_SpriteShiftRegisterL[i]) & 0x80) != 0
-					SpixelH := ((ppu_SpriteShiftRegisterH[i]) & 0x80) != 0
-					SpritePalLow = 0
-					if SpixelL {
-						SpritePalLow = 1
-					}
-					if SpixelH {
-						SpritePalLow |= 2
-					}
-
-					SpritePalHi = byte((ppu_SpriteAttribute[i] & 0x03) | 0x04)
-					SpritePriority = ((ppu_SpriteAttribute[i] >> 5) & 1) == 0
-				} else {
-					continue
-				}
-				if SpritePalLow != 0 {
-
-					if i == 0 && ppuScanlineContainsSpriteZero && PalLow != 0 && PPUMASK_RenderBG && PPUDot < 256 {
-						ppuScanlineContainsSpriteZero = false
-						PPUSTATUS_SpriteZeroHit = true
-					}
-					break
-				}
-			}
-		}
-
-		if (SpritePriority && SpritePalLow != 0) || PalLow == 0 {
-			PalLow = SpritePalLow
-			PalHi = SpritePalHi
-			if PalLow == 0 {
-				PalHi = 0
-			}
-		}
-
-		color := Palette[cartridge.PaletteRAM[(PalHi*4)+PalLow]&0x3F]
-
-		//RenderPixel(color)
-		FrameColorBuffer[FrameColorBufferPos] = color
-		FrameColorBufferPos++
-		//RenderNTSCPixel(PPUDot, pixel uint16, ppuCycleCounter int)
-
-		//g.gameScreen.Set(PPUDot-1, PPUScanline, color)
 	}
 }
 
@@ -380,6 +201,20 @@ func PPU8Steps() {
 			VRAMAddress ^= 0x0400 //Crossing into next nametable
 		} else {
 			VRAMAddress++
+		}
+	}
+}
+
+func UpdateScroll() {
+	if (PPUScanline < 240 || PPUScanline == 261) && (PPUMASK_RenderBG || PPUMASK_RenderSprites) {
+		//If this is a visible scanline and rendering sprites / background is enabled
+		if PPUDot == 256 { //The Y Scroll is incremented on dot 256
+			PPU_IncrementScrollY()
+		} else if PPUDot == 257 { //The X scroll is reset on dot 257
+			PPU_ResetXScroll()
+		}
+		if PPUDot >= 280 && PPUDot <= 304 && PPUScanline == 261 { //numbers from the nesdev wiki
+			PPU_ResetYScroll() //The Y scroll is reset on every dot from 280 through 304 on the pre-render scanline
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"mtt/timenes/common"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/cartridge"
+	"mtt/timenes/nes/ppu"
 	"os"
 
 	"github.com/ebitengine/debugui"
@@ -54,8 +55,8 @@ func (g *Game) Update() error {
 
 	for common.ROMLoaded && !pauseEmulation {
 		Emulate_CPU()
-		if DrawNewFrame {
-			DrawNewFrame = false
+		if ppu.DrawNewFrame {
+			ppu.DrawNewFrame = false
 			break
 			//return nil
 		}
@@ -136,7 +137,7 @@ func InitGame(newUI *ebitenui.UI) {
 func Reset() {
 	//var HeaderedROM []byte := os.ReadFile()
 	ResetCPU()
-	ResetPPU()
+	ppu.ResetPPU()
 	apu.ResetAPU()
 
 	//Reset ROM Data
@@ -156,7 +157,7 @@ func Reset() {
 }
 
 func RenderPixel(color color.RGBA) {
-	pixIndex := uint64((((PPUScanline) * common.ScreenWidth) + (PPUDot - 1)) * 4)
+	pixIndex := uint64((((ppu.PPUScanline) * common.ScreenWidth) + (ppu.PPUDot - 1)) * 4)
 
 	Emulator.gameScreen.Pix[pixIndex] = color.R
 	Emulator.gameScreen.Pix[pixIndex+1] = color.G
@@ -165,13 +166,13 @@ func RenderPixel(color color.RGBA) {
 }
 
 func RenderFrame() {
-	for i, color := range FrameColorBuffer {
+	for i, color := range ppu.FrameColorBuffer {
 		Emulator.gameScreen.Pix[(i * 4)] = color.R
 		Emulator.gameScreen.Pix[(i*4)+1] = color.G
 		Emulator.gameScreen.Pix[(i*4)+2] = color.B
 		//Emulator.gameScreen.Pix[(i*4)+3] = color.A
 	}
-	FrameColorBufferPos = 0
+	ppu.FrameColorBufferPos = 0
 }
 
 func MasterClockTick(location string) {
