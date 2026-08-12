@@ -6,8 +6,8 @@ import (
 	"image/color"
 	"log"
 	"mtt/timenes/common"
-	"mtt/timenes/mappers"
 	"mtt/timenes/nes/apu"
+	"mtt/timenes/nes/cartridge"
 	"os"
 
 	"github.com/ebitengine/debugui"
@@ -19,17 +19,6 @@ import (
 )
 
 // Header Variables
-
-var RAM [0x800]byte
-var VRAM [0x800]byte
-var CartVRAM [0x1000]byte //For mapper chips
-var PaletteRAM [0x20]byte
-var ROM [0x80000]byte
-
-var CHRROM [0x80000]byte
-var isCHRRAM bool
-var Header [0x10]byte
-var CartRAM [0x2000]byte
 
 // var cpuClock int = 0 // 2A03
 // var ppuClock int = 0 // 2C02
@@ -151,26 +140,9 @@ func Reset() {
 	apu.ResetAPU()
 
 	//Reset ROM Data
-	Header = [0x10]byte{}
-	ROM = [0x80000]byte{}
-	CHRROM = [0x80000]byte{}
-	isCHRRAM = false
+	cartridge.ResetCartridge()
 
-	//Reset RAM (Or don't, if I wanna do weird stuff...?)
-	RAM = [0x800]byte{}
-	VRAM = [0x800]byte{}
-	PaletteRAM = [0x20]byte{}
-	CartRAM = [0x2000]byte{}
-
-	common.MapperChipID = 0
-
-	common.PRGROM_Size = 0
-	common.CHRROM_Size = 0
-	common.IsNametableHorizontal = false
-	common.HasBatteryRAM = false
-	common.AltNametableLayout = false
-
-	LoadROM()
+	cartridge.LoadCartridge()
 
 	//copy(CHRData[:], HeaderedROM[0x8010:])
 
@@ -181,48 +153,6 @@ func Reset() {
 
 	OutsideCodeRead = 0
 	OutsideCodeWrite = 0
-	common.ROMLoaded = true
-}
-
-func LoadROM() {
-	HeaderedROM, err := os.ReadFile(common.Filepath)
-	common.Check(err)
-
-	//Header info
-	copy(Header[:], HeaderedROM[0x0:])
-	common.PRGROM_Size = uint32(Header[4]) * uint32(0x4000)
-	common.CHRROM_Size = uint32(Header[5]) * uint32(0x2000)
-	common.IsNametableHorizontal = (Header[6] & 1) == 0
-	common.HasBatteryRAM = (Header[6] & 0x02) != 0
-	common.AltNametableLayout = (Header[6] & 0x08) != 0
-
-	common.NES2_Header = ((Header[7] & 0xC) >> 2) == 2
-
-	common.MapperChipID = (Header[6] >> 4) | (Header[7] & 0xF0)
-
-	//size := uint16(Header[4])
-	ROM_Endpoint := uint32(0x10 + (common.PRGROM_Size))
-	CHR_Endpoint := uint32(ROM_Endpoint + uint32(common.CHRROM_Size))
-
-	copy(ROM[:], HeaderedROM[0x10:ROM_Endpoint])
-	if common.CHRROM_Size != 0 {
-		copy(CHRROM[:], HeaderedROM[ROM_Endpoint:CHR_Endpoint])
-	} else {
-
-	}
-
-	//Initialize any PRG-RAM from mapper chips
-	if common.HasBatteryRAM {
-		switch common.MapperChipID {
-		case 1: //MMC1
-			copy(mappers.MMC1_PRGRAM[:], HeaderedROM[0x10:])
-		case 2: //UxROM
-		case 3: //CNROM
-			//Add support for Hayauchi Super Igo?
-		case 4: //MMC3
-		}
-	}
-
 }
 
 func RenderPixel(color color.RGBA) {

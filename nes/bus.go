@@ -2,8 +2,9 @@ package nes
 
 import (
 	"mtt/timenes/common"
-	"mtt/timenes/mappers"
 	"mtt/timenes/nes/apu"
+	"mtt/timenes/nes/cartridge"
+	"mtt/timenes/nes/cartridge/mappers"
 )
 
 var AddressBus, ppuAddressBus uint16
@@ -18,7 +19,7 @@ func Read(Address uint16) byte {
 	var returnValue byte
 	if Address < 0x2000 {
 		//Read from RAM (Accounting for RAM Mirroring)
-		returnValue = RAM[Address&0x7FF]
+		returnValue = cartridge.RAM[Address&0x7FF]
 	} else if Address < 0x4000 {
 		//Reading a PPU Register
 		Address &= 0x2007
@@ -93,7 +94,7 @@ func Read(Address uint16) byte {
 
 	} else if Address < 0x7FFF {
 		//Could be PRG-RAM on the cartridge
-		switch common.MapperChipID {
+		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			returnValue = mappers.MMC1_PRGRAM[Address&0x1FFF]
 		default:
@@ -101,13 +102,13 @@ func Read(Address uint16) byte {
 		}
 	} else if Address >= 0x8000 {
 		//Read from ROM
-		switch common.MapperChipID {
+		switch cartridge.MapperChipID {
 		case 1: //MMC1
-			returnValue = ROM[mappers.MMC1_FetchCPUAddress(Address, common.PRGROM_Size)]
+			returnValue = cartridge.PRGROM[mappers.MMC1_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
-			returnValue = ROM[(Address-0x8000)&uint16(common.PRGROM_Size-1)]
+			returnValue = cartridge.PRGROM[(Address-0x8000)&uint16(cartridge.PRGROM_Size-1)]
 			//outsideCodeRead = Address
 		}
 	}
@@ -118,7 +119,7 @@ func Read(Address uint16) byte {
 // Write the Value into the Address given (PPU may have extra steps)
 func Write(Address uint16, Value byte) {
 	if Address < 0x2000 {
-		RAM[Address&0x7FF] = Value
+		cartridge.RAM[Address&0x7FF] = Value
 	} else if Address < 0x4000 {
 		//Write to PPU Register
 		UpdatePPUBus(Value)
@@ -335,7 +336,7 @@ func Write(Address uint16, Value byte) {
 		//	CartRAM[Address&0x1FFF] = Value
 	} else {
 		//Check what mapper chip we're using
-		switch common.MapperChipID {
+		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			mappers.MMC1_Write(Value, Address, CPU_TotalCycles)
 		case 3: //CNROM
@@ -352,33 +353,33 @@ func Write(Address uint16, Value byte) {
 func ReadPPU( /*Address uint16*/ ) byte {
 	if ppuAddressBus < 0x2000 {
 		//Read from pattern table.
-		switch common.MapperChipID {
+		switch cartridge.MapperChipID {
 		case 1: //MMC1
-			return CHRROM[mappers.MMC1_FetchPPUAddress(ppuAddressBus, common.CHRROM_Size)]
+			return cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(ppuAddressBus, cartridge.CHRROM_Size)]
 		case 3: //CNROM
-			return CHRROM[mappers.CNROM_ReadAddress(ppuAddressBus)]
+			return cartridge.CHRROM[mappers.CNROM_ReadAddress(ppuAddressBus)]
 		//case 4: //MMC3
 		//	return 0
 		default:
-			return CHRROM[ppuAddressBus]
+			return cartridge.CHRROM[ppuAddressBus]
 		}
 
 		//else, nothing happens
 	} else if ppuAddressBus < 0x3F00 {
 		//Read from the Nametables
-		switch common.MapperChipID {
+		switch cartridge.MapperChipID {
 		case 1: //MMC1
-			return CartVRAM[mappers.MMC1_FetchNametable(ppuAddressBus)]
+			return cartridge.CartVRAM[mappers.MMC1_FetchNametable(ppuAddressBus)]
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
-			if !common.AltNametableLayout {
-				if common.IsNametableHorizontal {
+			if !cartridge.AltNametableLayout {
+				if cartridge.IsNametableHorizontal {
 					// Horizontal Mirroring
-					return VRAM[int(ppuAddressBus&0x3FF)|(int(ppuAddressBus&0x800)>>1)]
+					return cartridge.VRAM[int(ppuAddressBus&0x3FF)|(int(ppuAddressBus&0x800)>>1)]
 				} else {
 					//Vertical Mirroring
-					return VRAM[int(ppuAddressBus&0x7FF)]
+					return cartridge.VRAM[int(ppuAddressBus&0x7FF)]
 				}
 			}
 		}
@@ -387,9 +388,9 @@ func ReadPPU( /*Address uint16*/ ) byte {
 	} else {
 		//Read from Palette RAM
 		if (ppuAddressBus & 3) == 0 {
-			return PaletteRAM[ppuAddressBus&0x0F]
+			return cartridge.PaletteRAM[ppuAddressBus&0x0F]
 		} else {
-			return PaletteRAM[ppuAddressBus&0x1F]
+			return cartridge.PaletteRAM[ppuAddressBus&0x1F]
 		}
 	}
 }
@@ -397,49 +398,49 @@ func ReadPPU( /*Address uint16*/ ) byte {
 func WritePPU(Value byte) {
 	if VRAMAddress < 0x2000 {
 		//Write to pattern table. (If the cartridge supports it)
-		if common.CHRROM_Size == 0 {
-			switch common.MapperChipID {
+		if cartridge.CHRROM_Size == 0 {
+			switch cartridge.MapperChipID {
 			case 1: //MMC1
 				//if AltNametableLayout {
 				//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
 				//} else {
-				CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, common.CHRROM_Size)] = Value
+				cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, cartridge.CHRROM_Size)] = Value
 				//}
 			case 3: //CNROM
-				CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
+				cartridge.CHRROM[mappers.CNROM_ReadAddress(VRAMAddress)] = Value
 			//case 4: //MMC3
 			default:
-				CHRROM[VRAMAddress] = Value
+				cartridge.CHRROM[VRAMAddress] = Value
 			}
 		}
 		//else, nothing happens because it's CHR-ROM
 	} else if VRAMAddress < 0x3F00 {
 		//Write to the Nametables
 
-		switch common.MapperChipID {
+		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			switch mappers.MMC1_GetNametableArrangement() {
 			case 0: //Screen A only
-				CartVRAM[int(VRAMAddress&0x3FF)] = Value
+				cartridge.CartVRAM[int(VRAMAddress&0x3FF)] = Value
 			case 1: //Screen B Only
-				CartVRAM[int(VRAMAddress&0x3FF)+0x400] = Value
+				cartridge.CartVRAM[int(VRAMAddress&0x3FF)+0x400] = Value
 			case 2: //Horizontal
-				CartVRAM[int(VRAMAddress&0x7FF)] = Value
+				cartridge.CartVRAM[int(VRAMAddress&0x7FF)] = Value
 			case 3: //Vertical
-				CartVRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+				cartridge.CartVRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
 			}
-			//CartVRAM[VRAMAddress&0xFFF] = Value
+			//cartridge.CartVRAM[VRAMAddress&0xFFF] = Value
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
-			if !common.AltNametableLayout {
-				if common.IsNametableHorizontal {
+			if !cartridge.AltNametableLayout {
+				if cartridge.IsNametableHorizontal {
 					// Horizontal Mirroring
-					VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+					cartridge.VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
 				} else {
 					//Vertical Mirroring
 					index := int(VRAMAddress & 0x7FF)
-					VRAM[index] = Value
+					cartridge.VRAM[index] = Value
 				}
 			}
 		}
@@ -447,9 +448,9 @@ func WritePPU(Value byte) {
 	} else {
 		//Write to Palette RAM
 		if (VRAMAddress & 3) == 0 {
-			PaletteRAM[VRAMAddress&0x0F] = Value
+			cartridge.PaletteRAM[VRAMAddress&0x0F] = Value
 		} else {
-			PaletteRAM[VRAMAddress&0x1F] = Value
+			cartridge.PaletteRAM[VRAMAddress&0x1F] = Value
 		}
 	}
 }

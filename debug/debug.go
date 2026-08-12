@@ -3,6 +3,7 @@ package debug
 import (
 	"fmt"
 	"mtt/timenes/nes"
+	"mtt/timenes/nes/cartridge"
 )
 
 var LoggingCPU = false
@@ -215,10 +216,10 @@ func DebugWindow( g *Game ) error { //Using ebitengine's built in debug display
 var CartRamLastString string
 
 func CartRAMLogger() {
-	CartTestStatus := nes.CartRAM[0]
-	CartTestValid := nes.CartRAM[1] == 0xDE && nes.CartRAM[2] == 0xB0 && nes.CartRAM[3] == 0x61
+	CartTestStatus := cartridge.CartRAM[0]
+	CartTestValid := cartridge.CartRAM[1] == 0xDE && cartridge.CartRAM[2] == 0xB0 && cartridge.CartRAM[3] == 0x61
 
-	newString := string(nes.CartRAM[4:])
+	newString := string(cartridge.CartRAM[4:])
 
 	if CartTestValid && CartTestStatus == 0x80 && (newString != CartRamLastString) {
 		//Valid Test line

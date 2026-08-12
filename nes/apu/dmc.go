@@ -1,8 +1,6 @@
 package apu
 
-import (
-	"mtt/timenes/common"
-)
+import "mtt/timenes/nes/cartridge"
 
 type DeltaModChannel struct {
 	Enabled              bool
@@ -101,7 +99,7 @@ func (d *DeltaModChannel) ClockDMCTimer() {
 
 func (d *DeltaModChannel) DMCMemoryReader() {
 	//Check for Mappers
-	switch common.MapperChipID {
+	switch cartridge.MapperChipID {
 	default:
 		//TODO: Stall for 1-4 CPU cycles (?)
 		//d.Buffer = nes.Read(d.SampleAddress)
