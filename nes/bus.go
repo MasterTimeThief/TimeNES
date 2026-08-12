@@ -310,7 +310,7 @@ func Write(Address uint16, Value byte) {
 			apu.IRQLevelDetector = false
 
 		case 0x4016: //Controller Input
-			input.UpdateControllers(Emulator.keys)
+			input.UpdateControllers()
 		case 0x4017: //APU Frame Counter control
 			//modeFlagPrev := apuFrameCounterMode
 			apu.APUFrameCounterMode = ((Value & 0x80) >> 7) != 0

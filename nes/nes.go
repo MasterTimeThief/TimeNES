@@ -31,10 +31,10 @@ var pauseEmulation bool = false
 
 type Game struct {
 	gameScreen *image.RGBA
-	keys       []ebiten.Key
-	UI         *ebitenui.UI
-	Exit       bool
-	debugui    debugui.DebugUI
+	//keys       []ebiten.Key
+	UI      *ebitenui.UI
+	Exit    bool
+	debugui debugui.DebugUI
 	//directory    []os.DirEntry
 	audioContext *audio.Context
 	player       *audio.Player

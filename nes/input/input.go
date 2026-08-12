@@ -11,7 +11,7 @@ var Controller1ShiftRegister, Controller2ShiftRegister uint16
 //var enableZapper bool = false
 
 // Update states of controllers
-func UpdateControllers(keys []ebiten.Key) {
+func UpdateControllers() {
 
 	//	0 - B
 	//	1 - A
@@ -21,7 +21,7 @@ func UpdateControllers(keys []ebiten.Key) {
 	//	5 - Down
 	//	6 - Left
 	//	7 - Right
-
+	var keys []ebiten.Key
 	keys = inpututil.AppendPressedKeys(keys[:0])
 
 	Controller1 = 0
