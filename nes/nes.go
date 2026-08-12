@@ -7,6 +7,7 @@ import (
 	"log"
 	"mtt/timenes/common"
 	"mtt/timenes/nes/apu"
+	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
 	"mtt/timenes/nes/ppu"
 	"os"
@@ -26,7 +27,6 @@ import (
 var MasterClock int = 0
 
 // Debugging
-var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0
 var ShowFPS bool = false
 var pauseEmulation bool = false
 
@@ -89,11 +89,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if ShowFPS {
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*common.ScreenScale)-132, (240*common.ScreenScale)-20) // Draw the UI onto the screen
 	}
-	if OutsideCodeRead > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", OutsideCodeRead), 5, (240*common.ScreenScale)-30)
+	if bus.OutsideCodeRead > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", bus.OutsideCodeRead), 5, (240*common.ScreenScale)-30)
 	}
-	if OutsideCodeWrite > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", OutsideCodeWrite), 5, (240*common.ScreenScale)-40)
+	if bus.OutsideCodeWrite > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", bus.OutsideCodeWrite), 5, (240*common.ScreenScale)-40)
 	}
 
 	g.UI.Draw(screen)
@@ -147,13 +147,13 @@ func Reset() {
 
 	//copy(CHRData[:], HeaderedROM[0x8010:])
 
-	PCL := Read(0xFFFC)
-	PCH := Read(0xFFFD)
+	PCL := bus.Read(0xFFFC)
+	PCH := bus.Read(0xFFFD)
 	ProgramCounter = BuildAddress(PCL, PCH)
 	//fmt.Printf("%#x", ProgramCounter)
 
-	OutsideCodeRead = 0
-	OutsideCodeWrite = 0
+	bus.OutsideCodeRead = 0
+	bus.OutsideCodeWrite = 0
 }
 
 func RenderPixel(color color.RGBA) {

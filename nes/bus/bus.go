@@ -1,4 +1,4 @@
-package nes
+package bus
 
 import (
 	"mtt/timenes/common"
@@ -11,6 +11,7 @@ import (
 
 var cpuOpenBus byte
 var OAMBusAddress byte
+var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0
 
 // Read from Address, and return that byte
 func Read(Address uint16) byte {
