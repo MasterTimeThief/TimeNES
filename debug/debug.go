@@ -2,6 +2,7 @@ package debug
 
 import (
 	"fmt"
+	"mtt/timenes/common"
 	"mtt/timenes/nes"
 	"mtt/timenes/nes/cartridge"
 )
@@ -35,7 +36,7 @@ func PrepTraceLogger() {
 	traceFlagV = nes.flag_Overflow
 	traceFlagN = nes.flag_Negative*/
 
-	traceCycles = nes.CPU_TotalCycles
+	traceCycles = common.CPU_TotalCycles
 }
 
 /*
@@ -196,7 +197,7 @@ func DebugWindow( g *Game ) error { //Using ebitengine's built in debug display
 			//ctx.Text("Fine Y Scroll:")
 			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
 			//ctx.Text("Nametable:")
-			//ctx.Text(fmt.Sprintf("$%02X", ppuCtrl_NametableSelect))
+			//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
 
 			//ctx.Text("Pause")
 			ctx.Button("Pause").On(func() {

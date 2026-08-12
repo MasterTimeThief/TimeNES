@@ -53,7 +53,7 @@ func (g *Game) Update() error {
 	}
 
 	for common.ROMLoaded && !pauseEmulation {
-		Emulate_CPU(g)
+		Emulate_CPU()
 		if DrawNewFrame {
 			DrawNewFrame = false
 			break
@@ -156,7 +156,7 @@ func Reset() {
 }
 
 func RenderPixel(color color.RGBA) {
-	pixIndex := uint64((((ppuScanline) * common.ScreenWidth) + (ppuDot - 1)) * 4)
+	pixIndex := uint64((((PPUScanline) * common.ScreenWidth) + (PPUDot - 1)) * 4)
 
 	Emulator.gameScreen.Pix[pixIndex] = color.R
 	Emulator.gameScreen.Pix[pixIndex+1] = color.G

@@ -8,12 +8,9 @@ import (
 	"mtt/timenes/nes/input"
 )
 
-var ppuAddressBus uint16
-var cpuOpenBus, ppuBus byte
+var PPUAddressBus uint16
+var cpuOpenBus, PPUBus byte
 var OAMBusAddress byte
-
-var ppuBusDecay [8]int
-var ppuBusDecayConstant int = 1786830
 
 // Read from Address, and return that byte
 func Read(Address uint16) byte {
@@ -28,51 +25,51 @@ func Read(Address uint16) byte {
 		case 0x2000: //PPUCTRL
 		case 0x2001: //PPUMASK
 		case 0x2002: //PPUSTATUS
-			ppuBus &= 0x1F
-			ppuBus |= byte(common.Ternary(ppuStatus_VBlank, 0x80, 0x00))
-			ppuBus |= byte(common.Ternary(ppuStatus_SpriteZeroHit, 0x40, 0x00))
-			ppuBus |= byte(common.Ternary(ppuStatus_Overflow, 0x20, 0x00))
-			ppuStatus_VBlank = false
+			PPUBus &= 0x1F
+			PPUBus |= byte(common.Ternary(PPUSTATUS_VBlank, 0x80, 0x00))
+			PPUBus |= byte(common.Ternary(PPUSTATUS_SpriteZeroHit, 0x40, 0x00))
+			PPUBus |= byte(common.Ternary(PPUSTATUS_Overflow, 0x20, 0x00))
+			PPUSTATUS_VBlank = false
 			WriteLatch = false
-			UpdatePPUBus2002(ppuBus)
+			UpdatePPUBus2002(PPUBus)
 		case 0x2003: //OAM ADDR
 		case 0x2004: //OAMDATA
-			if ppuScanline < 240 && (ppuMask_RenderBG || ppuMask_RenderSprites) {
+			if PPUScanline < 240 && (PPUMASK_RenderBG || PPUMASK_RenderSprites) {
 				//Return buffer?
-				if ppuDot == 0 || ppuDot > 320 {
-					ppuBus = SecondaryOAM[0]
-				} else if ppuDot > 0 && ppuDot <= 64 {
-					ppuBus = 0xFF
+				if PPUDot == 0 || PPUDot > 320 {
+					PPUBus = SecondaryOAM[0]
+				} else if PPUDot > 0 && PPUDot <= 64 {
+					PPUBus = 0xFF
 				} else {
-					returnValue = ppuBus
+					returnValue = PPUBus
 				}
 			} else {
-				ppuBus = OAM[OAMBusAddress]
+				PPUBus = OAM[OAMBusAddress]
 			}
-			UpdatePPUBus(ppuBus)
+			UpdatePPUBus(PPUBus)
 		case 0x2005: //PPUSCROLL
 		case 0x2006: //PPUADDR
 		case 0x2007: //PPUDATA
-			ppuAddressBus = VRAMAddress
+			PPUAddressBus = VRAMAddress
 			if (VRAMAddress & 0x3FFF) > 0x3F00 {
 				//Palette data
 				data := ReadPPU()
-				ppuBus = (ppuBus & 0xC0) | (data & byte(common.Ternary(ppuMask_Greyscale, 0x30, 0x3F)))
+				PPUBus = (PPUBus & 0xC0) | (data & byte(common.Ternary(PPUMASK_Greyscale, 0x30, 0x3F)))
 				//PPUReadBuffer = ReadPPU((VRAMAddress & 0x2F00) | (VRAMAddress & 0xFF))
 				//PPUReadBuffer = ppuBus
-				UpdatePPUBus2007Palette(ppuBus)
+				UpdatePPUBus2007Palette(PPUBus)
 			} else {
-				ppuBus = PPUReadBuffer
+				PPUBus = PPUReadBuffer
 				PPUReadBuffer = ReadPPU()
-				UpdatePPUBus(ppuBus)
+				UpdatePPUBus(PPUBus)
 			}
 
-			VRAMAddress += common.Ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
+			VRAMAddress += common.Ternary(PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
 			VRAMAddress &= 0x3FFF
 		default:
-			returnValue = ppuBus
+			returnValue = PPUBus
 		}
-		returnValue = ppuBus
+		returnValue = PPUBus
 	} else if Address == 0x4015 { //APU Status
 		apuStatus := byte(0)
 		apuStatus |= byte(common.Ternary(apu.APUDMCInterrupt, 0x80, 0x00))                                                                  //DMC Interrupt
@@ -127,29 +124,29 @@ func Write(Address uint16, Value byte) {
 		Address &= 0x2007
 		switch Address {
 		case 0x2000: //PPUCTRL
-			ppuCtrl_NametableSelect = Value & 0x03
-			ppuCtrl_VRAMInc32Mode = (Value & 0x04) != 0
-			ppuCtrl_SpritePatternTable = (Value & 0x08) != 0
-			ppuCtrl_BGPatternTable = (Value & 0x10) != 0
-			ppuCtrl_Use8x16Sprites = (Value & 0x20) != 0
-			ppuCtrl_EnableNMI = (Value & 0x80) != 0
+			PPUCTRL_NametableSelect = Value & 0x03
+			PPUCTRL_VRAMInc32Mode = (Value & 0x04) != 0
+			PPUCTRL_SpritePatternTable = (Value & 0x08) != 0
+			PPUCTRL_BGPatternTable = (Value & 0x10) != 0
+			PPUCTRL_Use8x16Sprites = (Value & 0x20) != 0
+			PPUCTRL_EnableNMI = (Value & 0x80) != 0
 
-			TransferAddress = (uint16(ppuCtrl_NametableSelect) << 10) | (uint16(TransferAddress) & 0x73FF)
+			TransferAddress = (uint16(PPUCTRL_NametableSelect) << 10) | (uint16(TransferAddress) & 0x73FF)
 		case 0x2001: //PPUMASK
-			ppuMask_Greyscale = (Value & 0x01) != 0
-			ppuMask_8pxMaskBG = (Value & 0x02) != 0
-			ppuMask_8pxMaskSprites = (Value & 0x04) != 0
-			ppuMask_RenderBG = (Value & 0x08) != 0
-			ppuMask_RenderSprites = (Value & 0x10) != 0
+			PPUMASK_Greyscale = (Value & 0x01) != 0
+			PPUMASK_8pxMaskBG = (Value & 0x02) != 0
+			PPUMASK_8pxMaskSprites = (Value & 0x04) != 0
+			PPUMASK_RenderBG = (Value & 0x08) != 0
+			PPUMASK_RenderSprites = (Value & 0x10) != 0
 			//NTSC scanline stuff
-			ppuMask_EmphasisRed = (Value & 0x20) != 0
-			ppuMask_EmphasisGreen = (Value & 0x40) != 0
-			ppuMask_EmphasisBlue = (Value & 0x80) != 0
+			PPUMASK_EmphasisRed = (Value & 0x20) != 0
+			PPUMASK_EmphasisGreen = (Value & 0x40) != 0
+			PPUMASK_EmphasisBlue = (Value & 0x80) != 0
 		case 0x2002: //PPUSTATUS
 		case 0x2003: //OAMADDR
 			OAMBusAddress = Value
 		case 0x2004: //OAMDATA
-			if ((ppuScanline >= 240 && ppuScanline < 261) && (ppuMask_RenderBG || ppuMask_RenderSprites)) || (!ppuMask_RenderBG && !ppuMask_RenderSprites) {
+			if ((PPUScanline >= 240 && PPUScanline < 261) && (PPUMASK_RenderBG || PPUMASK_RenderSprites)) || (!PPUMASK_RenderBG && !PPUMASK_RenderSprites) {
 				if (OAMBusAddress & 3) == 2 {
 					Value &= 0xE3
 				}
@@ -161,10 +158,10 @@ func Write(Address uint16, Value byte) {
 			}
 		case 0x2005: //PPUSCROLL
 			if !WriteLatch {
-				ppuScrollFineX = byte(Value & 7)
+				PPUScrollFineX = byte(Value & 7)
 				TransferAddress = uint16((TransferAddress & 0b0111111111100000) | uint16(Value>>3))
 			} else {
-				TransferAddress = ((TransferAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) /*| (uint16(ppuCtrl_NametableSelect&1) << 10)*/)
+				TransferAddress = ((TransferAddress & 0b0000110000011111) | uint16(uint16(Value&0xF8)<<2) | uint16(uint16(Value&7)<<12) /*| (uint16(PPUCTRL_NametableSelect&1) << 10)*/)
 			}
 			WriteLatch = !WriteLatch
 		case 0x2006: //PPUADDR
@@ -182,7 +179,7 @@ func Write(Address uint16, Value byte) {
 		case 0x2007: //PPUDATA
 			WritePPU(Value)
 
-			VRAMAddress += common.Ternary(ppuCtrl_VRAMInc32Mode, 0x20, 0x01)
+			VRAMAddress += common.Ternary(PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
 			VRAMAddress &= 0x3FFF
 		}
 
@@ -337,7 +334,7 @@ func Write(Address uint16, Value byte) {
 		//Check what mapper chip we're using
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
-			mappers.MMC1_Write(Value, Address, CPU_TotalCycles)
+			mappers.MMC1_Write(Value, Address, common.CPU_TotalCycles)
 		case 3: //CNROM
 			prgValue := Read(Address)
 			mappers.CNROM_Write(Value&prgValue, Address)
@@ -347,51 +344,6 @@ func Write(Address uint16, Value byte) {
 		}
 	}
 	//MasterClockTick("WRITE")
-}
-
-func ReadPPU( /*Address uint16*/ ) byte {
-	if ppuAddressBus < 0x2000 {
-		//Read from pattern table.
-		switch cartridge.MapperChipID {
-		case 1: //MMC1
-			return cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(ppuAddressBus, cartridge.CHRROM_Size)]
-		case 3: //CNROM
-			return cartridge.CHRROM[mappers.CNROM_ReadAddress(ppuAddressBus)]
-		//case 4: //MMC3
-		//	return 0
-		default:
-			return cartridge.CHRROM[ppuAddressBus]
-		}
-
-		//else, nothing happens
-	} else if ppuAddressBus < 0x3F00 {
-		//Read from the Nametables
-		switch cartridge.MapperChipID {
-		case 1: //MMC1
-			return cartridge.CartVRAM[mappers.MMC1_FetchNametable(ppuAddressBus)]
-		//case 3: //CNROM
-		//case 4: //MMC3
-		default:
-			if !cartridge.AltNametableLayout {
-				if cartridge.IsNametableHorizontal {
-					// Horizontal Mirroring
-					return cartridge.VRAM[int(ppuAddressBus&0x3FF)|(int(ppuAddressBus&0x800)>>1)]
-				} else {
-					//Vertical Mirroring
-					return cartridge.VRAM[int(ppuAddressBus&0x7FF)]
-				}
-			}
-		}
-		return 0
-
-	} else {
-		//Read from Palette RAM
-		if (ppuAddressBus & 3) == 0 {
-			return cartridge.PaletteRAM[ppuAddressBus&0x0F]
-		} else {
-			return cartridge.PaletteRAM[ppuAddressBus&0x1F]
-		}
-	}
 }
 
 func WritePPU(Value byte) {
@@ -450,45 +402,6 @@ func WritePPU(Value byte) {
 			cartridge.PaletteRAM[VRAMAddress&0x0F] = Value
 		} else {
 			cartridge.PaletteRAM[VRAMAddress&0x1F] = Value
-		}
-	}
-}
-
-func UpdatePPUBus(Value byte) byte {
-	ppuBus = Value
-	//PPU decay buffer code here
-	for i := 0; i < 8; i++ {
-		ppuBusDecay[i] = ppuBusDecayConstant
-	}
-	//???
-	return ppuBus
-}
-
-func UpdatePPUBus2002(Value byte) {
-	ppuBus = Value
-	//Only update the decay constant on the top 3 bits
-	for i := 5; i < 8; i++ {
-		ppuBusDecay[i] = ppuBusDecayConstant
-	}
-}
-
-func UpdatePPUBus2007Palette(Value byte) {
-	ppuBus = Value
-	//Only update the decay constant on the bottom 6 bits
-	for i := 0; i < 6; i++ {
-		ppuBusDecay[i] = ppuBusDecayConstant
-	}
-}
-
-func DecayPPUDataBus() {
-	DecayBitmask := [8]byte{0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F}
-
-	for i := range ppuBusDecay {
-		if ppuBusDecay[i] > 0 {
-			ppuBusDecay[i]--
-			if ppuBusDecay[i] == 0 {
-				ppuBus &= DecayBitmask[i]
-			}
 		}
 	}
 }

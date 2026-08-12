@@ -11,7 +11,7 @@ var StackPointer byte
 var A, X, Y byte
 var opcode byte
 var operands []byte
-var CPU_Cycles, CPU_Cycles_New, CPU_TotalCycles int
+var CPU_Cycles, CPU_Cycles_New int
 var CPU_Halted = false
 var flag_Carry, flag_Zero, flag_InterruptDisable, flag_Decimal, flag_Overflow, flag_Negative, flag_B bool
 var MagicConstant byte = 0xFF
@@ -318,7 +318,7 @@ func ResetCPU() {
 	A, X, Y = 0, 0, 0
 	opcode = 0
 	operands = nil
-	CPU_Cycles, CPU_Cycles_New, CPU_TotalCycles = 0, 0, 0
+	CPU_Cycles, CPU_Cycles_New, common.CPU_TotalCycles = 0, 0, 0
 	CPU_Halted = false
 
 	flag_Carry = false
@@ -347,10 +347,10 @@ func ReadFromPC() byte {
 	return Value
 }
 
-func Emulate_CPU(g *Game) {
+func Emulate_CPU( /*g *Game*/ ) {
 	//Non Maskable Interrupt check
 	prevNMILevelDetector := NMILevelDetector
-	NMILevelDetector = (ppuCtrl_EnableNMI && ppuStatus_VBlank)
+	NMILevelDetector = (PPUCTRL_EnableNMI && PPUSTATUS_VBlank)
 	if !prevNMILevelDetector && NMILevelDetector {
 		DoNMI = true
 	}
@@ -1931,12 +1931,12 @@ func Emulate_CPU(g *Game) {
 	//CartRAMLogger()
 	operands = nil
 
-	CPU_TotalCycles += CPU_Cycles
+	common.CPU_TotalCycles += CPU_Cycles
 	for CPU_Cycles > 0 {
 		CPU_Cycles--
-		Emulate_PPU(g)
-		Emulate_PPU(g)
-		Emulate_PPU(g)
+		Emulate_PPU()
+		Emulate_PPU()
+		Emulate_PPU()
 
 		//Run the APU
 		//apuRun = !apuRun
