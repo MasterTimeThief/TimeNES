@@ -58,14 +58,12 @@ func (n *NoiseChannel) ClockShiftRegister() {
 	n.ShiftRegister = (n.ShiftRegister & 0b0011111111111111) | (uint16(feedback&1) << 14)
 }
 
-func (n *NoiseChannel) UpdateNoiseOutput() {
+func (n *NoiseChannel) UpdateNoiseOutput() byte {
 	if !apuEnabled || !n.Enabled || (n.ShiftRegister&1) == 1 || n.LengthCounter.Counter == 0 {
-		n.Output = 0
+		return 0
+	} else if n.ConstantVolume {
+		return n.Volume
 	} else {
-		if n.ConstantVolume {
-			n.Output = n.Volume
-		} else {
-			n.Output = n.Decay
-		}
+		return n.Decay
 	}
 }

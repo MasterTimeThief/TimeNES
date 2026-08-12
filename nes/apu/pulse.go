@@ -44,18 +44,13 @@ func (p *PulseChannel) ClockPulseTimer() {
 	}
 }
 
-func (p *PulseChannel) UpdatePulseOutput() {
+func (p *PulseChannel) UpdatePulseOutput() byte {
 	duty := apuDutySequences[p.Duty][p.DutyPos]
-	var volume byte
-	if p.ConstantVolume {
-		volume = p.Volume
+	if !apuEnabled || !p.Enabled || duty == 0 || p.LengthCounter.Counter == 0 || p.Timer < 8 {
+		return 0
+	} else if p.ConstantVolume {
+		return duty * p.Volume
 	} else {
-		volume = p.Decay
-	}
-
-	if !apuEnabled || duty == 0 || p.LengthCounter.Counter == 0 || p.Timer < 8 {
-		p.Output = 0
-	} else {
-		p.Output = (duty * volume)
+		return duty * p.Decay
 	}
 }

@@ -37,14 +37,15 @@ func (LC *LengthCounter) ResetLengthCounter() {
 	LC.ReloadValue = 0
 }
 
-func (LC *LengthCounter) ReloadLengthCounter() {
-	if LC.ReloadFlag && LC.Counter == 0 {
-		LC.Counter = LC.ReloadValue
-	} else {
-		LC.ReloadFlag = false
+/*
+	func (LC *LengthCounter) ReloadLengthCounter() {
+		if LC.ReloadFlag && LC.Counter == 0 {
+			LC.Counter = LC.ReloadValue
+		} else {
+			LC.ReloadFlag = false
+		}
 	}
-}
-
+*/
 func (LC *LengthCounter) ClockLengthCounter() {
 	if LC.Counter != 0 && !LC.HaltFlag && !LC.ReloadFlag {
 		LC.Counter--

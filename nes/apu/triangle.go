@@ -25,18 +25,19 @@ func (t *TriangleChannel) ResetTriangle() {
 }
 
 func (t *TriangleChannel) ClockTriangleTimer() {
-	if t.Timer == 0 && t.LengthCounter.Counter != 0 && t.LinearCounter.Counter != 0 {
-		t.SeqPos = (t.SeqPos + 1) & 31
+	if t.Timer == 0 {
 		t.Timer = t.TimerReloadValue
+		if t.LengthCounter.Counter != 0 && t.LinearCounter.Counter != 0 {
+			t.SeqPos = (t.SeqPos + 1) & 31
+		}
 	} else {
 		t.Timer--
 	}
 }
 
-func (t *TriangleChannel) UpdateTriangleOutput() {
-	t.Output = apuTriangleSequences[t.SeqPos]
-
+func (t *TriangleChannel) UpdateTriangleOutput() byte {
 	if !apuEnabled || !t.Enabled || t.LengthCounter.Counter == 0 || t.LinearCounter.Counter == 0 {
-		t.Output = 0
+		return 0
 	}
+	return apuTriangleSequences[t.SeqPos]
 }

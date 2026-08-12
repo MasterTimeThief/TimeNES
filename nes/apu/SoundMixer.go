@@ -83,14 +83,16 @@ func (a *AudioBufferStruct) sendSample() {
 
 func AudioOutput() {
 	//Pulse channels
-	Pulse1.UpdatePulseOutput()
-	Pulse2.UpdatePulseOutput()
-	pulse_out := squareTable[Pulse1.Output+Pulse2.Output]
+	pulse1 := Pulse1.UpdatePulseOutput()
+	pulse2 := Pulse2.UpdatePulseOutput()
+	pulse_out := squareTable[pulse1+pulse2]
 
-	Triangle.UpdateTriangleOutput()
-	Noise.UpdateNoiseOutput()
+	triangle := Triangle.UpdateTriangleOutput()
+	noise := Noise.UpdateNoiseOutput()
+	dmc := byte(common.Ternary(DMC.Enabled, uint16(DMC.Output), 0))
+	//dmc := DMC.Output
 
-	tnd_out := tndTable[(3*Triangle.Output)+(2*Noise.Output)+DMC.Output]
+	tnd_out := tndTable[(3*triangle)+(2*noise)+dmc]
 
 	if apuDMAGetCycle {
 		audBuf.sample += pulse_out + tnd_out

@@ -234,7 +234,9 @@ func Write(Address uint16, Value byte) {
 		// Triangle
 		case 0x4008:
 			apu.Triangle.LengthCounter.HaltFlag = ((Value & 0x80) >> 7) != 0
-			apu.Triangle.LinearCounter.Counter = (Value & 0x7F)
+			if apu.Triangle.Enabled {
+				apu.Triangle.LinearCounter.Counter = (Value & 0x7F)
+			}
 		case 0x4009: //Unused
 		case 0x400A:
 			//apuTriangle.Timer = uint16(Value)
@@ -276,8 +278,12 @@ func Write(Address uint16, Value byte) {
 			apu.DMC.Output = (Value & 0x7F)
 		case 0x4012:
 			apu.DMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
+			apu.DMC.CurrentAddress = apu.DMC.SampleAddress
+			PrebufferDMCSamples()
 		case 0x4013:
 			apu.DMC.SampleLength = ((uint16(Value) << 4) | 1)
+			apu.DMC.BytesRemaining = apu.DMC.SampleLength
+			PrebufferDMCSamples()
 
 		case 0x4014: //OAMDMA
 			for i := 0; i < 256; i++ {
@@ -288,6 +294,7 @@ func Write(Address uint16, Value byte) {
 			//apuDMC.BytesRemaining = int((Value & 0x10) >> 4)
 			apu.Noise.LengthCounter.Counter &= (0xFF * ((Value & 0x08) >> 3))
 			apu.Triangle.LengthCounter.Counter &= (0xFF * ((Value & 0x04) >> 2))
+			apu.Triangle.LinearCounter.Counter &= (0xFF * ((Value & 0x04) >> 2))
 			apu.Pulse2.LengthCounter.Counter &= (0xFF * ((Value & 0x02) >> 1))
 			apu.Pulse1.LengthCounter.Counter &= (0xFF * (Value & 0x01))
 
@@ -501,4 +508,26 @@ func DecayPPUDataBus() {
 			}
 		}
 	}
+}
+
+func PrebufferDMCSamples() {
+
+	if apu.DMC.SampleLength > 0 && apu.DMC.SampleAddress > 0x7FFF {
+		apu.DMC.SampleBuffer = nil
+
+		//Get the entire sample upfront, because God is dead
+		for i := uint16(0); i < apu.DMC.SampleLength; i++ {
+			sampleAddr := apu.DMC.SampleAddress + i
+			if sampleAddr < 0x8000 { //We hit 0xFFFF and wrapped around
+				sampleAddr += 0x8000
+			}
+
+			apu.DMC.SampleBuffer = append(apu.DMC.SampleBuffer, Read(sampleAddr))
+		}
+		apu.DMC.SampleBufferPos = 0
+	}
+
+	//apu.DMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
+
+	//apu.DMC.SampleLength = ((uint16(Value) << 4) | 1)
 }

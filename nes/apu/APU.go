@@ -60,9 +60,9 @@ func Emulate_APU() {
 	if apuDMAGetCycle { //DMA Get Cycle
 		AudioOutput()
 		DMA_Get()
-		ClockFrameCounter()
 
 	} else { //DMA Put Cycle
+		ClockFrameCounter()
 		DMA_Put()
 	}
 	//Clock triangle timer every cycle
@@ -275,13 +275,13 @@ func ClockFrameCounterQuarterFrame() {
 func ClockFrameCounterHalfFrame() {
 
 	//TODO: Split off Clocks into seperate functions for readability
-	Pulse1.ReloadLengthCounter()
-	Pulse2.ReloadLengthCounter()
-	Triangle.ReloadLengthCounter()
-	Noise.ReloadLengthCounter()
+	//Pulse1.ReloadLengthCounter()
+	//Pulse2.ReloadLengthCounter()
+	//Triangle.ReloadLengthCounter()
+	//Noise.ReloadLengthCounter()
 
 	// length counters and sweep
-	if !Pulse1.Enabled {
+	/*if !Pulse1.Enabled {
 		Pulse1.LengthCounter.Counter = 0
 	}
 	if !Pulse2.Enabled {
@@ -292,7 +292,7 @@ func ClockFrameCounterHalfFrame() {
 	}
 	if !Noise.Enabled {
 		Noise.LengthCounter.Counter = 0
-	}
+	}*/
 
 	Pulse1.ClockSweep()
 	Pulse2.ClockSweep()

@@ -12,6 +12,7 @@ type DeltaModChannel struct {
 	SampleRate           uint16 // AKA Frequency
 	Output               byte   // AKA LoadCounter
 	SampleAddress        uint16
+	CurrentAddress       uint16
 	SampleLength         uint16
 	BytesRemaining       uint16
 	Buffer               byte
@@ -19,6 +20,13 @@ type DeltaModChannel struct {
 	Shifter              byte
 	ShifterBitsRemaining byte
 	DPCM_Up              bool
+
+	// This will get the whole sample at once,
+	// so I don't have to go back and read it
+	// each time I need a new sample.
+	// Also because Go is being a baby about it.
+	SampleBuffer    []byte
+	SampleBufferPos byte
 }
 
 var APUDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
@@ -42,8 +50,10 @@ func (d *DeltaModChannel) ResetDMC() {
 
 func (d *DeltaModChannel) ClockDMCTimer() {
 
-	//d.Timer--
-	d.Timer-- // the table is in CPU cycles, but the count is in APU cycles
+	//Refill the sample buffer if empty here?
+	if d.Buffer == 0 {
+		d.DMCMemoryReader()
+	}
 
 	if d.Timer == 0 {
 		if d.Enabled {
@@ -77,19 +87,43 @@ func (d *DeltaModChannel) ClockDMCTimer() {
 				//	APU_SetImplicitAbortDMC4015 = false
 				//}
 				d.Shifter = d.Buffer // and set up the shifter with the new values.
-				d.Enabled = true     // The APU is not silent.
+				d.Buffer = 0
+				d.Enabled = true // The DMC is not silent.
 
 			} else {
 				d.Enabled = false
 			}
 		}
+	} else {
+		d.Timer--
 	}
 }
 
-func (d *DeltaModChannel) FillDMCBuffer() {
+func (d *DeltaModChannel) DMCMemoryReader() {
 	//Check for Mappers
 	switch common.MapperChipID {
 	default:
+		//TODO: Stall for 1-4 CPU cycles (?)
 		//d.Buffer = nes.Read(d.SampleAddress)
+		if len(d.SampleBuffer) > 0 {
+			d.Buffer = d.SampleBuffer[d.SampleBufferPos]
+			d.SampleBufferPos++
+
+			//Advance the address, even if technically we don't need to
+			d.CurrentAddress++
+			if d.CurrentAddress < 0x8000 { //We hit 0xFFFF and wrapped around
+				d.CurrentAddress += 0x8000
+			}
+			d.BytesRemaining--
+			if d.BytesRemaining == 0 && d.Loop {
+				d.SampleBufferPos = 0
+				d.CurrentAddress = d.SampleAddress
+				d.BytesRemaining = d.SampleLength
+			} else if d.BytesRemaining == 0 && d.IRQEnable {
+				APUDMCInterrupt = true
+			}
+		} else {
+			d.Buffer = 0
+		}
 	}
 }
