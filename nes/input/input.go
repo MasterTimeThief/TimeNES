@@ -1,4 +1,4 @@
-package nes
+package input
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
@@ -11,7 +11,7 @@ var Controller1ShiftRegister, Controller2ShiftRegister uint16
 //var enableZapper bool = false
 
 // Update states of controllers
-func UpdateControllers() {
+func UpdateControllers(keys []ebiten.Key) {
 
 	//	0 - B
 	//	1 - A
@@ -22,11 +22,11 @@ func UpdateControllers() {
 	//	6 - Left
 	//	7 - Right
 
-	Emulator.keys = inpututil.AppendPressedKeys(Emulator.keys[:0])
+	keys = inpututil.AppendPressedKeys(keys[:0])
 
 	Controller1 = 0
 	Controller2 = 0
-	for _, k := range Emulator.keys {
+	for _, k := range keys {
 		switch k {
 		//Player 1
 		case ebiten.KeyX:
@@ -70,6 +70,8 @@ func UpdateControllers() {
 		}
 	}
 
+	Controller1ShiftRegister = uint16(Controller1)
+	Controller2ShiftRegister = uint16(Controller2)
 	//if enableZapper {
 	//	Controller1 |= byte(ternary(inpututil.IsMouseButtonJustPressed(ebiten.MouseButton0), 0x0, 0x10))
 	//	Controller1 |= 0x8

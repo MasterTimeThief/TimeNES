@@ -5,6 +5,7 @@ import (
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/cartridge"
 	"mtt/timenes/nes/cartridge/mappers"
+	"mtt/timenes/nes/input"
 )
 
 var AddressBus, ppuAddressBus uint16
@@ -84,12 +85,12 @@ func Read(Address uint16) byte {
 		apu.APUFrameInterrupt = false
 		returnValue = apuStatus
 	} else if Address == 0x4016 { //Controller 1
-		cBit := byte((Controller1ShiftRegister & 0x80) >> 7)
-		Controller1ShiftRegister <<= 1
+		cBit := byte((input.Controller1ShiftRegister & 0x80) >> 7)
+		input.Controller1ShiftRegister <<= 1
 		returnValue = cBit
 	} else if Address == 0x4017 { //Controller 2
-		cBit := byte((Controller2ShiftRegister & 0x80) >> 7)
-		Controller2ShiftRegister <<= 1
+		cBit := byte((input.Controller2ShiftRegister & 0x80) >> 7)
+		input.Controller2ShiftRegister <<= 1
 		returnValue = cBit
 
 	} else if Address < 0x7FFF {
@@ -309,9 +310,7 @@ func Write(Address uint16, Value byte) {
 			apu.IRQLevelDetector = false
 
 		case 0x4016: //Controller Input
-			UpdateControllers()
-			Controller1ShiftRegister = uint16(Controller1)
-			Controller2ShiftRegister = uint16(Controller2)
+			input.UpdateControllers(Emulator.keys)
 		case 0x4017: //APU Frame Counter control
 			//modeFlagPrev := apuFrameCounterMode
 			apu.APUFrameCounterMode = ((Value & 0x80) >> 7) != 0
