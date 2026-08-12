@@ -17,6 +17,7 @@ var flag_Carry, flag_Zero, flag_InterruptDisable, flag_Decimal, flag_Overflow, f
 var MagicConstant byte = 0xFF
 
 var apuRun bool
+var AddressBus uint16
 
 func SetZNFlags(Value byte) {
 	flag_Zero = (Value == 0x00)
@@ -327,6 +328,23 @@ func ResetCPU() {
 	flag_Overflow = false
 	flag_Negative = false
 	flag_B = false
+}
+
+func BuildAddress(Value_Low, Value_High byte) uint16 {
+	//b := []byte{Value_Low, Value_High}
+	//return binary.LittleEndian.Uint16(b[0:])
+
+	AddressBus = (uint16(Value_High)<<8 | uint16(Value_Low))
+	return AddressBus
+}
+
+func ReadFromPC() byte {
+	Value := Read(ProgramCounter)
+	//if LoggingCPU {
+	//	operands = append(operands, Value)
+	//}
+	ProgramCounter++
+	return Value
 }
 
 func Emulate_CPU(g *Game) {

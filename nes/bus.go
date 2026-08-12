@@ -8,7 +8,7 @@ import (
 	"mtt/timenes/nes/input"
 )
 
-var AddressBus, ppuAddressBus uint16
+var ppuAddressBus uint16
 var cpuOpenBus, ppuBus byte
 var OAMBusAddress byte
 
@@ -452,23 +452,6 @@ func WritePPU(Value byte) {
 			cartridge.PaletteRAM[VRAMAddress&0x1F] = Value
 		}
 	}
-}
-
-func BuildAddress(Value_Low, Value_High byte) uint16 {
-	//b := []byte{Value_Low, Value_High}
-	//return binary.LittleEndian.Uint16(b[0:])
-
-	AddressBus = (uint16(Value_High)<<8 | uint16(Value_Low))
-	return AddressBus
-}
-
-func ReadFromPC() byte {
-	Value := Read(ProgramCounter)
-	//if LoggingCPU {
-	//	operands = append(operands, Value)
-	//}
-	ProgramCounter++
-	return Value
 }
 
 func UpdatePPUBus(Value byte) byte {
