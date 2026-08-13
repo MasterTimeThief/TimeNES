@@ -9,16 +9,16 @@ import (
 	"mtt/timenes/nes/ppu"
 )
 
-var cpuOpenBus byte
+var CPUBus byte
 var OAMBusAddress byte
 var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0
 
 // Read from Address, and return that byte
 func Read(Address uint16) byte {
-	var returnValue byte
+	//var CPUBus byte
 	if Address < 0x2000 {
 		//Read from RAM (Accounting for RAM Mirroring)
-		returnValue = cartridge.RAM[Address&0x7FF]
+		CPUBus = cartridge.RAM[Address&0x7FF]
 	} else if Address < 0x4000 {
 		//Reading a PPU Register
 		Address &= 0x2007
@@ -42,7 +42,7 @@ func Read(Address uint16) byte {
 				} else if ppu.PPUDot > 0 && ppu.PPUDot <= 64 {
 					ppu.PPUBus = 0xFF
 				} else {
-					returnValue = ppu.PPUBus
+					CPUBus = ppu.PPUBus
 				}
 			} else {
 				ppu.PPUBus = ppu.OAM[OAMBusAddress]
@@ -68,9 +68,9 @@ func Read(Address uint16) byte {
 			ppu.VRAMAddress += common.Ternary(ppu.PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
 			ppu.VRAMAddress &= 0x3FFF
 		default:
-			returnValue = ppu.PPUBus
+			CPUBus = ppu.PPUBus
 		}
-		returnValue = ppu.PPUBus
+		CPUBus = ppu.PPUBus
 	} else if Address == 0x4015 { //APU Status
 		apuStatus := byte(0)
 		apuStatus |= byte(common.Ternary(apu.APUDMCInterrupt, 0x80, 0x00))                                                                  //DMC Interrupt
@@ -81,38 +81,40 @@ func Read(Address uint16) byte {
 		apuStatus |= byte(common.Ternary(!(apu.Pulse2.LengthCounter.Counter == 0 /*|| apuPulse2.LengthCounter.HaltFlag*/), 0x02, 0x00))     //Pulse 2 Active
 		apuStatus |= byte(common.Ternary(!(apu.Pulse1.LengthCounter.Counter == 0 /*|| apuPulse1.LengthCounter.HaltFlag*/), 0x01, 0x00))     //Pulse 1 Active
 		apu.APUFrameInterrupt = false
-		returnValue = apuStatus
+		CPUBus = apuStatus
 	} else if Address == 0x4016 { //Controller 1
 		cBit := byte((input.Controller1ShiftRegister & 0x80) >> 7)
 		input.Controller1ShiftRegister <<= 1
-		returnValue = cBit
+		CPUBus = cBit
 	} else if Address == 0x4017 { //Controller 2
 		cBit := byte((input.Controller2ShiftRegister & 0x80) >> 7)
 		input.Controller2ShiftRegister <<= 1
-		returnValue = cBit
-
+		CPUBus = cBit
+	} else if Address >= 0x4018 && Address <= 0x401F {
+		//APU and I/O functionality that is normally disabled.
 	} else if Address < 0x7FFF {
 		//Could be PRG-RAM on the cartridge
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
-			returnValue = mappers.MMC1_PRGRAM[Address&0x1FFF]
+			CPUBus = mappers.MMC1_PRGRAM[Address&0x1FFF]
 		default:
 			//outsideCodeRead = Address
+
 		}
 	} else if Address >= 0x8000 {
 		//Read from ROM
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
-			returnValue = cartridge.PRGROM[mappers.MMC1_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
+			CPUBus = cartridge.PRGROM[mappers.MMC1_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		//case 3: //CNROM
 		//case 4: //MMC3
 		default:
-			returnValue = cartridge.PRGROM[(Address-0x8000)&uint16(cartridge.PRGROM_Size-1)]
+			CPUBus = cartridge.PRGROM[(Address-0x8000)&uint16(cartridge.PRGROM_Size-1)]
 			//outsideCodeRead = Address
 		}
 	}
 	//MasterClockTick("READ")
-	return returnValue
+	return CPUBus
 }
 
 // Write the Value into the Address given (PPU may have extra steps)

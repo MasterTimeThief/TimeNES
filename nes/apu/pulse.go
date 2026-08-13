@@ -1,5 +1,7 @@
 package apu
 
+import "mtt/timenes/common"
+
 type PulseChannel struct {
 	Enabled          bool
 	Timer            uint16
@@ -46,7 +48,7 @@ func (p *PulseChannel) ClockPulseTimer() {
 
 func (p *PulseChannel) UpdatePulseOutput() byte {
 	duty := apuDutySequences[p.Duty][p.DutyPos]
-	if !apuEnabled || !p.Enabled || duty == 0 || p.LengthCounter.Counter == 0 || p.Timer < 8 {
+	if common.MuteEmulator || !p.Enabled || duty == 0 || p.LengthCounter.Counter == 0 || p.Timer < 8 {
 		return 0
 	} else if p.ConstantVolume {
 		return duty * p.Volume

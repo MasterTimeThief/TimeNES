@@ -33,15 +33,16 @@ type toolbar struct {
 	fileMenu   *widget.Button
 	openButton *widget.Button
 	quitButton *widget.Button
+	// Game
+	gameMenu    *widget.Button
+	pauseButton *widget.Button
+	muteButton  *widget.Button
+	resetButton *widget.Button
 	// Debug
 	debugMenu  *widget.Button
 	smbButton  *widget.Button
 	testButton *widget.Button
 	FPSButton  *widget.Button
-	// Game
-	gameMenu    *widget.Button
-	pauseButton *widget.Button
-	resetButton *widget.Button
 }
 
 type ListEntry struct {
@@ -116,12 +117,13 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 	//
 	game := newToolbarButton(res, "Game")
 	var (
+		mute  = newToolbarMenuEntry(res, "Toggle Audio")
 		pause = newToolbarMenuEntry(res, "Pause")
 		reset = newToolbarMenuEntry(res, "Reset")
 	)
 	game.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		nes.MenuBarSelected = true
-		openToolbarMenu(args.Button.GetWidget(), ui, pause, reset)
+		openToolbarMenu(args.Button.GetWidget(), ui, mute, pause, reset)
 	}))
 	root.AddChild(game)
 
@@ -148,6 +150,7 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 		quitButton: quit,
 		// Game
 		gameMenu:    game,
+		muteButton:  mute,
 		pauseButton: pause,
 		resetButton: reset,
 		// Debug
@@ -276,6 +279,11 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 	//
 	// Game
 	//
+
+	// Mute Emulator
+	toolbar.muteButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.MuteEmulator = !common.MuteEmulator
+	}))
 
 	// Pause Emulator
 	toolbar.pauseButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {

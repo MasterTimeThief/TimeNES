@@ -1,5 +1,7 @@
 package apu
 
+import "mtt/timenes/common"
+
 type TriangleChannel struct {
 	Enabled          bool
 	Timer            uint16
@@ -36,7 +38,7 @@ func (t *TriangleChannel) ClockTriangleTimer() {
 }
 
 func (t *TriangleChannel) UpdateTriangleOutput() byte {
-	if !apuEnabled || !t.Enabled || t.LengthCounter.Counter == 0 || t.LinearCounter.Counter == 0 {
+	if common.MuteEmulator || !t.Enabled || t.LengthCounter.Counter == 0 || t.LinearCounter.Counter == 0 {
 		return 0
 	}
 	return apuTriangleSequences[t.SeqPos]
