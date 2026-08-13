@@ -174,12 +174,12 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	-	-	-	-	-	-
 
 	case 0x85: //STA Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		bus.Write(Address, A)
+		ReadOperands_ZeroPageAddressed()
+		bus.Write(AddressBus, A)
 		CPU_Cycles = 3
 	case 0x95: //STA Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		bus.Write(Address, A)
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		bus.Write(AddressBus, A)
 		CPU_Cycles = 4
 	case 0x8D: //STA Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -212,13 +212,13 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(A)
 		CPU_Cycles = 2
 	case 0xA5: //LDA Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		A = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed()
+		A = bus.Read(AddressBus)
 		SetZNFlags(A)
 		CPU_Cycles = 3
 	case 0xB5: //LDA Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		A = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		A = bus.Read(AddressBus)
 		SetZNFlags(A)
 		CPU_Cycles = 4
 	case 0xAD: //LDA Absolute
@@ -253,12 +253,12 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	-	-	-	-	-	-
 
 	case 0x86: //STX Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		bus.Write(Address, X)
+		ReadOperands_ZeroPageAddressed()
+		bus.Write(AddressBus, X)
 		CPU_Cycles = 3
 	case 0x96: //STX Zero Page, Y
-		Address := ReadOperands_ZeroPageAddressed_YIndexed()
-		bus.Write(Address, X)
+		ReadOperands_ZeroPageAddressed_YIndexed()
+		bus.Write(AddressBus, X)
 		CPU_Cycles = 4
 	case 0x8E: //STX Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -275,8 +275,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(X)
 		CPU_Cycles = 2
 	case 0xA6: //LDX Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		X = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed()
+		X = bus.Read(AddressBus)
 		SetZNFlags(X)
 		CPU_Cycles = 3
 	case 0xAE: //LDX Absolute
@@ -285,8 +285,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(X)
 		CPU_Cycles = 4
 	case 0xB6: //LDX Zero Page, Y
-		Address := ReadOperands_ZeroPageAddressed_YIndexed()
-		X = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed_YIndexed()
+		X = bus.Read(AddressBus)
 		SetZNFlags(X)
 		CPU_Cycles = 4
 	case 0xBE: //LDX Absolute, Y
@@ -301,12 +301,12 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	-	-	-	-	-	-
 
 	case 0x84: //STY Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		bus.Write(Address, Y)
+		ReadOperands_ZeroPageAddressed()
+		bus.Write(AddressBus, Y)
 		CPU_Cycles = 3
 	case 0x94: //STY Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		bus.Write(Address, Y)
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		bus.Write(AddressBus, Y)
 		CPU_Cycles = 4
 	case 0x8C: //STY Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -323,8 +323,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(Y)
 		CPU_Cycles = 2
 	case 0xA4: //LDY Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Y = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed()
+		Y = bus.Read(AddressBus)
 		SetZNFlags(Y)
 		CPU_Cycles = 3
 	case 0xAC: //LDY Absolute
@@ -333,8 +333,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(Y)
 		CPU_Cycles = 4
 	case 0xB4: //LDY Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Y = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Y = bus.Read(AddressBus)
 		SetZNFlags(Y)
 		CPU_Cycles = 4
 	case 0xBC: //LDY Absolute, X
@@ -396,12 +396,12 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_ADC(ReadFromPC())
 		CPU_Cycles = 2
 	case 0x65: //ADC Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_ADC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_ADC(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0x75: //ADC Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_ADC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ADC(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0x6D: //ADC Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -433,16 +433,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_SBC(ReadFromPC())
 		CPU_Cycles = 2
 	case 0xE5: //SBC Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_SBC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_SBC(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0xED: //SBC Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_SBC(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0xF5: //SBC Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_SBC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_SBC(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0xFD: //SBC Absolute, X
 		CPU_Cycles = 4
@@ -467,16 +467,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	+	+	-	-	-	-
 
 	case 0xE6: //INC Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_INC(Address, bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_INC(AddressBus, bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0xEE: //INC Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_INC(AddressBus, bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0xF6: //INC Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_INC(Address, bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_INC(AddressBus, bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0xFE: //INC Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
@@ -489,16 +489,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	+	+	-	-	-	-
 
 	case 0xC6: //DEC Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_DEC(Address, bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_DEC(AddressBus, bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0xCE: //DEC Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_DEC(AddressBus, bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0xD6: //DEC Zeropage, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_DEC(Address, bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_DEC(AddressBus, bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0xDE: //DEC Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
@@ -562,14 +562,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(A)
 		CPU_Cycles = 2
 	case 0x06: //ASL Zero Page
-		Op_ASL(ReadOperands_ZeroPageAddressed())
+		ReadOperands_ZeroPageAddressed()
+		Op_ASL(AddressBus)
 		CPU_Cycles = 5
 	case 0x0E: //ASL Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_ASL(AddressBus)
 		CPU_Cycles = 6
 	case 0x16: //ASL Zero Page, X
-		Op_ASL(ReadOperands_ZeroPageAddressed_XIndexed())
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ASL(AddressBus)
 		CPU_Cycles = 6
 	case 0x1E: //ASL Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
@@ -587,14 +589,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(A)
 		CPU_Cycles = 2
 	case 0x46: //LSR Zero Page
-		Op_LSR(ReadOperands_ZeroPageAddressed())
+		ReadOperands_ZeroPageAddressed()
+		Op_LSR(AddressBus)
 		CPU_Cycles = 5
 	case 0x4E: //LSR Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_LSR(AddressBus)
 		CPU_Cycles = 6
 	case 0x56: //LSR Zero Page, X
-		Op_LSR(ReadOperands_ZeroPageAddressed_XIndexed())
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_LSR(AddressBus)
 		CPU_Cycles = 6
 	case 0x5E: //LSR Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
@@ -616,14 +620,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(A)
 		CPU_Cycles = 2
 	case 0x26: //ROL Zero Page
-		Op_ROL(ReadOperands_ZeroPageAddressed())
+		ReadOperands_ZeroPageAddressed()
+		Op_ROL(AddressBus)
 		CPU_Cycles = 5
 	case 0x2E: //ROL Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_ROL(AddressBus)
 		CPU_Cycles = 6
 	case 0x36: //ROL Zero Page, X
-		Op_ROL(ReadOperands_ZeroPageAddressed_XIndexed())
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ROL(AddressBus)
 		CPU_Cycles = 6
 	case 0x3E: //ROL Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
@@ -645,14 +651,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		SetZNFlags(A)
 		CPU_Cycles = 2
 	case 0x66: //ROR Zero Page
-		Op_ROR(ReadOperands_ZeroPageAddressed())
+		ReadOperands_ZeroPageAddressed()
+		Op_ROR(AddressBus)
 		CPU_Cycles = 5
 	case 0x6E: //ROR Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_ROR(AddressBus)
 		CPU_Cycles = 6
 	case 0x76: //ROR Zero Page, X
-		Op_ROR(ReadOperands_ZeroPageAddressed_XIndexed())
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ROR(AddressBus)
 		CPU_Cycles = 6
 	case 0x7E: //ROR Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
@@ -670,16 +678,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_AND(ReadFromPC())
 		CPU_Cycles = 2
 	case 0x25: //AND Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_AND(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_AND(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0x2D: //AND Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_AND(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0x35: //AND Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_AND(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_AND(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0x3D: //AND Absolute, X
 		CPU_Cycles = 4
@@ -707,16 +715,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_ORA(ReadFromPC())
 		CPU_Cycles = 2
 	case 0x05: //ORA Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_ORA(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_ORA(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0x0D: //ORA Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_ORA(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0x15: //ORA Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_ORA(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ORA(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0x1D: //ORA Absolute, X
 		CPU_Cycles = 4
@@ -744,16 +752,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_EOR(ReadFromPC())
 		CPU_Cycles = 2
 	case 0x45: //EOR Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_EOR(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_EOR(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0x4D: //EOR Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_EOR(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0x55: //EOR Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_EOR(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_EOR(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0x5D: //EOR Absolute, X
 		CPU_Cycles = 4
@@ -785,8 +793,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	M7	+	-	-	-	M6
 
 	case 0x24: //BIT Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_BIT(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_BIT(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0x2C: //BIT Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -804,16 +812,16 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_CMP(ReadFromPC())
 		CPU_Cycles = 2
 	case 0xC5: //CMP Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_CMP(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_CMP(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0xCD: //CMP Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_CMP(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0xD5: //CMP Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_CMP(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_CMP(bus.Read(AddressBus))
 		CPU_Cycles = 4
 	case 0xDD: //CMP Absolute, X
 		CPU_Cycles = 4
@@ -841,8 +849,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_CPX(ReadFromPC())
 		CPU_Cycles = 2
 	case 0xE4: //CPX Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_CPX(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_CPX(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0xEC: //CPX Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -858,8 +866,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 		Op_CPY(ReadFromPC())
 		CPU_Cycles = 2
 	case 0xC4: //CPY Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_CPY(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_CPY(bus.Read(AddressBus))
 		CPU_Cycles = 3
 	case 0xCC: //CPY Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -1305,11 +1313,11 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//SAX: A AND X -> M
 
 	case 0x87: //SAX Zero Page
-		AddressBus = ReadOperands_ZeroPageAddressed()
+		ReadOperands_ZeroPageAddressed()
 		bus.Write(AddressBus, (A & X))
 		CPU_Cycles = 3
 	case 0x97: //SAX Zero Page, Y
-		AddressBus = ReadOperands_ZeroPageAddressed_YIndexed()
+		ReadOperands_ZeroPageAddressed_YIndexed()
 		bus.Write(AddressBus, (A & X))
 		CPU_Cycles = 4
 	case 0x8F: //SAX Absolute
@@ -1324,14 +1332,14 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//LAX: LDA + LDX
 
 	case 0xA7: //LAX Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		A = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed()
+		A = bus.Read(AddressBus)
 		X = A
 		SetZNFlags(X)
 		CPU_Cycles = 3
 	case 0xB7: //LAX Zero Page, Y
-		Address := ReadOperands_ZeroPageAddressed_YIndexed()
-		A = bus.Read(Address)
+		ReadOperands_ZeroPageAddressed_YIndexed()
+		A = bus.Read(AddressBus)
 		X = A
 		SetZNFlags(X)
 		CPU_Cycles = 4
@@ -1363,14 +1371,14 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//SLO: ASL + ORA
 
 	case 0x07: // SLO Zero Page
-		Addr := ReadOperands_ZeroPageAddressed()
-		Op_ASL(Addr)
-		Op_ORA(bus.Read(Addr))
+		ReadOperands_ZeroPageAddressed()
+		Op_ASL(AddressBus)
+		Op_ORA(bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0x17: //SLO Zero Page, X
-		Addr := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_ASL(Addr)
-		Op_ORA(bus.Read(Addr))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ASL(AddressBus)
+		Op_ORA(bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0x0F: //SLO Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -1401,14 +1409,14 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//DCP: DEC + CMP
 
 	case 0xC7: //DCP Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_DEC(Address, bus.Read(Address))
-		Op_CMP(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_DEC(AddressBus, bus.Read(AddressBus))
+		Op_CMP(bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0xD7: //DCP Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_DEC(Address, bus.Read(Address))
-		Op_CMP(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_DEC(AddressBus, bus.Read(AddressBus))
+		Op_CMP(bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0xCF: //DCP Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -1467,14 +1475,14 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//RLA: ROL + AND
 
 	case 0x27: //RLA Zero Page
-		Addr := ReadOperands_ZeroPageAddressed()
-		Op_ROL(Addr)
-		Op_AND(bus.Read(Addr))
+		ReadOperands_ZeroPageAddressed()
+		Op_ROL(AddressBus)
+		Op_AND(bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0x37: //RLA Zero Page, X
-		Addr := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_ROL(Addr)
-		Op_AND(bus.Read(Addr))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ROL(AddressBus)
+		Op_AND(bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0x2F: //RLA Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -1505,12 +1513,12 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//SRE: LSR + EOR
 
 	case 0x47: //SRE Zero Page
-		AddressBus = ReadOperands_ZeroPageAddressed()
+		ReadOperands_ZeroPageAddressed()
 		Op_LSR(AddressBus)
 		Op_EOR(bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0x57: //SRE Zero Page, X
-		AddressBus = ReadOperands_ZeroPageAddressed_XIndexed()
+		ReadOperands_ZeroPageAddressed_XIndexed()
 		Op_LSR(AddressBus)
 		Op_EOR(bus.Read(AddressBus))
 		CPU_Cycles = 6
@@ -1543,14 +1551,14 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//RRA: ROR + ADC
 
 	case 0x67: //RRA Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_ROR(Address)
-		Op_ADC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_ROR(AddressBus)
+		Op_ADC(bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0x77: //RRA Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_ROR(Address)
-		Op_ADC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_ROR(AddressBus)
+		Op_ADC(bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0x6F: //RRA Absolute
 		ReadOperands_AbsoluteAddressed(false)
@@ -1581,14 +1589,14 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//ISC: INC + SBC
 
 	case 0xE7: //ISC Zero Page
-		Address := ReadOperands_ZeroPageAddressed()
-		Op_INC(Address, bus.Read(Address))
-		Op_SBC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed()
+		Op_INC(AddressBus, bus.Read(AddressBus))
+		Op_SBC(bus.Read(AddressBus))
 		CPU_Cycles = 5
 	case 0xF7: //ISC Zero Page, X
-		Address := ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_INC(Address, bus.Read(Address))
-		Op_SBC(bus.Read(Address))
+		ReadOperands_ZeroPageAddressed_XIndexed()
+		Op_INC(AddressBus, bus.Read(AddressBus))
+		Op_SBC(bus.Read(AddressBus))
 		CPU_Cycles = 6
 	case 0xEF: //ISC Absolute
 		ReadOperands_AbsoluteAddressed(false)

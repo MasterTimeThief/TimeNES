@@ -82,19 +82,14 @@ func ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) {
 	}
 }
 
-func ReadOperands_ZeroPageAddressed() uint16 {
-	AddressBus := ReadFromPC()
-	return BuildAddress(AddressBus, 0x00)
+func ReadOperands_ZeroPageAddressed() {
+	AddressBus = BuildAddress(ReadFromPC(), 0x00)
 }
 
-func ReadOperands_ZeroPageAddressed_XIndexed() uint16 {
-	AddressBus := ReadFromPC()
-	////MasterClockTick("Zp x")
-	return BuildAddress(AddressBus+X, 0x00)
+func ReadOperands_ZeroPageAddressed_XIndexed() {
+	AddressBus = BuildAddress(ReadFromPC()+X, 0x00)
 }
 
-func ReadOperands_ZeroPageAddressed_YIndexed() uint16 {
-	AddressBus := ReadFromPC()
-	////MasterClockTick("ZP Y")
-	return BuildAddress(AddressBus+Y, 0x00)
+func ReadOperands_ZeroPageAddressed_YIndexed() {
+	AddressBus = BuildAddress(ReadFromPC()+Y, 0x00)
 }
