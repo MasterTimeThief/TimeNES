@@ -30,47 +30,39 @@ func ReadOperands_AbsoluteAddressed(isJMP bool) {
 	if !isJMP {
 		//MasterClockTick("abs add, not jmp")
 	}
-	//return AddressBus
 }
 
 func ReadOperands_IndirectAddressed() {
 	AddressBus = uint16(ReadFromPC())
 	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
 	//Now read from HERE
-	indL := bus.Read(AddressBus)
-	var indH byte
+	low := bus.Read(AddressBus)
+	var high byte
 	if AddressBus&0x00FF == 0xFF {
 		//Original NMOS Bug
-		indH = bus.Read(AddressBus & 0xFF00)
+		high = bus.Read(AddressBus & 0xFF00)
 	} else {
-		indH = bus.Read(AddressBus + 1)
+		high = bus.Read(AddressBus + 1)
 	}
-	//MasterClockTick("ind add")
-	AddressBus = BuildAddress(indL, indH)
+	AddressBus = BuildAddress(low, high)
 }
 
 func ReadOperands_AbsoluteAddressed_XIndexed(pbCheck bool) {
 	low := ReadFromPC()
 	high := ReadFromPC()
-	AddressBus = BuildAddress(low, high)
-	AddressBus += uint16(X)
+	AddressBus = BuildAddress(low, high) + uint16(X)
 	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
-		////MasterClockTick("abs add x")
 		CPU_Cycles++ //Extra cycle for crossing page boundary
 	}
-	//return AddressBus
 }
 
 func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
 	low := ReadFromPC()
 	high := ReadFromPC()
-	AddressBus = BuildAddress(low, high)
-	AddressBus += uint16(Y)
+	AddressBus = BuildAddress(low, high) + uint16(Y)
 	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
-		////MasterClockTick("abs add y")
 		CPU_Cycles++ //Extra cycle for crossing page boundary
 	}
-	//return AddressBus
 }
 
 func ReadOperands_IndirectAddressed_XIndexed() {
@@ -78,21 +70,16 @@ func ReadOperands_IndirectAddressed_XIndexed() {
 	low := bus.Read(uint16(TempAddress))
 	high := bus.Read(uint16(TempAddress + 1))
 	AddressBus = BuildAddress(low, high)
-	//return AddressBus
 }
 
-func ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) uint16 {
-	Addr := ReadFromPC()
-	TempAddress := Addr
-	Addr = bus.Read(uint16(TempAddress)) //Low byte of new address
-	TempAddress++
-	AddressBus = (uint16(bus.Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
-	AddressBus += uint16(Y)
-	if pbCheck && bus.Read(uint16(TempAddress)) != byte((AddressBus&0xFF00)>>4) {
-		////MasterClockTick("ind add y")
-		CPU_Cycles++
+func ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) {
+	TempAddress := ReadFromPC()
+	low := bus.Read(uint16(TempAddress))
+	high := bus.Read(uint16(TempAddress + 1))
+	AddressBus = BuildAddress(low, high) + uint16(Y)
+	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
+		CPU_Cycles++ //Extra cycle for crossing page boundary
 	}
-	return AddressBus
 }
 
 func ReadOperands_ZeroPageAddressed() uint16 {
