@@ -61,7 +61,7 @@ func ReadOperands_AbsoluteAddressed_XIndexed(pbCheck bool) {
 	//return AddressBus
 }
 
-func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) uint16 {
+func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
 	low := ReadFromPC()
 	high := ReadFromPC()
 	AddressBus = BuildAddress(low, high)
@@ -70,7 +70,7 @@ func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) uint16 {
 		////MasterClockTick("abs add y")
 		CPU_Cycles++ //Extra cycle for crossing page boundary
 	}
-	return AddressBus
+	//return AddressBus
 }
 
 func ReadOperands_IndirectAddressed_XIndexed() uint16 {
