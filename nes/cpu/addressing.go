@@ -73,14 +73,12 @@ func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
 	//return AddressBus
 }
 
-func ReadOperands_IndirectAddressed_XIndexed() uint16 {
-	Addr := ReadFromPC() + X
-	////MasterClockTick("ind x")
-	TempAddress := Addr
-	Addr = bus.Read(uint16(TempAddress)) //Low byte of new address
-	TempAddress++
-	AddressBus = (uint16(bus.Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
-	return AddressBus
+func ReadOperands_IndirectAddressed_XIndexed() {
+	TempAddress := ReadFromPC() + X
+	low := bus.Read(uint16(TempAddress))
+	high := bus.Read(uint16(TempAddress + 1))
+	AddressBus = BuildAddress(low, high)
+	//return AddressBus
 }
 
 func ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) uint16 {
