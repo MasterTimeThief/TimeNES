@@ -2,10 +2,16 @@ package debug
 
 import (
 	"fmt"
+	"image/color"
 	"mtt/timenes/common"
+	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
 	"mtt/timenes/nes/cpu"
 	"mtt/timenes/nes/ppu"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 var LoggingCPU = false
@@ -19,6 +25,8 @@ var traceFlagC, traceFlagZ, traceFlagI, traceFlagD, traceFlagV, traceFlagN bool
 var traceCycles int
 
 var cycleTest string
+var ShowFPS bool = false
+var ShowDebugWindow bool = false
 
 // Sets everything outside of operands for the tracelogger to run later
 func PrepTraceLogger() {
@@ -227,5 +235,18 @@ func CartRAMLogger() {
 		//Valid Test line
 		CartRamLastString = newString
 		fmt.Print(newString)
+	}
+}
+
+func DisplayDebugging(screen *ebiten.Image) {
+	if ShowFPS {
+		vector.FillRect(screen, (256*common.ScreenScale)-135, (240*common.ScreenScale)-17, 135, 17, color.Black, false)
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*common.ScreenScale)-132, (240*common.ScreenScale)-15)
+	}
+	if bus.OutsideCodeRead > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", bus.OutsideCodeRead), 5, (240*common.ScreenScale)-30)
+	}
+	if bus.OutsideCodeWrite > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", bus.OutsideCodeWrite), 5, (240*common.ScreenScale)-40)
 	}
 }

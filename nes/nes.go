@@ -1,11 +1,11 @@
 package nes
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"log"
 	"mtt/timenes/common"
+	"mtt/timenes/debug"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
@@ -15,6 +15,7 @@ import (
 
 	"github.com/ebitengine/debugui"
 	"github.com/ebitenui/ebitenui"
+	"github.com/ebitenui/ebitenui/input"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -28,8 +29,8 @@ import (
 var MasterClock int = 0
 
 // Debugging
-var ShowFPS bool = false
-var pauseEmulation bool = false
+var PauseEmulation bool = false
+var MenuBarSelected bool = false
 
 type Game struct {
 	gameScreen *image.RGBA
@@ -54,7 +55,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	for common.ROMLoaded && !pauseEmulation {
+	for common.ROMLoaded && !PauseEmulation {
 		cpu.Emulate_CPU()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
@@ -87,18 +88,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.WritePixels(screenScaled.Pix)
 	}
 
-	if ShowFPS {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*common.ScreenScale)-132, (240*common.ScreenScale)-20) // Draw the UI onto the screen
-	}
-	if bus.OutsideCodeRead > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", bus.OutsideCodeRead), 5, (240*common.ScreenScale)-30)
-	}
-	if bus.OutsideCodeWrite > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", bus.OutsideCodeWrite), 5, (240*common.ScreenScale)-40)
-	}
+	debug.DisplayDebugging(screen)
 
-	g.UI.Draw(screen)
-	//g.debugui.Draw(screen)
+	//Only draw the UI if the mouse is close to it
+	if _, my := input.CursorPosition(); my < common.MouseHeight || MenuBarSelected || !common.ROMExists {
+		g.UI.Draw(screen)
+	}
+	if debug.ShowDebugWindow {
+		g.debugui.Draw(screen)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
