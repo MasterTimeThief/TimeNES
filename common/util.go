@@ -38,7 +38,6 @@ func Print(s string) func() {
 	}
 }
 
-func FileSelectDialog() {
-	//nes.Filepath, _ = dialog.File().Filter("NES", "nes").Load()
-
+func Combine2Bytes(Lo, Hi byte) uint16 {
+	return uint16(Hi)<<8 | uint16(Lo)
 }

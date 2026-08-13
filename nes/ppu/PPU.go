@@ -14,33 +14,39 @@ var PPUReadBuffer byte
 var NMILevelDetector, DoNMI bool
 
 // $2000: PPUCTRL
-var PPUCTRL_NametableSelect byte    // PPUCTRL Bit 1 & 2
-var PPUCTRL_VRAMInc32Mode bool      // PPUCTRL Bit 3
-var PPUCTRL_SpritePatternTable bool // PPUCTRL Bit 4
-var PPUCTRL_BGPatternTable bool     // PPUCTRL Bit 5
-var PPUCTRL_Use8x16Sprites bool     // PPUCTRL Bit 6
-var PPUCTRL_EnableNMI bool          // PPUCTRL Bit 8
+var (
+	PPUCTRL_NametableSelect    byte // PPUCTRL Bit 1 & 2
+	PPUCTRL_VRAMInc32Mode      bool // PPUCTRL Bit 3
+	PPUCTRL_SpritePatternTable bool // PPUCTRL Bit 4
+	PPUCTRL_BGPatternTable     bool // PPUCTRL Bit 5
+	PPUCTRL_Use8x16Sprites     bool // PPUCTRL Bit 6
+	PPUCTRL_EnableNMI          bool // PPUCTRL Bit 8
+)
 
 // $2001: PPUMASK
-var PPUMASK_Greyscale bool      // PPUMASK Bit 0
-var PPUMASK_8pxMaskBG bool      // PPUMASK Bit 1
-var PPUMASK_8pxMaskSprites bool // PPUMASK Bit 2
-var PPUMASK_RenderBG bool       // PPUMASK Bit 3
-var PPUMASK_RenderSprites bool  // PPUMASK Bit 4
-var PPUMASK_EmphasisRed bool    // PPUMASK Bit 5
-var PPUMASK_EmphasisGreen bool  // PPUMASK Bit 6
-var PPUMASK_EmphasisBlue bool   // PPUMASK Bit 7
+var (
+	PPUMASK_Greyscale      bool // PPUMASK Bit 0
+	PPUMASK_8pxMaskBG      bool // PPUMASK Bit 1
+	PPUMASK_8pxMaskSprites bool // PPUMASK Bit 2
+	PPUMASK_RenderBG       bool // PPUMASK Bit 3
+	PPUMASK_RenderSprites  bool // PPUMASK Bit 4
+	PPUMASK_EmphasisRed    bool // PPUMASK Bit 5
+	PPUMASK_EmphasisGreen  bool // PPUMASK Bit 6
+	PPUMASK_EmphasisBlue   bool // PPUMASK Bit 7
+)
 
 // $2002: PPUSTATUS
-var PPUSTATUS_Overflow bool      // PPUSTATUS Bit 5
-var PPUSTATUS_SpriteZeroHit bool // PPUSTATUS Bit 6
-var PPUSTATUS_VBlank bool        // PPUSTATUS Bit 7
+var (
+	PPUSTATUS_Overflow      bool // PPUSTATUS Bit 5
+	PPUSTATUS_SpriteZeroHit bool // PPUSTATUS Bit 6
+	PPUSTATUS_VBlank        bool // PPUSTATUS Bit 7
+)
 
 var PPUDot int      //The X position of the scanning beam
 var PPUScanline int //The Y position of the scanning beam
 var ppuShiftRegister_patternL, ppuShiftRegister_patternH, ppuShiftRegister_attributeL, ppuShiftRegister_attributeH uint16
 var ppu8Step_patternLowBitPlane, ppu8Step_patternHighBitPlane, ppu8Step_attribute, ppu8Step_NextCharacter, ppu8Step_temp byte
-var PPUScrollFineX, ppuScrollFineY byte
+var PPUScrollFineX byte
 var DrawNewFrame bool = false
 var FrameColorBuffer [61440]color.RGBA
 var FrameColorBufferPos int = 0
@@ -101,7 +107,7 @@ func ResetPPU() {
 	ppu8Step_NextCharacter = 0
 	ppu8Step_temp = 0
 
-	PPUScrollFineX, ppuScrollFineY = 0, 0
+	PPUScrollFineX = 0
 	DrawNewFrame = false
 
 	OAM = [0x100]byte{}

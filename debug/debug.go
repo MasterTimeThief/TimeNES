@@ -3,8 +3,8 @@ package debug
 import (
 	"fmt"
 	"mtt/timenes/common"
-	"mtt/timenes/nes"
 	"mtt/timenes/nes/cartridge"
+	"mtt/timenes/nes/cpu"
 	"mtt/timenes/nes/ppu"
 )
 
@@ -22,13 +22,13 @@ var cycleTest string
 
 // Sets everything outside of operands for the tracelogger to run later
 func PrepTraceLogger() {
-	tracePC = nes.ProgramCounter
+	tracePC = cpu.PC
 	traceVRAM = ppu.VRAMAddress
 
-	traceA = nes.A
-	traceX = nes.X
-	tracyY = nes.Y
-	traceSP = nes.StackPointer
+	traceA = cpu.A
+	traceX = cpu.X
+	tracyY = cpu.Y
+	traceSP = cpu.SP
 
 	/*traceFlagC = nes.flag_Carry
 	traceFlagZ = nes.flag_Zero

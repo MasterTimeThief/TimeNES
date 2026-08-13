@@ -551,7 +551,8 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 
 	toolbar.selectROMButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		//Add file select
-		openFileSelectWindow(res, nes.Emulator.UI)
+		//openFileSelectWindow(res, nes.Emulator.UI)
+		common.FileSelectDialog()
 	}))
 
 	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {

@@ -9,6 +9,7 @@ import (
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
+	"mtt/timenes/nes/cpu"
 	"mtt/timenes/nes/ppu"
 	"os"
 
@@ -54,7 +55,7 @@ func (g *Game) Update() error {
 	}
 
 	for common.ROMLoaded && !pauseEmulation {
-		Emulate_CPU()
+		cpu.Emulate_CPU()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
 			break
@@ -78,7 +79,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if !common.ROMExists {
 		ebitenutil.DebugPrintAt(screen, "No ROM File loaded!", 5, (240*common.ScreenScale)-20)
-	} else if CPU_Halted {
+	} else if cpu.CPU_Halted {
 		ebitenutil.DebugPrintAt(screen, "Game Crashed!", 5, (240*common.ScreenScale)-20)
 	} else if common.ROMLoaded {
 		screenScaled := image.NewRGBA(image.Rect(0, 0, common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale))
@@ -136,7 +137,7 @@ func InitGame(newUI *ebitenui.UI) {
 
 func Reset() {
 	//var HeaderedROM []byte := os.ReadFile()
-	ResetCPU()
+	cpu.ResetCPU()
 	ppu.ResetPPU()
 	apu.ResetAPU()
 
@@ -149,7 +150,7 @@ func Reset() {
 
 	PCL := bus.Read(0xFFFC)
 	PCH := bus.Read(0xFFFD)
-	ProgramCounter = BuildAddress(PCL, PCH)
+	cpu.PC = cpu.BuildAddress(PCL, PCH)
 	//fmt.Printf("%#x", ProgramCounter)
 
 	bus.OutsideCodeRead = 0
@@ -187,7 +188,7 @@ func MasterClockTick(location string) {
 	//
 
 	MasterClock++
-	CPU_Cycles_New++
+	cpu.CPU_Cycles_New++
 	/*switch MasterClock {
 	case 1:
 		Emulate_CPU(g)

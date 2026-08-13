@@ -1,4 +1,4 @@
-package nes
+package cpu
 
 import (
 	"fmt"
@@ -8,15 +8,31 @@ import (
 	"mtt/timenes/nes/ppu"
 )
 
-var ProgramCounter uint16
-var StackPointer byte
-var A, X, Y byte
+// CPU Registers
+var (
+	PC uint16 // Program Counter
+	SP byte   // Stack Pointer
+	A  byte   // Accumulator
+	X  byte   // X-Index
+	Y  byte   // Y-Index
+)
+
+// Status Register
+var (
+	flag_Carry            bool // Bit 0: Carry Flag
+	flag_Zero             bool // Bit 1: Zero Flag
+	flag_InterruptDisable bool // Bit 2: Interrupt Disable Flag
+	flag_Decimal          bool // Bit 3: Decimal Flag
+	flag_B                bool // Bit 4: B Flag
+	flag_Overflow         bool // Bit 6: Overflow Flag
+	flag_Negative         bool // Bit 7: Negative Flag
+)
+
 var opcode byte
 var operands []byte
 var CPU_Cycles, CPU_Cycles_New int
 var CPU_Halted = false
-var flag_Carry, flag_Zero, flag_InterruptDisable, flag_Decimal, flag_Overflow, flag_Negative, flag_B bool
-var MagicConstant byte = 0xFF
+var MagicConstant byte = 0xFF //Might be needed for some of the illegal opcodes
 
 var apuRun bool
 var AddressBus uint16
@@ -24,106 +40,6 @@ var AddressBus uint16
 func SetZNFlags(Value byte) {
 	flag_Zero = (Value == 0x00)
 	flag_Negative = (Value >= 0x80)
-}
-
-//TODO: Check the ReadOperandAbsolute functions to add a CPU cycle if the high byte was altered
-
-func ReadOperands_AbsoluteAddressed(isJMP bool) uint16 {
-	AddressBus := uint16(ReadFromPC())
-	//MasterClockTick("Abs add")
-	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
-	if !isJMP {
-		//MasterClockTick("abs add, not jmp")
-	}
-	return AddressBus
-}
-
-func ReadOperands_IndirectAddressed() uint16 {
-	/*Addr := ReadFromPC()
-	TempAddress := Addr
-	Addr = bus.Read(uint16(TempAddress)) //Low byte of new address
-	TempAddress++
-	AddressBus = (uint16(bus.Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
-	return AddressBus*/
-	AddressBus := uint16(ReadFromPC())
-	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
-	//Now read from HERE
-	indL := bus.Read(AddressBus)
-	var indH byte
-	if AddressBus&0x00FF == 0xFF {
-		//Original NMOS Bug
-		indH = bus.Read(AddressBus & 0xFF00)
-	} else {
-		indH = bus.Read(AddressBus + 1)
-	}
-	//MasterClockTick("ind add")
-	return BuildAddress(indL, indH)
-}
-
-func ReadOperands_AbsoluteAddressed_XIndexed(pbCheck bool) uint16 {
-	low := ReadFromPC()
-	high := ReadFromPC()
-	AddressBus = BuildAddress(low, high)
-	AddressBus += uint16(X)
-	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
-		////MasterClockTick("abs add x")
-		CPU_Cycles++ //Extra cycle for crossing page boundary
-	}
-
-	return AddressBus
-}
-
-func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) uint16 {
-	low := ReadFromPC()
-	high := ReadFromPC()
-	AddressBus = BuildAddress(low, high)
-	AddressBus += uint16(Y)
-	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
-		////MasterClockTick("abs add y")
-		CPU_Cycles++ //Extra cycle for crossing page boundary
-	}
-	return AddressBus
-}
-
-func ReadOperands_IndirectAddressed_XIndexed() uint16 {
-	Addr := ReadFromPC() + X
-	////MasterClockTick("ind x")
-	TempAddress := Addr
-	Addr = bus.Read(uint16(TempAddress)) //Low byte of new address
-	TempAddress++
-	AddressBus = (uint16(bus.Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
-	return AddressBus
-}
-
-func ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) uint16 {
-	Addr := ReadFromPC()
-	TempAddress := Addr
-	Addr = bus.Read(uint16(TempAddress)) //Low byte of new address
-	TempAddress++
-	AddressBus = (uint16(bus.Read(uint16(TempAddress)))<<8 | uint16(Addr)) //High byte
-	AddressBus += uint16(Y)
-	if pbCheck && bus.Read(uint16(TempAddress)) != byte((AddressBus&0xFF00)>>4) {
-		////MasterClockTick("ind add y")
-		CPU_Cycles++
-	}
-	return AddressBus
-}
-
-func ReadOperands_ZeroPageAddressed() uint16 {
-	AddressBus := ReadFromPC()
-	return BuildAddress(AddressBus, 0x00)
-}
-
-func ReadOperands_ZeroPageAddressed_XIndexed() uint16 {
-	AddressBus := ReadFromPC()
-	////MasterClockTick("Zp x")
-	return BuildAddress(AddressBus+X, 0x00)
-}
-
-func ReadOperands_ZeroPageAddressed_YIndexed() uint16 {
-	AddressBus := ReadFromPC()
-	////MasterClockTick("ZP Y")
-	return BuildAddress(AddressBus+Y, 0x00)
 }
 
 func Branch(Condition bool, Value byte) {
@@ -134,11 +50,11 @@ func Branch(Condition bool, Value byte) {
 			signedVal -= 256 //range from -128 to 127
 		}
 		CPU_Cycles = 3
-		if byte((ProgramCounter&0xFF00)>>4) != byte(((ProgramCounter+uint16(signedVal))&0xFF00)>>4) {
+		if byte((PC&0xFF00)>>4) != byte(((PC+uint16(signedVal))&0xFF00)>>4) {
 			CPU_Cycles++ //Extra cycle for crossing page boundary
 			//MasterClockTick("branch page cross")
 		}
-		ProgramCounter = uint16(ProgramCounter + uint16(signedVal))
+		PC = uint16(PC + uint16(signedVal))
 		//MasterClockTick("branch taken")
 	} else {
 		//fmt.Println("branch not taken")
@@ -148,16 +64,16 @@ func Branch(Condition bool, Value byte) {
 
 func Push(Value byte) {
 	//Store to the stack, and decrement the stack pointer
-	bus.Write(uint16(StackPointer)+0x100, Value)
+	bus.Write(uint16(SP)+0x100, Value)
 	////MasterClockTick("push")
-	StackPointer--
+	SP--
 }
 
 func Pull() byte {
 	//Increment the stack pointer, and read from the stack
-	StackPointer++
+	SP++
 	//MasterClockTick("pull SP++")
-	temp := bus.Read(uint16(StackPointer) + 0x100)
+	temp := bus.Read(uint16(SP) + 0x100)
 	//MasterClockTick("pull")
 	return temp
 }
@@ -188,135 +104,9 @@ func PullFlags() {
 	//MasterClockTick("pull flags")
 }
 
-// Performs Arithmetic Shift Left onto value at Address
-func Op_ASL(Address uint16) {
-	Value := bus.Read(Address)
-	flag_Carry = (Value >= 0x80)
-	Value <<= 1
-	bus.Write(Address, Value)
-	SetZNFlags(Value)
-
-}
-
-// Performs Arithmetic Shift Right onto value at Address
-func Op_LSR(Address uint16) {
-	Value := bus.Read(Address)
-	flag_Carry = (Value & 1) != 0
-	Value >>= 1
-	bus.Write(Address, Value)
-	SetZNFlags(Value)
-}
-
-// Perform Rotate Left onto value at Address
-func Op_ROL(Address uint16) {
-	Value := bus.Read(Address)
-	futureCarry := (Value >= 0x80)
-	Value <<= 1
-	if flag_Carry {
-		Value |= 1
-	}
-	//MasterClockTick("rol")
-	bus.Write(Address, Value)
-	flag_Carry = futureCarry
-	SetZNFlags(Value)
-}
-
-// Perform Rotate Right onto value at Address
-func Op_ROR(Address uint16) {
-	Value := bus.Read(Address)
-	futureCarry := (Value & 1) != 0
-	Value >>= 1
-	if flag_Carry {
-		Value |= 0x80
-	}
-	//MasterClockTick("ror")
-	bus.Write(Address, Value)
-	flag_Carry = futureCarry
-	SetZNFlags(Value)
-}
-
-// Increment Value, and save to Address
-func Op_INC(Address uint16, Value byte) {
-	Value++
-	bus.Write(Address, Value)
-	SetZNFlags(Value)
-}
-
-// Decrement Value, and save to Address
-func Op_DEC(Address uint16, Value byte) {
-	Value--
-	bus.Write(Address, Value)
-	SetZNFlags(Value)
-}
-
-// Bitwise OR with A
-func Op_ORA(Value byte) {
-	A |= Value
-	SetZNFlags(A)
-}
-
-// Bitwise AND with A
-func Op_AND(Value byte) {
-	A &= Value
-	SetZNFlags(A)
-}
-
-// Bitwise XOR with A
-func Op_EOR(Value byte) {
-	A ^= Value
-	SetZNFlags(A)
-}
-
-// Add Value to A with Carry
-func Op_ADC(Value byte) {
-	IntSum := int(A) + int(Value) + common.BoolToInt(flag_Carry)
-	flag_Overflow = (^int(A^Value) & (int(A) ^ IntSum) & 0x80) != 0
-	flag_Carry = IntSum > 0xFF
-	A = byte(IntSum)
-	SetZNFlags(A)
-}
-
-// Subtract Value from A with Carry
-func Op_SBC(Value byte) {
-	IntSum := int(A) - int(Value) - common.BoolToInt(!flag_Carry)
-	flag_Overflow = (int(A^Value) & (int(A) ^ IntSum) & 0x80) != 0
-	flag_Carry = IntSum >= 0x00
-	A = byte(IntSum)
-	SetZNFlags(A)
-}
-
-// Compare Value with A
-func Op_CMP(Value byte) {
-	flag_Carry = Value <= A
-	flag_Zero = (Value == A)
-	flag_Negative = ((A - Value) >= 0x80)
-}
-
-// Compare Value with X
-func Op_CPX(Value byte) {
-	flag_Carry = Value <= X
-	flag_Zero = (Value == X)
-	flag_Negative = ((X - Value) >= 0x80)
-}
-
-// Compare Value with Y
-func Op_CPY(Value byte) {
-	flag_Carry = Value <= Y
-	flag_Zero = (Value == Y)
-	flag_Negative = ((Y - Value) >= 0x80)
-}
-
-// Uhh
-func Op_BIT(Value byte) {
-	//Bit Test
-	flag_Zero = ((A & Value) == 0)
-	flag_Negative = ((Value & 0x80) != 0)
-	flag_Overflow = ((Value & 0x40) != 0)
-}
-
 func ResetCPU() {
 
-	StackPointer = 0xFD
+	SP = 0xFD
 	A, X, Y = 0, 0, 0
 	opcode = 0
 	operands = nil
@@ -341,11 +131,11 @@ func BuildAddress(Value_Low, Value_High byte) uint16 {
 }
 
 func ReadFromPC() byte {
-	Value := bus.Read(ProgramCounter)
+	Value := bus.Read(PC)
 	//if LoggingCPU {
 	//	operands = append(operands, Value)
 	//}
-	ProgramCounter++
+	PC++
 	return Value
 }
 
@@ -362,11 +152,11 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//var opcode byte
 	if !ppu.DoNMI {
 		//If we're not running an NMI
-		opcode = bus.Read(ProgramCounter)
+		opcode = bus.Read(PC)
 		//if debug.LoggingCPU {
 		//	debug.prepTraceLogger()
 		//}
-		ProgramCounter++
+		PC++
 		//MasterClockTick("OPCODE")
 	} else {
 		//If we're running an NMI, force opcode $00
@@ -1155,12 +945,12 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x4C: //JMP
 		Address := ReadOperands_AbsoluteAddressed(true)
-		ProgramCounter = Address
+		PC = Address
 		CPU_Cycles = 3
 
 	case 0x6C: //JMP Indirect
 		Address := ReadOperands_IndirectAddressed()
-		ProgramCounter = Address
+		PC = Address
 		CPU_Cycles = 5 //TODO: What the fuck
 
 	//	JSR: Jump to New Location Saving Return Address
@@ -1172,10 +962,10 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x20: //JSR
 		temp_low := ReadFromPC()
-		Push(byte(ProgramCounter / 0x100))
-		Push(byte(ProgramCounter))
+		Push(byte(PC / 0x100))
+		Push(byte(PC))
 		temp_high := ReadFromPC()
-		ProgramCounter = BuildAddress(temp_low, temp_high)
+		PC = BuildAddress(temp_low, temp_high)
 		//MasterClockTick("jsr")
 		CPU_Cycles = 6
 
@@ -1189,8 +979,8 @@ func Emulate_CPU( /*g *Game*/ ) {
 		temp_high := Pull()
 		//MasterClockTick("rts Pull1")
 		//MasterClockTick("rts Pull2")
-		ProgramCounter = BuildAddress(temp_low, temp_high)
-		ProgramCounter++
+		PC = BuildAddress(temp_low, temp_high)
+		PC++
 		//MasterClockTick("rts pc++")
 		CPU_Cycles = 6
 
@@ -1212,17 +1002,17 @@ func Emulate_CPU( /*g *Game*/ ) {
 	case 0x00: //BRK
 		flag_B = false
 		if !ppu.DoNMI {
-			ProgramCounter++
+			PC++
 			flag_B = true
 		}
-		Push(byte(ProgramCounter >> 8))
-		Push(byte(ProgramCounter))
+		Push(byte(PC >> 8))
+		Push(byte(PC))
 		PushFlags()
 		//flag_InterruptDisable = true
 
 		PCL := bus.Read(common.Ternary(ppu.DoNMI, 0xFFFA, 0xFFFE))
 		PCH := bus.Read(common.Ternary(ppu.DoNMI, 0xFFFB, 0xFFFF))
-		ProgramCounter = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
+		PC = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
 		ppu.DoNMI = false
 		CPU_Cycles = 7
 
@@ -1246,7 +1036,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 		//MasterClockTick("rti Pull2")
 		temp_low := Pull()
 		temp_high := Pull()
-		ProgramCounter = BuildAddress(temp_low, temp_high)
+		PC = BuildAddress(temp_low, temp_high)
 		CPU_Cycles = 6
 
 	//Stack
@@ -1299,7 +1089,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	+	+	-	-	-	-
 
 	case 0xBA: //TSX
-		X = StackPointer
+		X = SP
 		SetZNFlags(X)
 		CPU_Cycles = 2
 
@@ -1309,7 +1099,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//	-	-	-	-	-	-
 
 	case 0x9A: //TXS
-		StackPointer = X
+		SP = X
 		CPU_Cycles = 2
 
 	//Flags
@@ -1887,10 +1677,10 @@ func Emulate_CPU( /*g *Game*/ ) {
 	case 0xBB: //LAS (LAE) Absolute, Y
 		//LDA/TSX oper
 		//M AND SP -> A, X, SP
-		Value := (bus.Read(ReadOperands_AbsoluteAddressed_YIndexed(true)) & StackPointer)
+		Value := (bus.Read(ReadOperands_AbsoluteAddressed_YIndexed(true)) & SP)
 		A = Value
 		X = Value
-		StackPointer = Value
+		SP = Value
 		SetZNFlags(A)
 		CPU_Cycles = 4
 
@@ -1916,13 +1706,13 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//Check for, and perform Interrupt Request (IRQ)
 	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !ppu.DoNMI && !flag_InterruptDisable {
 		flag_B = false
-		Push(byte(ProgramCounter >> 8))
-		Push(byte(ProgramCounter))
+		Push(byte(PC >> 8))
+		Push(byte(PC))
 		PushFlags()
 
 		PCL := bus.Read(0xFFFE)
 		PCH := bus.Read(0xFFFF)
-		ProgramCounter = BuildAddress(PCL, PCH)
+		PC = BuildAddress(PCL, PCH)
 
 		//Disable interrupts
 		apu.APUDMCInterrupt = false
