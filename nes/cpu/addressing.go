@@ -24,6 +24,12 @@ import "mtt/timenes/nes/bus"
 
 */
 
+func PageCrossingCheck(pbCheck bool, Address uint16, lo, hi byte) {
+	if pbCheck && byte((Address&0xFF00)>>8) != hi {
+		CPU_Cycles++ //Extra cycle for crossing page boundary
+	}
+}
+
 func ReadOperands_AbsoluteAddressed(isJMP bool) {
 	AddressBus = uint16(ReadFromPC())
 	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
@@ -51,18 +57,14 @@ func ReadOperands_AbsoluteAddressed_XIndexed(pbCheck bool) {
 	low := ReadFromPC()
 	high := ReadFromPC()
 	AddressBus = BuildAddress(low, high) + uint16(X)
-	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
-		CPU_Cycles++ //Extra cycle for crossing page boundary
-	}
+	PageCrossingCheck(pbCheck, AddressBus, low, high)
 }
 
 func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
 	low := ReadFromPC()
 	high := ReadFromPC()
 	AddressBus = BuildAddress(low, high) + uint16(Y)
-	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
-		CPU_Cycles++ //Extra cycle for crossing page boundary
-	}
+	PageCrossingCheck(pbCheck, AddressBus, low, high)
 }
 
 func ReadOperands_IndirectAddressed_XIndexed() {
@@ -77,9 +79,7 @@ func ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) {
 	low := bus.Read(uint16(TempAddress))
 	high := bus.Read(uint16(TempAddress + 1))
 	AddressBus = BuildAddress(low, high) + uint16(Y)
-	if pbCheck && byte((AddressBus&0xFF00)>>4) != high {
-		CPU_Cycles++ //Extra cycle for crossing page boundary
-	}
+	PageCrossingCheck(pbCheck, AddressBus, low, high)
 }
 
 func ReadOperands_ZeroPageAddressed() {
