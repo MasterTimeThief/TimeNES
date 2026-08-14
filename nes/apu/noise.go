@@ -11,6 +11,7 @@ type NoiseChannel struct {
 	ShiftRegister    uint16
 	LengthCounter
 	Envelope
+	ForceMute bool
 }
 
 var apuNoiseTimerLUT = [16]uint16{4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068}
@@ -30,6 +31,7 @@ func (n *NoiseChannel) ResetNoise() {
 	n.Mode = false
 	n.Output = 0
 	n.ShiftRegister = 1
+	n.ForceMute = false
 }
 
 func (n *NoiseChannel) ClockNoiseTimer() {
@@ -61,7 +63,7 @@ func (n *NoiseChannel) ClockShiftRegister() {
 }
 
 func (n *NoiseChannel) UpdateNoiseOutput() byte {
-	if common.MuteEmulator || !n.Enabled || (n.ShiftRegister&1) == 1 || n.LengthCounter.Counter == 0 {
+	if common.MuteEmulator || n.ForceMute || !n.Enabled || (n.ShiftRegister&1) == 1 || n.LengthCounter.Counter == 0 {
 		return 0
 	} else if n.ConstantVolume {
 		return n.Volume

@@ -292,8 +292,8 @@ func ClockFrameCounterHalfFrame() {
 		Noise.LengthCounter.Counter = 0
 	}*/
 
-	Pulse1.ClockSweep()
-	Pulse2.ClockSweep()
+	Pulse1.ClockSweep(true)
+	Pulse2.ClockSweep(false)
 
 	Pulse1.ClockLengthCounter()
 	Pulse2.ClockLengthCounter()

@@ -1,6 +1,7 @@
 package nes
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -71,6 +72,40 @@ func (g *Game) Update() error {
 	}
 	// Update the UI
 	g.UI.Update()
+	if debug.ShowDebugWindow {
+		g.debugui.Update(func(ctx *debugui.Context) error {
+			ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
+				ctx.SetGridLayout([]int{100, -1}, nil)
+				ctx.Text("Instruction Count:")
+				ctx.Text(fmt.Sprintf("$%d", debug.InstructionCount))
+				//ctx.Text("VRAM Address:")
+				//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
+				//ctx.Text("T Register:")
+				//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
+				//ctx.Text("Fine X Scroll:")
+				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+				//ctx.Text("Fine Y Scroll:")
+				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+				//ctx.Text("Nametable:")
+				//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
+
+				//ctx.Text("Pause")
+
+				/*ctx.Button("Pause").On(func() {
+					nes.PauseEmulation = !pauseEmulation
+				})
+				ctx.Button("RESET").On(func() {
+					common.ROMLoaded = false
+				})*/
+				ctx.Checkbox(&apu.Pulse1.ForceMute, "Mute Square 1")
+				ctx.Checkbox(&apu.Pulse2.ForceMute, "Mute Square 2")
+				ctx.Checkbox(&apu.Triangle.ForceMute, "Mute Triangle")
+				ctx.Checkbox(&apu.Noise.ForceMute, "Mute Noise")
+				ctx.Checkbox(&apu.DMC.ForceMute, "Mute DMC")
+			})
+			return nil
+		})
+	}
 	return nil
 }
 

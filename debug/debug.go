@@ -189,40 +189,7 @@ func TraceLoggerPPU() {
 		}* /
 	}
 }*/
-/*
-func DebugWindow( g *Game ) error { //Using ebitengine's built in debug display
 
-	if _, err := g.debugui.Update(func(ctx *debugui.Context) error {
-		ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
-			ctx.SetGridLayout([]int{100, -1}, nil)
-			ctx.Text("Instruction Count:")
-			ctx.Text(fmt.Sprintf("$%d", InstructionCount))
-			//ctx.Text("VRAM Address:")
-			//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
-			//ctx.Text("T Register:")
-			//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
-			//ctx.Text("Fine X Scroll:")
-			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-			//ctx.Text("Fine Y Scroll:")
-			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-			//ctx.Text("Nametable:")
-			//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
-
-			//ctx.Text("Pause")
-			ctx.Button("Pause").On(func() {
-				pauseEmulation = !pauseEmulation
-			})
-			ctx.Button("RESET").On(func() {
-				nes.ROMLoaded = false
-			})
-		})
-		return nil
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-*/
 var CartRamLastString string
 
 func CartRAMLogger() {

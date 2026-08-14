@@ -89,8 +89,8 @@ func AudioOutput() {
 
 	triangle := Triangle.UpdateTriangleOutput()
 	noise := Noise.UpdateNoiseOutput()
-	dmc := byte(common.Ternary(DMC.Enabled, uint16(DMC.Output), 0))
-	//dmc := DMC.Output
+	//dmc := byte(common.Ternary(DMC.Enabled, uint16(DMC.Output), 0))
+	dmc := DMC.Output
 
 	tnd_out := tndTable[(3*triangle)+(2*noise)+dmc]
 

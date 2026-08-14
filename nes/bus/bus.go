@@ -200,7 +200,8 @@ func Write(Address uint16, Value byte) {
 			apu.Pulse1.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
 			apu.Pulse1.Sweep.Period = uint16(Value&0x70) >> 4
 			apu.Pulse1.Sweep.Negate = ((Value & 0x8) >> 3) != 0
-			apu.Pulse1.Shift = (Value & 0x07)
+			apu.Pulse1.Sweep.Shift = (Value & 0x07)
+			apu.Pulse1.Sweep.ReloadFlag = true
 		case 0x4002:
 			apu.Pulse1.TimerReloadValue = apu.SetTimerLow(Value, apu.Pulse1.TimerReloadValue)
 			apu.Pulse1.Timer = apu.Pulse1.TimerReloadValue
@@ -210,6 +211,8 @@ func Write(Address uint16, Value byte) {
 			if apu.Pulse1.Enabled {
 				apu.Pulse1.LengthCounter.Counter = apu.LengthCounterLoad(Value >> 3)
 			}
+			apu.Pulse1.StartFlag = true
+			apu.Pulse1.DutyPos = 0
 
 		// Pulse 2
 		case 0x4004:
@@ -222,7 +225,8 @@ func Write(Address uint16, Value byte) {
 			apu.Pulse2.Sweep.Enabled = ((Value & 0x80) >> 7) != 0
 			apu.Pulse2.Sweep.Period = uint16(Value&0x70) >> 4
 			apu.Pulse2.Sweep.Negate = ((Value & 0x8) >> 3) != 0
-			apu.Pulse2.Shift = (Value & 0x07)
+			apu.Pulse2.Sweep.Shift = (Value & 0x07)
+			apu.Pulse2.Sweep.ReloadFlag = true
 		case 0x4006:
 			apu.Pulse2.TimerReloadValue = apu.SetTimerLow(Value, apu.Pulse2.TimerReloadValue)
 			apu.Pulse2.Timer = apu.Pulse2.TimerReloadValue
@@ -232,12 +236,14 @@ func Write(Address uint16, Value byte) {
 			if apu.Pulse2.Enabled {
 				apu.Pulse2.LengthCounter.Counter = apu.LengthCounterLoad(Value >> 3)
 			}
+			apu.Pulse2.StartFlag = true
+			apu.Pulse1.DutyPos = 0
 
 		// Triangle
 		case 0x4008:
 			apu.Triangle.LengthCounter.HaltFlag = ((Value & 0x80) >> 7) != 0
 			if apu.Triangle.Enabled {
-				apu.Triangle.LinearCounter.Counter = (Value & 0x7F)
+				apu.Triangle.LinearCounter.ReloadValue = (Value & 0x7F)
 			}
 		case 0x4009: //Unused
 		case 0x400A:
@@ -266,6 +272,7 @@ func Write(Address uint16, Value byte) {
 			if apu.Noise.Enabled {
 				apu.Noise.LengthCounter.Counter = apu.LengthCounterLoad(Value >> 3)
 			}
+			apu.Noise.StartFlag = true
 
 		// DMC
 		case 0x4010:
@@ -305,6 +312,14 @@ func Write(Address uint16, Value byte) {
 			apu.Triangle.Enabled = (Value & 0x04) != 0
 			apu.Pulse2.Enabled = (Value & 0x02) != 0
 			apu.Pulse1.Enabled = (Value & 0x01) != 0
+
+			if apu.DMC.Enabled {
+				if apu.DMC.BytesRemaining > 0 {
+					apu.DMC.DMCRestartSample()
+				}
+			} else {
+				apu.DMC.BytesRemaining = 0
+			}
 
 			apu.APUDMCInterrupt = false
 			apu.IRQLevelDetector = false

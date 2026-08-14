@@ -39,10 +39,11 @@ type toolbar struct {
 	muteButton  *widget.Button
 	resetButton *widget.Button
 	// Debug
-	debugMenu  *widget.Button
-	smbButton  *widget.Button
-	testButton *widget.Button
-	FPSButton  *widget.Button
+	debugMenu         *widget.Button
+	smbButton         *widget.Button
+	testButton        *widget.Button
+	FPSButton         *widget.Button
+	DebugWindowButton *widget.Button
 }
 
 type ListEntry struct {
@@ -132,13 +133,14 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 	//
 	debug := newToolbarButton(res, "Debug")
 	var (
-		smb  = newToolbarMenuEntry(res, "Super Mario Bros.")
-		test = newToolbarMenuEntry(res, "AccuracyCoin")
-		fps  = newToolbarMenuEntry(res, "Toggle FPS Display")
+		smb         = newToolbarMenuEntry(res, "Super Mario Bros.")
+		test        = newToolbarMenuEntry(res, "AccuracyCoin")
+		fps         = newToolbarMenuEntry(res, "Toggle FPS Display")
+		debugwindow = newToolbarMenuEntry(res, "Debug Window")
 	)
 	debug.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		nes.MenuBarSelected = true
-		openToolbarMenu(args.Button.GetWidget(), ui, smb, test, fps)
+		openToolbarMenu(args.Button.GetWidget(), ui, smb, test, fps, debugwindow)
 	}))
 	root.AddChild(debug)
 
@@ -154,10 +156,11 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 		pauseButton: pause,
 		resetButton: reset,
 		// Debug
-		debugMenu:  debug,
-		smbButton:  smb,
-		testButton: test,
-		FPSButton:  fps,
+		debugMenu:         debug,
+		smbButton:         smb,
+		testButton:        test,
+		FPSButton:         fps,
+		DebugWindowButton: debugwindow,
 	}
 }
 
@@ -312,6 +315,10 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 
 	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		debug.ShowFPS = !debug.ShowFPS
+	}))
+
+	toolbar.DebugWindowButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		debug.ShowDebugWindow = !debug.ShowDebugWindow
 	}))
 
 }

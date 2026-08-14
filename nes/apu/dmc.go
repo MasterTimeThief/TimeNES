@@ -19,6 +19,8 @@ type DeltaModChannel struct {
 	ShifterBitsRemaining byte
 	DPCM_Up              bool
 
+	ForceMute bool
+
 	// This will get the whole sample at once,
 	// so I don't have to go back and read it
 	// each time I need a new sample.
@@ -44,6 +46,8 @@ func (d *DeltaModChannel) ResetDMC() {
 	d.Shifter = 0
 	d.ShifterBitsRemaining = 0
 	d.DPCM_Up = false
+
+	d.ForceMute = false
 }
 
 func (d *DeltaModChannel) ClockDMCTimer() {
@@ -102,8 +106,8 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 	switch cartridge.MapperChipID {
 	default:
 		//TODO: Stall for 1-4 CPU cycles (?)
-		//d.Buffer = nes.Read(d.SampleAddress)
-		//
+		//d.Buffer = bus.Read(d.SampleAddress)
+
 		//if len(d.SampleBuffer) > 0 {
 		//	d.Buffer = d.SampleBuffer[d.SampleBufferPos]
 		//	d.SampleBufferPos++
@@ -115,9 +119,7 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 		//	}
 		//	d.BytesRemaining--
 		//	if d.BytesRemaining == 0 && d.Loop {
-		//		d.SampleBufferPos = 0
-		//		d.CurrentAddress = d.SampleAddress
-		//		d.BytesRemaining = d.SampleLength
+		//		d.DMCRestartSample()
 		//	} else if d.BytesRemaining == 0 && d.IRQEnable {
 		//		APUDMCInterrupt = true
 		//	}
@@ -125,4 +127,10 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 		d.Buffer = 0
 		//}
 	}
+}
+
+func (d *DeltaModChannel) DMCRestartSample() {
+	d.SampleBufferPos = 0
+	d.CurrentAddress = d.SampleAddress
+	d.BytesRemaining = d.SampleLength
 }
