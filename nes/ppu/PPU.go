@@ -54,7 +54,8 @@ var FrameColorBufferPos int = 0
 var OAM [0x100]byte
 var SecondaryOAM [0x20]byte
 var ppuSpriteEvalTemp byte
-var ppuOAMAddress, ppuSecondaryOAMAddress, ppuSecondaryOAMSize uint16
+var ppuOAMAddress byte
+var ppuSecondaryOAMAddress, ppuSecondaryOAMSize uint16
 var ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
 var ppuSpriteEvalTick int
 
@@ -254,6 +255,7 @@ func SpriteEvaluation() {
 	if PPUDot == 0 { //Step 0: Reset Secondary OAM count
 		ppuSecondaryOAMAddress = 0
 		ppuSecondaryOAMFull = false
+		ppuSpriteEvaluationOAMOverflowed = false
 	} else if PPUDot > 0 && PPUDot <= 64 { //Step 1: Clear Secondary OAM
 		if (PPUDot & 1) == 1 {
 			//Odd PPU cycles load the value $FF
@@ -267,7 +269,7 @@ func SpriteEvaluation() {
 	} else if PPUDot > 64 && PPUDot <= 256 { //Step 2: Load OAM into Secondary OAM (If not full)
 		if (PPUDot & 1) == 1 {
 			//Odd PPU cycles load the value from OAM
-			ppuSpriteEvalTemp = OAM[ppuOAMAddress&0xFF] //CHECK IF THIS IS LEGIT
+			ppuSpriteEvalTemp = OAM[ppuOAMAddress]
 		} else {
 			if !ppuSpriteEvaluationOAMOverflowed {
 				//Even PPU cycles store the value in secondaryOAM
@@ -327,15 +329,15 @@ func SpriteEvaluation() {
 			ppu_SpriteYposition[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
 			ppuSecondaryOAMAddress++
 		case 1:
-			//Set this object's Y position in the array
+			//Set this object's pattern in the array
 			ppu_SpritePattern[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
 			ppuSecondaryOAMAddress++
 		case 2:
-			//Set this object's Y position in the array
+			//Set this object's attributes in the array
 			ppu_SpriteAttribute[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
 			ppuSecondaryOAMAddress++
 		case 3:
-			//Set this object's Y position in the array
+			//Set this object's X position in the array
 			ppu_SpriteXposition[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
 		case 4:
 			PPUAddressBus = ppuFindSpritePatternData(ppuSecondaryOAMAddress / 4)

@@ -37,75 +37,7 @@ var MagicConstant byte = 0xFF //Might be needed for some of the illegal opcodes
 var apuRun bool
 var AddressBus uint16
 
-func SetZNFlags(Value byte) {
-	flag_Zero = (Value == 0x00)
-	flag_Negative = (Value >= 0x80)
-}
-
-func Branch(Condition bool, Value byte) {
-	if Condition {
-		//fmt.Println("branch taken")
-		signedVal := int(Value)
-		if signedVal > 127 {
-			signedVal -= 256 //range from -128 to 127
-		}
-		CPU_Cycles = 3
-		if byte((PC&0xFF00)>>4) != byte(((PC+uint16(signedVal))&0xFF00)>>4) {
-			CPU_Cycles++ //Extra cycle for crossing page boundary
-			//MasterClockTick("branch page cross")
-		}
-		PC = uint16(PC + uint16(signedVal))
-		//MasterClockTick("branch taken")
-	} else {
-		//fmt.Println("branch not taken")
-		CPU_Cycles = 2
-	}
-}
-
-func Push(Value byte) {
-	//Store to the stack, and decrement the stack pointer
-	bus.Write(uint16(SP)+0x100, Value)
-	////MasterClockTick("push")
-	SP--
-}
-
-func Pull() byte {
-	//Increment the stack pointer, and read from the stack
-	SP++
-	//MasterClockTick("pull SP++")
-	temp := bus.Read(uint16(SP) + 0x100)
-	//MasterClockTick("pull")
-	return temp
-}
-
-func PushFlags() {
-	temp := byte(0)
-	temp += byte(common.Ternary(flag_Carry, 0x01, 0x00))
-	temp += byte(common.Ternary(flag_Zero, 0x02, 0x00))
-	temp += byte(common.Ternary(flag_InterruptDisable, 0x04, 0x00))
-	temp += byte(common.Ternary(flag_Decimal, 0x08, 0x00))
-	temp += byte(common.Ternary(flag_B, 0x10, 0x00)) //B Flag
-	temp += 0x20
-	temp += byte(common.Ternary(flag_Overflow, 0x40, 0x00))
-	temp += byte(common.Ternary(flag_Negative, 0x80, 0x00))
-	Push(temp)
-
-}
-
-func PullFlags() {
-	temp := Pull()
-	flag_Carry = (temp & 0x01) != 0
-	flag_Zero = (temp & 0x02) != 0
-	flag_InterruptDisable = (temp & 0x04) != 0
-	flag_Decimal = (temp & 0x08) != 0
-	flag_B = (temp & 0x10) != 0
-	flag_Overflow = (temp & 0x40) != 0
-	flag_Negative = (temp & 0x80) != 0
-	//MasterClockTick("pull flags")
-}
-
 func ResetCPU() {
-
 	SP = 0xFD
 	A, X, Y = 0, 0, 0
 	opcode = 0
@@ -120,23 +52,6 @@ func ResetCPU() {
 	flag_Overflow = false
 	flag_Negative = false
 	flag_B = false
-}
-
-func BuildAddress(Value_Low, Value_High byte) uint16 {
-	//b := []byte{Value_Low, Value_High}
-	//return binary.LittleEndian.Uint16(b[0:])
-
-	AddressBus = (uint16(Value_High)<<8 | uint16(Value_Low))
-	return AddressBus
-}
-
-func ReadFromPC() byte {
-	Value := bus.Read(PC)
-	//if LoggingCPU {
-	//	operands = append(operands, Value)
-	//}
-	PC++
-	return Value
 }
 
 func Emulate_CPU( /*g *Game*/ ) {
