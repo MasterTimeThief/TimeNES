@@ -1,6 +1,7 @@
 package bus
 
 import (
+	"fmt"
 	"mtt/timenes/common"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/cartridge"
@@ -108,6 +109,8 @@ func Read(Address uint16) byte {
 			CPUBus = cartridge.PRGROM[mappers.MMC1_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		//case 3: //CNROM
 		//case 4: //MMC3
+		case 7:
+			CPUBus = cartridge.PRGROM[mappers.AxROM_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		default:
 			CPUBus = cartridge.PRGROM[(Address-0x8000)&uint16(cartridge.PRGROM_Size-1)]
 			//outsideCodeRead = Address
@@ -348,17 +351,33 @@ func Write(Address uint16, Value byte) {
 
 		//} else if Address < 0x8000 {
 		//	CartRAM[Address&0x1FFF] = Value
-	} else {
+	} else if Address >= 0x6000 && Address < 0x8000 {
+		//Check for PRG-RAM
+		switch cartridge.MapperChipID {
+		case 1: //MMC1
+			mappers.MMC1_WriteToPRGRAM(Value, Address)
+		case 3: //CNROM
+			prgValue := Read(Address)
+			mappers.CNROM_WriteToPRGRAM(Value&prgValue, Address) // Can have bus conflicts
+		//case 4: //MMC3
+		default:
+			//OutsideCodeWrite = Address
+			fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
+		}
+	} else if Address >= 0x8000 { //Account for Mapper chips
 		//Check what mapper chip we're using
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			mappers.MMC1_Write(Value, Address, common.CPU_TotalCycles)
 		case 3: //CNROM
 			prgValue := Read(Address)
-			mappers.CNROM_Write(Value&prgValue, Address)
+			mappers.CNROM_Write(Value&prgValue, Address) // Can have bus conflicts
 		//case 4: //MMC3
+		case 7:
+			mappers.AxROM_Write(Value, Address)
 		default:
-			OutsideCodeWrite = Address
+			//OutsideCodeWrite = Address
+			fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
 		}
 	}
 	//MasterClockTick("WRITE")
@@ -376,7 +395,7 @@ func WritePPU(Value byte) {
 				cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(ppu.VRAMAddress, cartridge.CHRROM_Size)] = Value
 				//}
 			case 3: //CNROM
-				cartridge.CHRROM[mappers.CNROM_ReadAddress(ppu.VRAMAddress)] = Value
+				cartridge.CHRROM[mappers.CNROM_FetchPPUAddress(ppu.VRAMAddress)] = Value
 			//case 4: //MMC3
 			default:
 				cartridge.CHRROM[ppu.VRAMAddress] = Value

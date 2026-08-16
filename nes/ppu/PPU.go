@@ -418,7 +418,7 @@ func ReadPPU( /*Address uint16*/ ) byte {
 		case 1: //MMC1
 			return cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(PPUAddressBus, cartridge.CHRROM_Size)]
 		case 3: //CNROM
-			return cartridge.CHRROM[mappers.CNROM_ReadAddress(PPUAddressBus)]
+			return cartridge.CHRROM[mappers.CNROM_FetchPPUAddress(PPUAddressBus)]
 		//case 4: //MMC3
 		//	return 0
 		default:

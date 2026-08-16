@@ -2,10 +2,6 @@
 package mappers
 
 var MMC1_PRGRAM [0x2000]byte
-var MMC1_PRG_Bank1 [0x4000]byte
-var MMC1_PRG_Bank2 [0x4000]byte
-var MMC1_CHR_Bank1 [0x1000]byte
-var MMC1_CHR_Bank2 [0x1000]byte
 
 var MMC1_ShiftRegister byte = 0x10
 var MMC1_Control byte = 0x0C
@@ -15,62 +11,63 @@ var MMC1_PRGBank byte
 
 var lastWriteCycle int
 
-// Clears the MMC1 Shift register to the default state
+func MMC1_WriteToPRGRAM(Value byte, Addr uint16) {
+	if (MMC1_PRGBank & 0x10) == 0 {
+		MMC1_PRGRAM[Addr&0x1FFF] = Value
+	}
+}
+
 func MMC1_Write(Value byte, Addr uint16, Cycle int) {
 
-	if Addr < 0x8000 { //PRG-RAM
-		if (MMC1_PRGBank & 0x10) == 0 {
-			MMC1_PRGRAM[Addr&0x1FFF] = Value
-		}
-	} else {
-		if (Value & 0x80) != 0 { //If bit 7 is set, clear the shift register
-			MMC1_Reset()
-		} else { //Add to the shift register
-			if Cycle-lastWriteCycle <= 1 {
-				lastWriteCycle = Cycle
-				return
-			} else {
-				shiftCheck := MMC1_ShiftRegister & 1
-				MMC1_ShiftRegister = (MMC1_ShiftRegister >> 1) | ((Value & 1) << 4)
-				MMC1_ShiftRegister &= 0x1F //Probably redundant, but just in case
-				if shiftCheck != 0 {       //This was write 5
-					bankSelect := (Addr >> 13) & 3
-					switch bankSelect {
-					case 0: //$8000-$9FFF
-						MMC1_Control = MMC1_ShiftRegister
-					case 1: //$A000-$BFFF
-						MMC1_CHRBank0 = MMC1_ShiftRegister
-					case 2: //$C000-$DFFF
-						MMC1_CHRBank1 = MMC1_ShiftRegister
-					case 3: //$E000-$FFFF
-						MMC1_PRGBank = MMC1_ShiftRegister
-					}
-					MMC1_ShiftRegister = 0x10
+	//if Addr < 0x8000 { //PRG-RAM
+	//	if (MMC1_PRGBank & 0x10) == 0 {
+	//		MMC1_PRGRAM[Addr&0x1FFF] = Value
+	//	}
+	//} else {
+	if (Value & 0x80) != 0 { //If bit 7 is set, clear the shift register
+		MMC1_Reset()
+	} else { //Add to the shift register
+		if Cycle-lastWriteCycle <= 1 {
+			lastWriteCycle = Cycle
+			return
+		} else {
+			shiftCheck := MMC1_ShiftRegister & 1
+			MMC1_ShiftRegister = (MMC1_ShiftRegister >> 1) | ((Value & 1) << 4)
+			MMC1_ShiftRegister &= 0x1F //Probably redundant, but just in case
+			if shiftCheck != 0 {       //This was write 5
+				bankSelect := (Addr >> 13) & 3
+				switch bankSelect {
+				case 0: //$8000-$9FFF
+					MMC1_Control = MMC1_ShiftRegister
+				case 1: //$A000-$BFFF
+					MMC1_CHRBank0 = MMC1_ShiftRegister
+				case 2: //$C000-$DFFF
+					MMC1_CHRBank1 = MMC1_ShiftRegister
+				case 3: //$E000-$FFFF
+					MMC1_PRGBank = MMC1_ShiftRegister
 				}
+				MMC1_ShiftRegister = 0x10
 			}
 		}
 	}
+	//}
 }
 
 func MMC1_FetchCPUAddress(Addr uint16, PRGLength uint32) uint32 {
 	BankMode := (MMC1_Control & 0xC) >> 2
 	var tempAddr uint32
 	switch BankMode {
-	case 0:
+	case 0, 1:
 		// switch 32 KB at $8000, ignoring low bit of bank number
 		tempAddr = uint32(Addr & 0x7FFF)
-		return ((0x8000 * uint32(MMC1_PRGBank&0x0E)) + tempAddr) & PRGLength
-	case 1:
-		// Yes its the same as above, 0 and 1 are the same
-		tempAddr = uint32(Addr & 0x7FFF)
-		return ((0x8000 * uint32(MMC1_PRGBank&0x0E)) + tempAddr) & PRGLength
+		return ((0x8000 * uint32(MMC1_PRGBank&0x0E)) + tempAddr) & (PRGLength - 1)
 	case 2:
 		// fix first bank at $8000 and switch 16 KB bank at $C000
 		tempAddr = uint32(Addr & 0x3FFF)
 		if Addr >= 0xC000 {
 			return (0x4000 * uint32(MMC1_PRGBank)) + tempAddr
 		} else {
-			return tempAddr
+			return tempAddr /*| (uint32(MMC1_PRGBank & 0x08)<<13)*/
 		}
 	case 3:
 		// fix last bank at $C000 and switch 16 KB bank at $8000

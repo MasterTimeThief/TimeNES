@@ -2,7 +2,6 @@ package cartridge
 
 import (
 	"mtt/timenes/common"
-	"mtt/timenes/nes/cartridge/mappers"
 	"os"
 )
 
@@ -77,16 +76,18 @@ func LoadCartridge() {
 
 	}
 
-	//Initialize any PRG-RAM from mapper chips
-	if HasBatteryRAM {
-		switch MapperChipID {
-		case 1: //MMC1
-			copy(mappers.MMC1_PRGRAM[:], HeaderedROM[0x10:])
-		case 2: //UxROM
-		case 3: //CNROM
-			//Add support for Hayauchi Super Igo?
-		case 4: //MMC3
-		}
+	//Initialize mapper chips
+	//if HasBatteryRAM {
+	switch MapperChipID {
+	case 1: //MMC1
+		//copy(mappers.MMC1_PRGRAM[:], HeaderedROM[0x10:])
+	case 2: //UxROM
+	case 3: //CNROM
+		//Add support for Hayauchi Super Igo?
+	case 4: //MMC3
+	case 7: //AxROM
+		//mappers.AxROM_Register = byte(PRGROM_Size / uint32(0x8000))
 	}
+	//}
 	common.ROMLoaded = true
 }
