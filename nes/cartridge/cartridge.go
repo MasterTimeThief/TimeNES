@@ -6,14 +6,20 @@ import (
 )
 
 // Header Variables
+var ( // iNES Header Data
+	PRGROM_Size           uint32 // Byte 4: Size of PRG ROM in 16KB Units
+	CHRROM_Size           uint32 // Byte 5: Size of CHR ROM in 8 KB units (value 0 means the board uses CHR RAM)
+	IsNametableHorizontal bool   // Byte 6, Bit 0: Nametable Arrangement (0: Vertical / 1: Horizontal)
+	HasBatteryRAM         bool   // Byte 6, Bit 1: Cartridge contains battery-backed PRG RAM ($6000-7FFF) or other persistent memory
+	AltNametableLayout    bool   // Byte 6, Bit 3: Alternative nametable layout
+	MapperChipID          byte   // Gotten from upper half of Bytes 6 and 7
+)
 
-var PRGROM_Size uint32         // Byte 4: Size of PRG ROM in 16KB Units
-var CHRROM_Size uint32         // Byte 5: Size of CHR ROM in 8 KB units (value 0 means the board uses CHR RAM)
-var IsNametableHorizontal bool // Byte 6, Bit 0: Nametable Arrangement (0: Vertical / 1: Horizontal)
-var HasBatteryRAM bool         // Byte 6, Bit 1: Cartridge contains battery-backed PRG RAM ($6000-7FFF) or other persistent memory
-var AltNametableLayout bool    // Byte 6, Bit 3: Alternative nametable layout
-var NES2_Header bool           // Byte 7, Bits 2-3: If equal to 2, flags 8-15 are in NES 2.0 format
-var MapperChipID byte          // Gotten from upper half of Bytes 6 and 7
+var ( //NES 2.0 Header Data
+	NES2_Header      bool // Byte 7, Bits 2-3: If equal to 2, flags 8-15 are in NES 2.0 format
+	MapperChipIDHigh byte //Byte 8, Bits 0-3: ID for higher mapper chips
+	SubmapperID      byte //Byte 8, Bits 4-7: ID for submappers
+)
 
 var Header [0x10]byte
 var PRGROM [0x80000]byte

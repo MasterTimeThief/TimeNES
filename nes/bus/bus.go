@@ -107,9 +107,11 @@ func Read(Address uint16) byte {
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			CPUBus = cartridge.PRGROM[mappers.MMC1_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
+		case 2: //UxROM
+			CPUBus = cartridge.PRGROM[mappers.UxROM_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		//case 3: //CNROM
 		//case 4: //MMC3
-		case 7:
+		case 7: //AxROM
 			CPUBus = cartridge.PRGROM[mappers.AxROM_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		default:
 			CPUBus = cartridge.PRGROM[(Address-0x8000)&uint16(cartridge.PRGROM_Size-1)]
@@ -369,11 +371,13 @@ func Write(Address uint16, Value byte) {
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			mappers.MMC1_Write(Value, Address, common.CPU_TotalCycles)
+		case 2: //UxROM
+			mappers.UxROM_Write(Value, Address)
 		case 3: //CNROM
 			prgValue := Read(Address)
 			mappers.CNROM_Write(Value&prgValue, Address) // Can have bus conflicts
 		//case 4: //MMC3
-		case 7:
+		case 7: //AxROM
 			mappers.AxROM_Write(Value, Address)
 		default:
 			//OutsideCodeWrite = Address

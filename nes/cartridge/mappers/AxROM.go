@@ -3,7 +3,6 @@ package mappers
 
 var AxROM_Register byte
 
-// Clears the MMC1 Shift register to the default state
 func AxROM_Write(Value byte, Addr uint16) {
 	AxROM_Register = Value
 }
