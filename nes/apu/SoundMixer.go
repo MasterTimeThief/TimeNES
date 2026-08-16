@@ -1,6 +1,7 @@
 package apu
 
 import (
+	"encoding/binary"
 	"math"
 	"mtt/timenes/common"
 	"time"
@@ -51,6 +52,7 @@ func InitAudioOutput() {
 		ringBuffer:  newRingBuffer(apuRingBufferSize),
 		frameBuffer: make([][]byte, apuInputSamples),
 	}
+	InitFilters()
 }
 
 func NewAudioContext() *audio.Context {
@@ -72,11 +74,7 @@ func NewAudioPlayer(context *audio.Context) *audio.Player {
 func (a *AudioBufferStruct) sendSample() {
 	result := a.sample /*/ float32(a.SampleRate)*/
 	a.sample = 0
-	b := math.Float32bits(result)
-	newSample := []byte{
-		byte(b), byte(b >> 8), byte(b >> 16), byte(b >> 24),
-		byte(b), byte(b >> 8), byte(b >> 16), byte(b >> 24),
-	}
+	newSample := BytesFromFloat32(result)
 	a.frameBuffer = append(a.frameBuffer, newSample)
 	//a.ringBuffer.Write(newSample)
 }
@@ -113,15 +111,34 @@ func TransferBuffer() {
 		NearestNeighborIndex += NearestNeighborRatio
 
 		newIndex := int(NearestNeighborIndex)
-
 		if int(NearestNeighborIndex) < inputBufferSize {
-			audBuf.ringBuffer.Write(audBuf.frameBuffer[newIndex])
+
+			//Filter
+			FilteredSample := audBuf.frameBuffer[newIndex]
+
+			if len(audBuf.frameBuffer[newIndex]) >= 4 {
+				InputSampleFloat := Float32FromBytes(audBuf.frameBuffer[newIndex])
+				//FilteredSample = BytesFromFloat32(LowFilter14k.FilterUpdate(HighFilter440.FilterUpdate(HighFilter90.FilterUpdate(InputSampleFloat))))
+				FilteredSample = BytesFromFloat32(HighFilter440.FilterUpdate(InputSampleFloat))
+			}
+
+			audBuf.ringBuffer.Write(FilteredSample)
 		}
 	}
 
 	audBuf.frameBuffer = nil
 }
 
-func Filter(freq float32, sampleRate int, isHighPass bool, resonance float32) {
-	//Add High / Low Passes
+func Float32FromBytes(bytes []byte) float32 {
+	bits := binary.LittleEndian.Uint32(bytes)
+	float := math.Float32frombits(bits)
+	return float
+}
+
+func BytesFromFloat32(float float32) []byte {
+	b := math.Float32bits(float)
+	return []byte{
+		byte(b), byte(b >> 8), byte(b >> 16), byte(b >> 24),
+		byte(b), byte(b >> 8), byte(b >> 16), byte(b >> 24),
+	}
 }
