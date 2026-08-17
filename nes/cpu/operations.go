@@ -26,6 +26,14 @@ func ReadFromAB() byte {
 	return bus.Read(AddressBus)
 }
 
+func WriteToPC(Value byte) {
+	bus.Write(PC, Value)
+}
+
+func WriteToAB(Value byte) {
+	bus.Write(AddressBus, Value)
+}
+
 func SetZNFlags(Value byte) {
 	flag_Zero = (Value == 0x00)
 	flag_Negative = (Value >= 0x80)

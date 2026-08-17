@@ -59,7 +59,7 @@ func ResetCPU() {
 	flag_B = false
 }
 
-func Emulate_CPU( /*g *Game*/ ) {
+func Emulate_CPU() {
 	//Non Maskable Interrupt check
 	prevNMILevelDetector := NMILevelDetector
 	NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
@@ -95,31 +95,31 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x85: //STA Zero Page
 		ReadOperands_ZeroPageAddressed()
-		bus.Write(AddressBus, A)
+		WriteToAB(A)
 		CPU_Cycles = 3
 	case 0x95: //STA Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		bus.Write(AddressBus, A)
+		WriteToAB(A)
 		CPU_Cycles = 4
 	case 0x8D: //STA Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		bus.Write(AddressBus, A)
+		WriteToAB(A)
 		CPU_Cycles = 4
 	case 0x9D: //STA Absolute, X
 		CPU_Cycles = 5
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
-		bus.Write(AddressBus, A)
+		WriteToAB(A)
 	case 0x99: //STA Absolute, Y
 		ReadOperands_AbsoluteAddressed_YIndexed(false)
-		bus.Write(AddressBus, A)
+		WriteToAB(A)
 		CPU_Cycles = 5
 	case 0x81: //STA Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		bus.Write(AddressBus, A)
+		WriteToAB(A)
 		CPU_Cycles = 6
 	case 0x91: //STA Indirect, Y
 		ReadOperands_IndirectAddressed_YIndexed(false)
-		bus.Write(AddressBus, A)
+		WriteToAB(A)
 		CPU_Cycles = 6
 
 	//	LDA: Load Accumulator with Memory
@@ -133,38 +133,38 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0xA5: //LDA Zero Page
 		ReadOperands_ZeroPageAddressed()
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		SetZNFlags(A)
 		CPU_Cycles = 3
 	case 0xB5: //LDA Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		SetZNFlags(A)
 		CPU_Cycles = 4
 	case 0xAD: //LDA Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		SetZNFlags(A)
 		CPU_Cycles = 4
 	case 0xBD: //LDA Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		SetZNFlags(A)
 	case 0xB9: //LDA Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		SetZNFlags(A)
 	case 0xA1: //LDA Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		SetZNFlags(A)
 		CPU_Cycles = 6
 	case 0xB1: //LDA Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		SetZNFlags(A)
 
 	//	STX: Store Index X in Memory
@@ -174,15 +174,15 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x86: //STX Zero Page
 		ReadOperands_ZeroPageAddressed()
-		bus.Write(AddressBus, X)
+		WriteToAB(X)
 		CPU_Cycles = 3
 	case 0x96: //STX Zero Page, Y
 		ReadOperands_ZeroPageAddressed_YIndexed()
-		bus.Write(AddressBus, X)
+		WriteToAB(X)
 		CPU_Cycles = 4
 	case 0x8E: //STX Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		bus.Write(AddressBus, X)
+		WriteToAB(X)
 		CPU_Cycles = 4
 
 	//	LDX: Load Index X with Memory
@@ -196,23 +196,23 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0xA6: //LDX Zero Page
 		ReadOperands_ZeroPageAddressed()
-		X = bus.Read(AddressBus)
+		X = ReadFromAB()
 		SetZNFlags(X)
 		CPU_Cycles = 3
 	case 0xAE: //LDX Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		X = bus.Read(AddressBus)
+		X = ReadFromAB()
 		SetZNFlags(X)
 		CPU_Cycles = 4
 	case 0xB6: //LDX Zero Page, Y
 		ReadOperands_ZeroPageAddressed_YIndexed()
-		X = bus.Read(AddressBus)
+		X = ReadFromAB()
 		SetZNFlags(X)
 		CPU_Cycles = 4
 	case 0xBE: //LDX Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		X = bus.Read(AddressBus)
+		X = ReadFromAB()
 		SetZNFlags(X)
 
 	//	STY: Store Index Y in Memory
@@ -222,15 +222,15 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x84: //STY Zero Page
 		ReadOperands_ZeroPageAddressed()
-		bus.Write(AddressBus, Y)
+		WriteToAB(Y)
 		CPU_Cycles = 3
 	case 0x94: //STY Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		bus.Write(AddressBus, Y)
+		WriteToAB(Y)
 		CPU_Cycles = 4
 	case 0x8C: //STY Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		bus.Write(AddressBus, Y)
+		WriteToAB(Y)
 		CPU_Cycles = 4
 
 	//	LDY: Load Index Y with Memory
@@ -244,23 +244,23 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0xA4: //LDY Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Y = bus.Read(AddressBus)
+		Y = ReadFromAB()
 		SetZNFlags(Y)
 		CPU_Cycles = 3
 	case 0xAC: //LDY Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Y = bus.Read(AddressBus)
+		Y = ReadFromAB()
 		SetZNFlags(Y)
 		CPU_Cycles = 4
 	case 0xB4: //LDY Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Y = bus.Read(AddressBus)
+		Y = ReadFromAB()
 		SetZNFlags(Y)
 		CPU_Cycles = 4
 	case 0xBC: //LDY Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		Y = bus.Read(AddressBus)
+		Y = ReadFromAB()
 		SetZNFlags(Y)
 
 	//Transfer
@@ -317,32 +317,32 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0x65: //ADC Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 3
 	case 0x75: //ADC Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x6D: //ADC Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x7D: //ADC Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 	case 0x79: //ADC Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 	case 0x61: //ADC Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x71: //ADC Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 
 	//	SBC: Subtract Memory from Accumulator with Borrow
 	//	A - M - C̅ -> A
@@ -354,32 +354,32 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0xE5: //SBC Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_SBC(bus.Read(AddressBus))
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 3
 	case 0xED: //SBC Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_SBC(bus.Read(AddressBus))
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 4
 	case 0xF5: //SBC Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_SBC(bus.Read(AddressBus))
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 4
 	case 0xFD: //SBC Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		Op_SBC(bus.Read(AddressBus))
+		Op_SBC(ReadFromAB())
 	case 0xF9: //SBC Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		Op_SBC(bus.Read(AddressBus))
+		Op_SBC(ReadFromAB())
 	case 0xE1: //SBC Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_SBC(bus.Read(AddressBus))
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 6
 	case 0xF1: //SBC Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		Op_SBC(bus.Read(AddressBus))
+		Op_SBC(ReadFromAB())
 
 	//	INC: Increment Memory by One
 	//	M + 1 -> M
@@ -388,19 +388,19 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0xE6: //INC Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_INC(AddressBus, bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
 		CPU_Cycles = 5
 	case 0xEE: //INC Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_INC(AddressBus, bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
 		CPU_Cycles = 6
 	case 0xF6: //INC Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_INC(AddressBus, bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
 		CPU_Cycles = 6
 	case 0xFE: //INC Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
-		Op_INC(AddressBus, bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
 		CPU_Cycles = 7
 
 	//	DEC: Decrement Memory by One
@@ -410,19 +410,19 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0xC6: //DEC Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_DEC(AddressBus, bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
 		CPU_Cycles = 5
 	case 0xCE: //DEC Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_DEC(AddressBus, bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
 		CPU_Cycles = 6
 	case 0xD6: //DEC Zeropage, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_DEC(AddressBus, bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
 		CPU_Cycles = 6
 	case 0xDE: //DEC Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
-		Op_DEC(AddressBus, bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
 		CPU_Cycles = 7
 
 	//	INX: Increment Index X by One
@@ -599,32 +599,32 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0x25: //AND Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 3
 	case 0x2D: //AND Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x35: //AND Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x3D: //AND Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 	case 0x39: //AND Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 	case 0x21: //AND Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x31: //AND Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 
 	//	ORA: OR Memory with Accumulator
 	//	A OR M -> A
@@ -636,32 +636,32 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0x05: //ORA Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 3
 	case 0x0D: //ORA Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x15: //ORA Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x1D: //ORA Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 	case 0x19: //ORA Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 	case 0x01: //ORA Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x11: //ORA Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 
 	//	EOR: Exclusive-OR Memory with Accumulator
 	//	A EOR M -> A
@@ -673,32 +673,32 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0x45: //EOR Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 3
 	case 0x4D: //EOR Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x55: //EOR Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 4
 	case 0x5D: //EOR Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 	case 0x59: //EOR Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 	case 0x41: //EOR Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x51: //EOR Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 
 	//	BIT: //Test Bits in Memory with Accumulator
 	//	bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V);
@@ -714,11 +714,11 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x24: //BIT Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_BIT(bus.Read(AddressBus))
+		Op_BIT(ReadFromAB())
 		CPU_Cycles = 3
 	case 0x2C: //BIT Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_BIT(bus.Read(AddressBus))
+		Op_BIT(ReadFromAB())
 		CPU_Cycles = 4
 
 	//Compare
@@ -733,32 +733,32 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0xC5: //CMP Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_CMP(bus.Read(AddressBus))
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 3
 	case 0xCD: //CMP Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_CMP(bus.Read(AddressBus))
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 4
 	case 0xD5: //CMP Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_CMP(bus.Read(AddressBus))
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 4
 	case 0xDD: //CMP Absolute, X
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_XIndexed(true)
-		Op_CMP(bus.Read(AddressBus))
+		Op_CMP(ReadFromAB())
 	case 0xD9: //CMP Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		Op_CMP(bus.Read(AddressBus))
+		Op_CMP(ReadFromAB())
 	case 0xC1: //CMP Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_CMP(bus.Read(AddressBus))
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 6
 	case 0xD1: //CMP Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		Op_CMP(bus.Read(AddressBus))
+		Op_CMP(ReadFromAB())
 
 	//	CPX: Compare Memory and Index X
 	//	X - M
@@ -770,11 +770,11 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0xE4: //CPX Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_CPX(bus.Read(AddressBus))
+		Op_CPX(ReadFromAB())
 		CPU_Cycles = 3
 	case 0xEC: //CPX Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_CPX(bus.Read(AddressBus))
+		Op_CPX(ReadFromAB())
 		CPU_Cycles = 4
 
 	//	CPY: Compare Memory and Index Y
@@ -787,11 +787,11 @@ func Emulate_CPU( /*g *Game*/ ) {
 		CPU_Cycles = 2
 	case 0xC4: //CPY Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_CPY(bus.Read(AddressBus))
+		Op_CPY(ReadFromAB())
 		CPU_Cycles = 3
 	case 0xCC: //CPY Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_CPY(bus.Read(AddressBus))
+		Op_CPY(ReadFromAB())
 		CPU_Cycles = 4
 
 	//Branch
@@ -1253,38 +1253,38 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0xA7: //LAX Zero Page
 		ReadOperands_ZeroPageAddressed()
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		X = A
 		SetZNFlags(X)
 		CPU_Cycles = 3
 	case 0xB7: //LAX Zero Page, Y
 		ReadOperands_ZeroPageAddressed_YIndexed()
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		X = A
 		SetZNFlags(X)
 		CPU_Cycles = 4
 	case 0xAF: //LAX Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		X = A
 		SetZNFlags(X)
 		CPU_Cycles = 4
 	case 0xBF: //LAX Absolute, Y
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		X = A
 		SetZNFlags(X)
 	case 0xA3: //LAX Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		X = A
 		SetZNFlags(X)
 		CPU_Cycles = 6
 	case 0xB3: //LAX Indirect, Y
 		CPU_Cycles = 5
 		ReadOperands_IndirectAddressed_YIndexed(true)
-		A = bus.Read(AddressBus)
+		A = ReadFromAB()
 		X = A
 		SetZNFlags(X)
 
@@ -1293,75 +1293,75 @@ func Emulate_CPU( /*g *Game*/ ) {
 	case 0x07: // SLO Zero Page
 		ReadOperands_ZeroPageAddressed()
 		Op_ASL(AddressBus)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 5
 	case 0x17: //SLO Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
 		Op_ASL(AddressBus)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x0F: //SLO Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_ASL(AddressBus)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x1F: //Slo Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
 		Op_ASL(AddressBus)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x1B: //Slo Absolute, Y
 		ReadOperands_AbsoluteAddressed_YIndexed(false)
 		Op_ASL(AddressBus)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x03: //Slo Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
 		Op_ASL(AddressBus)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 8
 	case 0x13: //Slo Indirect, Y
 		ReadOperands_IndirectAddressed_YIndexed(false)
 		Op_ASL(AddressBus)
-		Op_ORA(bus.Read(AddressBus))
+		Op_ORA(ReadFromAB())
 		CPU_Cycles = 8
 
 	//DCP: DEC + CMP
 
 	case 0xC7: //DCP Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_DEC(AddressBus, bus.Read(AddressBus))
-		Op_CMP(bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 5
 	case 0xD7: //DCP Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_DEC(AddressBus, bus.Read(AddressBus))
-		Op_CMP(bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 6
 	case 0xCF: //DCP Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_DEC(AddressBus, bus.Read(AddressBus))
-		Op_CMP(bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 6
 	case 0xDF: //DCP Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
-		Op_DEC(AddressBus, bus.Read(AddressBus))
-		Op_CMP(bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 7
 	case 0xDB: //DCP Absolute, Y
 		ReadOperands_AbsoluteAddressed_YIndexed(false)
-		Op_DEC(AddressBus, bus.Read(AddressBus))
-		Op_CMP(bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 7
 	case 0xC3: //DCP Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_DEC(AddressBus, bus.Read(AddressBus))
-		Op_CMP(bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 8
 	case 0xD3: //DCP Indirect, Y
 		ReadOperands_IndirectAddressed_YIndexed(false)
-		Op_DEC(AddressBus, bus.Read(AddressBus))
-		Op_CMP(bus.Read(AddressBus))
+		Op_DEC(AddressBus, ReadFromAB())
+		Op_CMP(ReadFromAB())
 		CPU_Cycles = 8
 
 	//SHA: Stores A AND X AND (high-byte of addr. + 1) at addr.
@@ -1397,37 +1397,37 @@ func Emulate_CPU( /*g *Game*/ ) {
 	case 0x27: //RLA Zero Page
 		ReadOperands_ZeroPageAddressed()
 		Op_ROL(AddressBus)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 5
 	case 0x37: //RLA Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
 		Op_ROL(AddressBus)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x2F: //RLA Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_ROL(AddressBus)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x3F: //RLA Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
 		Op_ROL(AddressBus)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x3B: //RLA Absolute, Y
 		ReadOperands_AbsoluteAddressed_YIndexed(false)
 		Op_ROL(AddressBus)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x23: //RLA Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
 		Op_ROL(AddressBus)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 8
 	case 0x33: //RLA Indirect, Y
 		ReadOperands_IndirectAddressed_YIndexed(false)
 		Op_ROL(AddressBus)
-		Op_AND(bus.Read(AddressBus))
+		Op_AND(ReadFromAB())
 		CPU_Cycles = 8
 
 	//SRE: LSR + EOR
@@ -1435,37 +1435,37 @@ func Emulate_CPU( /*g *Game*/ ) {
 	case 0x47: //SRE Zero Page
 		ReadOperands_ZeroPageAddressed()
 		Op_LSR(AddressBus)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 5
 	case 0x57: //SRE Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
 		Op_LSR(AddressBus)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x4F: //SRE Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_LSR(AddressBus)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x5F: //SRE Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
 		Op_LSR(AddressBus)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x5B: //SRE Absolute, Y
 		ReadOperands_AbsoluteAddressed_YIndexed(false)
 		Op_LSR(AddressBus)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x43: //SRE Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
 		Op_LSR(AddressBus)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 8
 	case 0x53: //SRE Indirect, Y
 		ReadOperands_IndirectAddressed_YIndexed(false)
 		Op_LSR(AddressBus)
-		Op_EOR(bus.Read(AddressBus))
+		Op_EOR(ReadFromAB())
 		CPU_Cycles = 8
 
 	//RRA: ROR + ADC
@@ -1473,75 +1473,75 @@ func Emulate_CPU( /*g *Game*/ ) {
 	case 0x67: //RRA Zero Page
 		ReadOperands_ZeroPageAddressed()
 		Op_ROR(AddressBus)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 5
 	case 0x77: //RRA Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
 		Op_ROR(AddressBus)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x6F: //RRA Absolute
 		ReadOperands_AbsoluteAddressed(false)
 		Op_ROR(AddressBus)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 6
 	case 0x7F: //RRA Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
 		Op_ROR(AddressBus)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x7B: //RRA Absolute, Y
 		ReadOperands_AbsoluteAddressed_YIndexed(false)
 		Op_ROR(AddressBus)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 7
 	case 0x63: //RRA Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
 		Op_ROR(AddressBus)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 8
 	case 0x73: //RRA Indirect, Y
 		ReadOperands_IndirectAddressed_YIndexed(false)
 		Op_ROR(AddressBus)
-		Op_ADC(bus.Read(AddressBus))
+		Op_ADC(ReadFromAB())
 		CPU_Cycles = 8
 
 	//ISC: INC + SBC
 
 	case 0xE7: //ISC Zero Page
 		ReadOperands_ZeroPageAddressed()
-		Op_INC(AddressBus, bus.Read(AddressBus))
-		Op_SBC(bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 5
 	case 0xF7: //ISC Zero Page, X
 		ReadOperands_ZeroPageAddressed_XIndexed()
-		Op_INC(AddressBus, bus.Read(AddressBus))
-		Op_SBC(bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 6
 	case 0xEF: //ISC Absolute
 		ReadOperands_AbsoluteAddressed(false)
-		Op_INC(AddressBus, bus.Read(AddressBus))
-		Op_SBC(bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 6
 	case 0xFF: //ISC Absolute, X
 		ReadOperands_AbsoluteAddressed_XIndexed(false)
-		Op_INC(AddressBus, bus.Read(AddressBus))
-		Op_SBC(bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 7
 	case 0xFB: //ISC Absolute, Y
 		ReadOperands_AbsoluteAddressed_YIndexed(false)
-		Op_INC(AddressBus, bus.Read(AddressBus))
-		Op_SBC(bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 7
 	case 0xE3: //ISC Indirect, X
 		ReadOperands_IndirectAddressed_XIndexed()
-		Op_INC(AddressBus, bus.Read(AddressBus))
-		Op_SBC(bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 8
 	case 0xF3: //ISC Indirect, Y
 		ReadOperands_IndirectAddressed_YIndexed(false)
-		Op_INC(AddressBus, bus.Read(AddressBus))
-		Op_SBC(bus.Read(AddressBus))
+		Op_INC(AddressBus, ReadFromAB())
+		Op_SBC(ReadFromAB())
 		CPU_Cycles = 8
 
 	//Immediates (unofficial)
@@ -1612,7 +1612,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 		//M AND SP -> A, X, SP
 		CPU_Cycles = 4
 		ReadOperands_AbsoluteAddressed_YIndexed(true)
-		Value := (bus.Read(AddressBus) & SP)
+		Value := (ReadFromAB() & SP)
 		A = Value
 		X = Value
 		SP = Value
