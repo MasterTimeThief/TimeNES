@@ -10,11 +10,11 @@ Currently supports:
 - All 256 opcodes
 
 Currently supported mapper chips:
-- 001: MMC1
-- 003: CNROM
-- 007: AxROM
-
-
++ [x] 001: MMC1
++ [x] 002: UxROM
++ [x] 003: CNROM
++ [ ] 004: MMC3 (In progress, not implemented)
++ [x] 007: AxROM
 
 Things to add:
 
@@ -24,15 +24,7 @@ Things to add:
 - Additional controller support (eg. Zapper)
 - Save stating
 - TAS Support
-- Screenshots
 
 
-My personal checklist for games to get running:
-✅ Super Mario Bros.
-⬜ Super Mario Bros. 2
-⬜ Super Mario Bros. 3
-✅ Donkey Kong
-✅ Excitebike
-✅ Duck Hunt
-✅ Metroid
-✅ The Legend of Zelda
+![Super Mario Bros.](screens/screenshot1.png) ![Castlevania](screens/screenshot2.png) ![Mega Man 2](screens/screenshot3.png)
+![Duck Hunt](screens/screenshot4.png) ![The Legend of Zelda](screens/screenshot5.png) ![Ninja Gaiden](screens/screenshot6.png)
