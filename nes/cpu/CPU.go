@@ -40,6 +40,8 @@ var NMILevelDetector, DoNMI bool
 
 var apuRun bool
 var AddressBus uint16
+var Pointer uint16
+var Target uint16
 
 func ResetCPU() {
 	SP = 0xFD

@@ -30,6 +30,36 @@ func PageCrossingCheck(pbCheck bool, Address uint16, lo, hi byte) {
 	}
 }
 
+func SetAddressBusHigh(Value byte) {
+	AddressBus &= 0x00FF
+	AddressBus += uint16(Value) << 8
+}
+
+func SetAddressBusLow(Value byte) {
+	AddressBus &= 0xFF00
+	AddressBus += uint16(Value)
+}
+
+func SetPointerHigh(Value byte) {
+	Pointer &= 0x00FF
+	Pointer += uint16(Value) << 8
+}
+
+func SetPointerLow(Value byte) {
+	Pointer &= 0xFF00
+	Pointer += uint16(Value)
+}
+
+func SetTargetHigh(Value byte) {
+	Target &= 0x00FF
+	Target += uint16(Value) << 8
+}
+
+func SetTargetLow(Value byte) {
+	Target &= 0xFF00
+	Target += uint16(Value)
+}
+
 func ReadOperands_AbsoluteAddressed(isJMP bool) {
 	AddressBus = uint16(ReadFromPC())
 	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
