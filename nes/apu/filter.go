@@ -6,10 +6,10 @@ import (
 
 // https://stackoverflow.com/questions/28291582/implementing-a-high-pass-filter-to-an-audio-signal
 type Filter struct {
-	resonance  float32
-	frequency  float32
-	SampleRate int
-	IsHighPass bool
+	//resonance  float32
+	//frequency  float32
+	//SampleRate int
+	//IsHighPass bool
 
 	Value                 float32
 	c, a1, a2, a3, b1, b2 float32
@@ -27,21 +27,21 @@ func InitFilters() {
 
 func (f *Filter) InitFilter(freq float32, sampleRate int, isHighPass bool, resonance float32) {
 	//Add High / Low Passes
-	f.resonance = resonance
-	f.frequency = freq
-	f.SampleRate = sampleRate
-	f.IsHighPass = isHighPass
+	//f.resonance = resonance
+	//f.frequency = freq
+	//f.SampleRate = sampleRate
+	//f.IsHighPass = isHighPass
 
-	if f.IsHighPass {
-		f.c = float32(math.Tan(float64(math.Pi * f.frequency / float32(f.SampleRate))))
+	if isHighPass {
+		f.c = float32(math.Tan(float64(math.Pi * freq / float32(sampleRate))))
 		f.a1 = float32(1.0) / (float32(1.0) + (resonance * f.c) + (f.c * f.c))
 		f.a2 = float32(-2.0) * f.a1
 		f.a3 = f.a1
 		f.b1 = float32(2.0) * ((f.c * f.c) - float32(1.0)) * f.a1
-		f.b2 = (float32(1.0) - (f.resonance * f.c) + (f.c * f.c)) * f.a1
+		f.b2 = (float32(1.0) - (resonance * f.c) + (f.c * f.c)) * f.a1
 	} else {
-		f.c = float32(1.0) / float32(math.Tan(float64(math.Pi*f.frequency/float32(f.SampleRate))))
-		f.a1 = float32(1.0) / (float32(1.0) + (f.resonance * f.c) + (f.c * f.c))
+		f.c = float32(1.0) / float32(math.Tan(float64(math.Pi*freq/float32(sampleRate))))
+		f.a1 = float32(1.0) / (float32(1.0) + (resonance * f.c) + (f.c * f.c))
 		f.a2 = float32(2.0) * f.a1
 		f.a3 = f.a1
 		f.b1 = float32(2.0) * (float32(1.0) - (f.c * f.c)) * f.a1
