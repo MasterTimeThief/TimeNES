@@ -25,6 +25,8 @@ Things to add:
 - Save stating
 - TAS Support
 
+![AccuracyCoin test results](screens/screenshotAC.png)
 
 ![Super Mario Bros.](screens/screenshot1.png) ![Castlevania](screens/screenshot2.png) ![Mega Man 2](screens/screenshot3.png)
+
 ![Duck Hunt](screens/screenshot4.png) ![The Legend of Zelda](screens/screenshot5.png) ![Ninja Gaiden](screens/screenshot6.png)
