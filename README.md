@@ -1,7 +1,7 @@
 # TimeNES
 NES Emulator built in Go
 
-This emulator bagan from the guide by [100th_Coin](https://www.patreon.com/100th_Coin/posts/making-your-nes-137873901), and has since expanded with additional features / accuracy. 
+This emulator began from the guide by [100th_Coin](https://www.patreon.com/100th_Coin/posts/making-your-nes-137873901), and has since expanded with additional features / accuracy. 
 
 Currently supports:
 - APU Support (DMC not yet supported)
