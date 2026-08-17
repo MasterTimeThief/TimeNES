@@ -8,6 +8,9 @@ import (
 	"mtt/timenes/nes/ppu"
 )
 
+type CPU struct {
+}
+
 // CPU Registers
 var (
 	PC uint16 // Program Counter
@@ -33,6 +36,7 @@ var operands []byte
 var CPU_Cycles, CPU_Cycles_New int
 var CPU_Halted = false
 var MagicConstant byte = 0xFF //Might be needed for some of the illegal opcodes
+var NMILevelDetector, DoNMI bool
 
 var apuRun bool
 var AddressBus uint16
@@ -44,6 +48,7 @@ func ResetCPU() {
 	operands = nil
 	CPU_Cycles, CPU_Cycles_New, common.CPU_TotalCycles = 0, 0, 0
 	CPU_Halted = false
+	NMILevelDetector, DoNMI = false, false
 
 	flag_Carry = false
 	flag_Zero = false
@@ -56,16 +61,16 @@ func ResetCPU() {
 
 func Emulate_CPU( /*g *Game*/ ) {
 	//Non Maskable Interrupt check
-	prevNMILevelDetector := ppu.NMILevelDetector
-	ppu.NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
-	if !prevNMILevelDetector && ppu.NMILevelDetector {
-		ppu.DoNMI = true
+	prevNMILevelDetector := NMILevelDetector
+	NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
+	if !prevNMILevelDetector && NMILevelDetector {
+		DoNMI = true
 	}
 	CPU_Cycles_New = 0
 
 	//Get the opcode
 	//var opcode byte
-	if !ppu.DoNMI {
+	if !DoNMI {
 		//If we're not running an NMI
 		opcode = bus.Read(PC)
 		//if debug.LoggingCPU {
@@ -929,7 +934,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 
 	case 0x00: //BRK
 		flag_B = false
-		if !ppu.DoNMI {
+		if !DoNMI {
 			PC++
 			flag_B = true
 		}
@@ -938,10 +943,10 @@ func Emulate_CPU( /*g *Game*/ ) {
 		PushFlags()
 		//flag_InterruptDisable = true
 
-		PCL := bus.Read(common.Ternary(ppu.DoNMI, 0xFFFA, 0xFFFE))
-		PCH := bus.Read(common.Ternary(ppu.DoNMI, 0xFFFB, 0xFFFF))
+		PCL := bus.Read(common.Ternary(DoNMI, 0xFFFA, 0xFFFE))
+		PCH := bus.Read(common.Ternary(DoNMI, 0xFFFB, 0xFFFF))
 		PC = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
-		ppu.DoNMI = false
+		DoNMI = false
 		CPU_Cycles = 7
 
 	//	RTI: Return from Interrupt
@@ -1633,7 +1638,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 	//cycleTest = ""
 
 	//Check for, and perform Interrupt Request (IRQ)
-	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !ppu.DoNMI && !flag_InterruptDisable {
+	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !DoNMI && !flag_InterruptDisable {
 		flag_B = false
 		Push(byte(PC >> 8))
 		Push(byte(PC))
@@ -1646,7 +1651,7 @@ func Emulate_CPU( /*g *Game*/ ) {
 		//Disable interrupts
 		apu.APUDMCInterrupt = false
 		apu.APUFrameInterrupt = false
-		ppu.DoNMI = false
+		DoNMI = false
 	}
 
 	//CartRAMLogger()

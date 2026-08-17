@@ -7,11 +7,13 @@ import (
 	"mtt/timenes/nes/cartridge/mappers"
 )
 
+type PPU struct {
+}
+
 var WriteLatch bool        //PPU's w register
 var TransferAddress uint16 //PPU's t register
 var VRAMAddress uint16     //PPU's v register
 var PPUReadBuffer byte
-var NMILevelDetector, DoNMI bool
 
 // $2000: PPUCTRL
 var (
@@ -73,7 +75,6 @@ var PPUBus byte
 func ResetPPU() {
 	WriteLatch = false
 	TransferAddress, VRAMAddress, PPUReadBuffer = 0, 0, 0
-	NMILevelDetector, DoNMI = false, false
 
 	// $2000: PPUCTRL
 	PPUCTRL_NametableSelect = 0

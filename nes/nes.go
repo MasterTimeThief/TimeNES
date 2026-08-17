@@ -34,12 +34,15 @@ var PauseEmulation bool = false
 var MenuBarSelected bool = false
 
 type Game struct {
-	gameScreen *image.RGBA
-	//keys       []ebiten.Key
-	UI      *ebitenui.UI
-	Exit    bool
-	debugui debugui.DebugUI
-	//directory    []os.DirEntry
+	cpu *cpu.CPU
+	ppu *ppu.PPU
+	apu *apu.APU
+	bus *bus.BUS
+
+	gameScreen   *image.RGBA
+	UI           *ebitenui.UI
+	Exit         bool
+	debugui      debugui.DebugUI
 	audioContext *audio.Context
 	player       *audio.Player
 }

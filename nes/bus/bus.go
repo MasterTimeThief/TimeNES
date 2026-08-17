@@ -10,6 +10,9 @@ import (
 	"mtt/timenes/nes/ppu"
 )
 
+type BUS struct {
+}
+
 var CPUBus byte
 var OAMBusAddress byte
 var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0

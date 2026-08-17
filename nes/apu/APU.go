@@ -1,5 +1,8 @@
 package apu
 
+type APU struct {
+}
+
 var Pulse1 PulseChannel
 var Pulse2 PulseChannel
 var Triangle TriangleChannel
