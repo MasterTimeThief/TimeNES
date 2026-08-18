@@ -101,6 +101,8 @@ func Read(Address uint16) byte {
 		switch cartridge.MapperChipID {
 		case 1: //MMC1
 			CPUBus = mappers.MMC1_PRGRAM[Address&0x1FFF]
+		case 4: //MMC3
+			CPUBus = mappers.MMC3_PRGRAM[Address&0x1FFF]
 		default:
 			//outsideCodeRead = Address
 
@@ -113,7 +115,8 @@ func Read(Address uint16) byte {
 		case 2: //UxROM
 			CPUBus = cartridge.PRGROM[mappers.UxROM_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		//case 3: //CNROM
-		//case 4: //MMC3
+		case 4: //MMC3
+			CPUBus = cartridge.PRGROM[mappers.MMC3_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		case 7: //AxROM
 			CPUBus = cartridge.PRGROM[mappers.AxROM_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		default:
@@ -364,7 +367,8 @@ func Write(Address uint16, Value byte) {
 		case 3: //CNROM
 			prgValue := Read(Address)
 			mappers.CNROM_WriteToPRGRAM(Value&prgValue, Address) // Can have bus conflicts
-		//case 4: //MMC3
+		case 4: //MMC3
+			mappers.MMC3_WriteToPRGRAM(Value, Address)
 		default:
 			//OutsideCodeWrite = Address
 			fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
@@ -379,7 +383,8 @@ func Write(Address uint16, Value byte) {
 		case 3: //CNROM
 			prgValue := Read(Address)
 			mappers.CNROM_Write(Value&prgValue, Address) // Can have bus conflicts
-		//case 4: //MMC3
+		case 4: //MMC3
+			mappers.MMC3_Write(Value, Address)
 		case 7: //AxROM
 			mappers.AxROM_Write(Value, Address)
 		default:
@@ -403,7 +408,8 @@ func WritePPU(Value byte) {
 				//}
 			case 3: //CNROM
 				cartridge.CHRROM[mappers.CNROM_FetchPPUAddress(ppu.VRAMAddress)] = Value
-			//case 4: //MMC3
+			case 4: //MMC3
+				cartridge.CHRROM[mappers.MMC3_FetchPPUAddress(ppu.VRAMAddress, cartridge.CHRROM_Size)] = Value
 			default:
 				cartridge.CHRROM[ppu.VRAMAddress] = Value
 			}

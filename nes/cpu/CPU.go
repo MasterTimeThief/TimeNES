@@ -5,6 +5,7 @@ import (
 	"mtt/timenes/common"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/bus"
+	"mtt/timenes/nes/cartridge/mappers"
 	"mtt/timenes/nes/ppu"
 )
 
@@ -1640,7 +1641,7 @@ func Emulate_CPU() {
 	//cycleTest = ""
 
 	//Check for, and perform Interrupt Request (IRQ)
-	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !DoNMI && !flag_InterruptDisable {
+	if (apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_DoIRQ) && !DoNMI && !flag_InterruptDisable {
 		flag_B = false
 		Push(byte(PC >> 8))
 		Push(byte(PC))
@@ -1653,6 +1654,7 @@ func Emulate_CPU() {
 		//Disable interrupts
 		apu.APUDMCInterrupt = false
 		apu.APUFrameInterrupt = false
+		mappers.MMC3_DoIRQ = false
 		DoNMI = false
 	}
 

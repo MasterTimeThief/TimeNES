@@ -127,7 +127,7 @@ func ResetPPU() {
 	ppu_SpriteYposition = [8]byte{}
 }
 
-func Emulate_PPU( /*g *Game*/ ) {
+func Emulate_PPU() {
 
 	if PPUDot == 1 && PPUScanline == 241 {
 		PPUSTATUS_VBlank = true
@@ -152,6 +152,9 @@ func Emulate_PPU( /*g *Game*/ ) {
 
 	//Drawing the next pixel
 	RenderNextPixel()
+
+	//MMC3 IRQ check
+	mappers.MMC3_ClockIRQ(PPUAddressBus)
 
 	PPUDot++
 	if PPUDot > 341 {

@@ -2,6 +2,7 @@ package cartridge
 
 import (
 	"mtt/timenes/common"
+	"mtt/timenes/nes/cartridge/mappers"
 	"os"
 )
 
@@ -91,6 +92,7 @@ func LoadCartridge() {
 	case 3: //CNROM
 		//Add support for Hayauchi Super Igo?
 	case 4: //MMC3
+		mappers.MMC3_InitRegisters(PRGROM_Size)
 	case 7: //AxROM
 		//mappers.AxROM_Register = byte(PRGROM_Size / uint32(0x8000))
 	}
