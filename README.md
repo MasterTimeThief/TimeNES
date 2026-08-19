@@ -13,7 +13,7 @@ Currently supported mapper chips:
 + [x] 001: MMC1
 + [x] 002: UxROM
 + [x] 003: CNROM
-+ [ ] 004: MMC3 (In progress, not implemented)
++ [ ] 004: MMC3 (Currently broken)
 + [x] 007: AxROM
 
 Things to add:

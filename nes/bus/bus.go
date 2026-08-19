@@ -432,7 +432,17 @@ func WritePPU(Value byte) {
 			}
 			//cartridge.CartVRAM[ppu.VRAMAddress&0xFFF] = Value
 		//case 3: //CNROM
-		//case 4: //MMC3
+		case 4: //MMC3
+			if cartridge.AltNametableLayout {
+			} else {
+				if mappers.MMC3_IsHorizontalNametable {
+					// Horizontal Mirroring
+					cartridge.VRAM[int(ppu.VRAMAddress&0x3FF)|int(ppu.VRAMAddress&0x800)>>1] = Value
+				} else {
+					//Vertical Mirroring
+					cartridge.VRAM[int(ppu.VRAMAddress&0x7FF)] = Value
+				}
+			}
 		default:
 			if !cartridge.AltNametableLayout {
 				if cartridge.IsNametableHorizontal {
@@ -440,8 +450,7 @@ func WritePPU(Value byte) {
 					cartridge.VRAM[int(ppu.VRAMAddress&0x3FF)|int(ppu.VRAMAddress&0x800)>>1] = Value
 				} else {
 					//Vertical Mirroring
-					index := int(ppu.VRAMAddress & 0x7FF)
-					cartridge.VRAM[index] = Value
+					cartridge.VRAM[int(ppu.VRAMAddress&0x7FF)] = Value
 				}
 			}
 		}

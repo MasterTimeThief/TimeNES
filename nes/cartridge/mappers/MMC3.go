@@ -13,8 +13,8 @@ package mappers
 
 var (
 	MMC3_PRGOffset [4]uint32
-	MMC3_CHROffset [6]uint32
-	MMC3_Register  [8]uint32
+	MMC3_CHROffset [8]uint32
+	MMC3_Register  [8]byte
 )
 
 var ( // Bank Select ($8000-$9FFE, even)
@@ -25,7 +25,7 @@ var ( // Bank Select ($8000-$9FFE, even)
 
 // Bank data ($8001-$9FFF, odd)
 var MMC3_BankData byte
-var MMC3_Nametable bool
+var MMC3_IsHorizontalNametable bool
 
 var ( // PRG RAM protect ($A001-$BFFF, odd)
 	MMC3_WriteProtect bool
@@ -46,27 +46,30 @@ var (
 //
 
 var ( //PRG Banks
-	MMC3_LastBank         uint32
-	MMC3_2ndToLastBank    uint32
-	MMC3_BankAddress_8000 uint32
-	MMC3_BankAddress_A000 uint32
-	MMC3_BankAddress_C000 uint32
+	MMC3_LastBank      uint32
+	MMC3_2ndToLastBank uint32
+
+//	MMC3_BankAddress_8000 uint32
+//	MMC3_BankAddress_A000 uint32
+//	MMC3_BankAddress_C000 uint32
 )
 
-var ( //CHR Banks
-	MMC3_CHRBankAddress0 uint32
-	MMC3_CHRBankAddress1 uint32
-	MMC3_CHRBankAddress2 uint32
-	MMC3_CHRBankAddress3 uint32
-	MMC3_CHRBankAddress4 uint32
-	MMC3_CHRBankAddress5 uint32
-)
+//
+//var ( //CHR Banks
+//	MMC3_CHRBankAddress0 uint32
+//	MMC3_CHRBankAddress1 uint32
+//	MMC3_CHRBankAddress2 uint32
+//	MMC3_CHRBankAddress3 uint32
+//	MMC3_CHRBankAddress4 uint32
+//	MMC3_CHRBankAddress5 uint32
+//)
 
 var MMC3_PRGRAM [0x2000]byte
 
 func MMC3_InitRegisters(PRGLength uint32) {
 	MMC3_LastBank = PRGLength - 0x2000
 	MMC3_2ndToLastBank = PRGLength - 0x4000
+	MMC3_UpdateRegister()
 }
 
 func MMC3_WriteToPRGRAM(Value byte, Addr uint16) {
@@ -82,23 +85,20 @@ func MMC3_Write(Value byte, Addr uint16) {
 			MMC3_BankSelect = Value & 0x7
 			MMC3_PRGBankMode = (Value & 0x40) != 0
 			MMC3_CHRBankMode = (Value & 0x80) != 0
-
-			if MMC3_PRGBankMode {
-				MMC3_BankAddress_8000 = MMC3_2ndToLastBank
-			} else {
-				MMC3_BankAddress_C000 = MMC3_2ndToLastBank
-			}
+			MMC3_UpdateRegister()
 
 			// Also check for MMC6 behavior here
 		} else { //Odd
 			// Bank data ($8001-$9FFF, odd)
 			//MMC3_BankData = Value
-			MMC3_BankSwap(Value)
+			//MMC3_BankSwap(Value)
+			MMC3_Register[MMC3_BankSelect] = Value
+			MMC3_UpdateRegister()
 		}
 	} else if Addr < 0xC000 {
 		if (Addr & 1) == 0 { // Even
 			// Nametable arrangement ($A000-$BFFE, even)
-			MMC3_Nametable = (Value & 1) != 0
+			MMC3_IsHorizontalNametable = (Value & 1) == 0
 		} else { //Odd
 			// PRG RAM protect ($A001-$BFFF, odd)
 			MMC3_WriteProtect = (Value & 0x40) != 0
@@ -124,6 +124,7 @@ func MMC3_Write(Value byte, Addr uint16) {
 	}
 }
 
+/*
 func MMC3_BankSwap(NewBank byte) {
 	switch MMC3_BankSelect {
 	case 0: // Select 2 KB CHR bank at PPU $0000-$07FF (or $1000-$17FF)
@@ -148,50 +149,100 @@ func MMC3_BankSwap(NewBank byte) {
 		MMC3_BankAddress_A000 = (0x2000 * uint32(NewBank&0x3F))
 	}
 }
+*/
 
 func MMC3_FetchCPUAddress(Addr uint16, PRGLength uint32) uint32 {
-	tempAddr := Addr & 0x1FFF
-	if Addr < 0xA000 { //$8000-$9FFF
-		return (MMC3_BankAddress_8000 + uint32(tempAddr)) //& (PRGLength - 1)
-	} else if Addr < 0xC000 { //$A000-$BFFF
-		return (MMC3_BankAddress_A000 + uint32(tempAddr)) //& (PRGLength - 1)
-	} else if Addr < 0xE000 { //$C000-$DFFF
-		return (MMC3_BankAddress_C000 + uint32(tempAddr)) //& (PRGLength - 1)
-	} else { //$E000-$FFFF
-		return (MMC3_LastBank + uint32(tempAddr)) //& (PRGLength - 1)
-	}
+	//tempAddr := Addr & 0x1FFF
+	//if Addr < 0xA000 { //$8000-$9FFF
+	//	return (MMC3_BankAddress_8000 + uint32(tempAddr)) //& (PRGLength - 1)
+	//} else if Addr < 0xC000 { //$A000-$BFFF
+	//	return (MMC3_BankAddress_A000 + uint32(tempAddr)) //& (PRGLength - 1)
+	//} else if Addr < 0xE000 { //$C000-$DFFF
+	//	return (MMC3_BankAddress_C000 + uint32(tempAddr)) //& (PRGLength - 1)
+	//} else { //$E000-$FFFF
+	//	return (MMC3_LastBank + uint32(tempAddr)) //& (PRGLength - 1)
+	//}
+	bank := (Addr - 0x8000) / 0x2000
+	offset := uint32(Addr & 0x1FFF)
+	return MMC3_PRGOffset[bank] + offset
 }
 
 func MMC3_FetchPPUAddress(Addr uint16, CHRLength uint32) uint32 {
-	if MMC3_CHRBankMode {
-		if Addr < 0x0400 { // 1KB Bank
-			return MMC3_CHRBankAddress2 + uint32(Addr&0x3FF)
-		} else if Addr < 0x0800 { // 1KB Bank
-			return MMC3_CHRBankAddress3 + uint32(Addr&0x3FF)
-		} else if Addr < 0x0C00 { // 1KB Bank
-			return MMC3_CHRBankAddress4 + uint32(Addr&0x3FF)
-		} else if Addr < 0x1000 { // 1KB Bank
-			return MMC3_CHRBankAddress5 + uint32(Addr&0x3FF)
-		} else if Addr < 0x1800 { // 2KB Bank
-			return MMC3_CHRBankAddress0 + uint32(Addr&0x7FF)
-		} else { // 2KB Bank
-			return MMC3_CHRBankAddress1 + uint32(Addr&0x7FF)
-		}
+	//if MMC3_CHRBankMode {
+	//	if Addr < 0x0400 { // 1KB Bank
+	//		return MMC3_CHRBankAddress2 + uint32(Addr&0x3FF)
+	//	} else if Addr < 0x0800 { // 1KB Bank
+	//		return MMC3_CHRBankAddress3 + uint32(Addr&0x3FF)
+	//	} else if Addr < 0x0C00 { // 1KB Bank
+	//		return MMC3_CHRBankAddress4 + uint32(Addr&0x3FF)
+	//	} else if Addr < 0x1000 { // 1KB Bank
+	//		return MMC3_CHRBankAddress5 + uint32(Addr&0x3FF)
+	//	} else if Addr < 0x1800 { // 2KB Bank
+	//		return MMC3_CHRBankAddress0 + uint32(Addr&0x7FF)
+	//	} else { // 2KB Bank
+	//		return MMC3_CHRBankAddress1 + uint32(Addr&0x7FF)
+	//	}
+	//} else {
+	//	if Addr < 0x0800 { // 2KB Bank
+	//		return MMC3_CHRBankAddress0 + uint32(Addr&0x7FF)
+	//	} else if Addr < 0x1000 { // 2KB Bank
+	//		return MMC3_CHRBankAddress1 + uint32(Addr&0x7FF)
+	//	} else if Addr < 0x1400 { // 1KB Bank
+	//		return MMC3_CHRBankAddress2 + uint32(Addr&0x3FF)
+	//	} else if Addr < 0x1800 { // 1KB Bank
+	//		return MMC3_CHRBankAddress3 + uint32(Addr&0x3FF)
+	//	} else if Addr < 0x1C00 { // 1KB Bank
+	//		return MMC3_CHRBankAddress4 + uint32(Addr&0x3FF)
+	//	} else { // 1KB Bank
+	//		return MMC3_CHRBankAddress5 + uint32(Addr&0x3FF)
+	//	}
+	//}
+	bank := Addr / 0x400
+	offset := uint32(Addr & 0x3FF)
+	return MMC3_CHROffset[bank] + offset
+}
+
+func MMC3_UpdateRegister() {
+	if MMC3_PRGBankMode {
+		MMC3_PRGOffset[0] = MMC3_2ndToLastBank
+		MMC3_PRGOffset[1] = MMC3_GetPRGOffset(MMC3_Register[7])
+		MMC3_PRGOffset[2] = MMC3_GetPRGOffset(MMC3_Register[6])
+		MMC3_PRGOffset[3] = MMC3_LastBank
 	} else {
-		if Addr < 0x0800 { // 2KB Bank
-			return MMC3_CHRBankAddress0 + uint32(Addr&0x7FF)
-		} else if Addr < 0x1000 { // 2KB Bank
-			return MMC3_CHRBankAddress1 + uint32(Addr&0x7FF)
-		} else if Addr < 0x1400 { // 1KB Bank
-			return MMC3_CHRBankAddress2 + uint32(Addr&0x3FF)
-		} else if Addr < 0x1800 { // 1KB Bank
-			return MMC3_CHRBankAddress3 + uint32(Addr&0x3FF)
-		} else if Addr < 0x1C00 { // 1KB Bank
-			return MMC3_CHRBankAddress4 + uint32(Addr&0x3FF)
-		} else { // 1KB Bank
-			return MMC3_CHRBankAddress5 + uint32(Addr&0x3FF)
-		}
+		MMC3_PRGOffset[0] = MMC3_GetPRGOffset(MMC3_Register[6])
+		MMC3_PRGOffset[1] = MMC3_GetPRGOffset(MMC3_Register[7])
+		MMC3_PRGOffset[2] = MMC3_2ndToLastBank
+		MMC3_PRGOffset[3] = MMC3_LastBank
 	}
+
+	if MMC3_CHRBankMode {
+		MMC3_CHROffset[0] = MMC3_GetCHROffset(MMC3_Register[2])
+		MMC3_CHROffset[1] = MMC3_GetCHROffset(MMC3_Register[3])
+		MMC3_CHROffset[2] = MMC3_GetCHROffset(MMC3_Register[4])
+		MMC3_CHROffset[3] = MMC3_GetCHROffset(MMC3_Register[5])
+		MMC3_CHROffset[4] = MMC3_GetCHROffset(MMC3_Register[0] & 0xFE)
+		MMC3_CHROffset[5] = MMC3_GetCHROffset(MMC3_Register[0] | 1)
+		MMC3_CHROffset[6] = MMC3_GetCHROffset(MMC3_Register[1] & 0xFE)
+		MMC3_CHROffset[7] = MMC3_GetCHROffset(MMC3_Register[1] | 1)
+	} else {
+		MMC3_CHROffset[0] = MMC3_GetCHROffset(MMC3_Register[0] & 0xFE)
+		MMC3_CHROffset[1] = MMC3_GetCHROffset(MMC3_Register[0] | 1)
+		MMC3_CHROffset[2] = MMC3_GetCHROffset(MMC3_Register[1] & 0xFE)
+		MMC3_CHROffset[3] = MMC3_GetCHROffset(MMC3_Register[1] | 1)
+		MMC3_CHROffset[4] = MMC3_GetCHROffset(MMC3_Register[2])
+		MMC3_CHROffset[5] = MMC3_GetCHROffset(MMC3_Register[3])
+		MMC3_CHROffset[6] = MMC3_GetCHROffset(MMC3_Register[4])
+		MMC3_CHROffset[7] = MMC3_GetCHROffset(MMC3_Register[5])
+	}
+
+}
+
+func MMC3_GetPRGOffset(offset byte) uint32 {
+	return uint32(0x2000 * uint32(offset&0x3F))
+}
+
+func MMC3_GetCHROffset(offset byte) uint32 {
+	return (0x400 * uint32(offset))
 }
 
 func MMC3_ClockIRQ(Addr uint16) {
