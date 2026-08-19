@@ -28,7 +28,7 @@ import (
 // var ppuClock int = 0 // 2C02
 var MasterClock int = 0
 
-// Debugging
+var PauseEmulation bool = false
 var MenuBarSelected bool = false
 
 type Game struct {
@@ -48,6 +48,9 @@ type Game struct {
 var Emulator *Game
 
 func (g *Game) Update() error {
+	CheckForPause()
+	CheckForReset()
+	common.ParseHotkeys()
 
 	if common.Filepath != "" && !common.ROMLoaded {
 		Reset()
@@ -57,7 +60,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	for common.ROMLoaded && !debug.PauseEmulation {
+	for common.ROMLoaded && !PauseEmulation {
 		cpu.Emulate_CPU()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
@@ -72,10 +75,8 @@ func (g *Game) Update() error {
 		return ebiten.Termination
 	}
 	// Update the UI
+	debug.Update(&g.debugui)
 	g.UI.Update()
-	if debug.ShowDebugWindow {
-		debug.DebugWindow(&g.debugui)
-	}
 	return nil
 }
 
@@ -221,4 +222,17 @@ func MasterClockTick(location string) {
 
 	}*/
 	//cycleTest += fmt.Sprint("Cycle: " + location + "\n")
+}
+
+func CheckForReset() {
+	if common.PendingReset {
+		common.ROMLoaded = false
+		common.PendingReset = false
+	}
+}
+func CheckForPause() {
+	if common.PendingPause {
+		PauseEmulation = !PauseEmulation
+		common.PendingPause = false
+	}
 }

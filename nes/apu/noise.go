@@ -1,7 +1,5 @@
 package apu
 
-import "mtt/timenes/common"
-
 type NoiseChannel struct {
 	Enabled          bool
 	Timer            uint16
@@ -63,7 +61,7 @@ func (n *NoiseChannel) ClockShiftRegister() {
 }
 
 func (n *NoiseChannel) UpdateNoiseOutput() byte {
-	if common.MuteEmulator || n.ForceMute || !n.Enabled || (n.ShiftRegister&1) == 1 || n.LengthCounter.Counter == 0 {
+	if MuteEmulator || n.ForceMute || !n.Enabled || (n.ShiftRegister&1) == 1 || n.LengthCounter.Counter == 0 {
 		return 0
 	} else if n.ConstantVolume {
 		return n.Volume

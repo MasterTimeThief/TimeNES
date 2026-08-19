@@ -9,7 +9,6 @@ import (
 	goimage "image"
 	"image/color"
 	"mtt/timenes/common"
-	"mtt/timenes/debug"
 	"mtt/timenes/nes"
 
 	"github.com/ebitenui/ebitenui"
@@ -285,17 +284,17 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 
 	// Mute Emulator
 	toolbar.muteButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		common.MuteEmulator = !common.MuteEmulator
+		common.PendingMute = true
 	}))
 
 	// Pause Emulator
 	toolbar.pauseButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		debug.PauseEmulation = !debug.PauseEmulation
+		common.PendingPause = true
 	}))
 
 	// Reset Emulator
 	toolbar.resetButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		common.ROMLoaded = false
+		common.PendingReset = true
 	}))
 
 	//
@@ -314,11 +313,12 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 	}))
 
 	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		debug.ShowFPS = !debug.ShowFPS
+		//debug.ShowFPS = !debug.ShowFPS
+		common.PendingFPS = true
 	}))
 
 	toolbar.DebugWindowButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		debug.ShowDebugWindow = !debug.ShowDebugWindow
+		common.PendingDebug = true
 	}))
 
 }

@@ -52,7 +52,6 @@ var traceCycles int
 
 var cycleTest string
 var ShowFPS bool = false
-var PauseEmulation bool = false
 var ShowDebugWindow bool = false
 
 // Sets everything outside of operands for the tracelogger to run later
@@ -233,6 +232,7 @@ var CartRamLastString string
 }*/
 
 func DisplayDebugging(screen *ebiten.Image) {
+
 	if ShowFPS {
 		vector.FillRect(screen, float32(256*common.ScreenScale)-135, float32(240*common.ScreenScale)-17, 135, 17, color.Black, false)
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*common.ScreenScale)-132, (240*common.ScreenScale)-15)
@@ -245,105 +245,119 @@ func DisplayDebugging(screen *ebiten.Image) {
 	}
 }
 
+func Update(ui *debugui.DebugUI) {
+	if common.PendingFPS {
+		ShowFPS = !ShowFPS
+		common.PendingFPS = false
+	}
+	if common.PendingDebug {
+		ShowDebugWindow = !ShowDebugWindow
+		common.PendingDebug = false
+	}
+	DebugWindow(ui)
+}
+
 func DebugWindow(ui *debugui.DebugUI) {
-	ui.Update(func(ctx *debugui.Context) error {
-		ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
+	if ShowDebugWindow {
+		ui.Update(func(ctx *debugui.Context) error {
+			ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
 
-			ctx.Header("Functions", true, func() {
-				ctx.SetGridLayout([]int{-1, -1}, nil)
-				ctx.Button("Pause").On(func() {
-					PauseEmulation = !PauseEmulation
-				})
-				ctx.Button("Reset").On(func() {
-					common.ROMLoaded = false
-				})
-			})
-			//Header Info
-			headerType := "iNES"
-			if cartridge.NES2_Header {
-				headerType = "NES 2.0"
-			}
-			ctx.Header("Header Info ("+headerType+")", false, func() {
-				ctx.SetGridLayout([]int{-1, -1}, nil)
-				ctx.Text("PRG-ROM Size:")
-				ctx.Text(SizeText[cartridge.PRGROM_Size])
-				ctx.Text("CHR-RAM Size:")
-				ctx.Text(SizeText[cartridge.CHRROM_Size])
-				ctx.Text("Mapper Chip:")
-				ctx.Text(fmt.Sprintf("%d", cartridge.MapperChipID))
-				ctx.Text("Submapper:")
-				ctx.Text(fmt.Sprintf("%d", cartridge.SubmapperID))
-				ctx.Text("Nametable Arrangement:")
-				if cartridge.IsNametableHorizontal {
-					ctx.Text("Horizontal")
-				} else {
-					ctx.Text("Vertical")
-				}
-				ctx.Text("Alt Nametable Arr:")
-				if cartridge.AltNametableLayout {
-					ctx.Text("Yes")
-				} else {
-					ctx.Text("No")
-				}
-				ctx.Text("SRAM")
-				if cartridge.HasBatteryRAM {
-					ctx.Text("Yes")
-				} else {
-					ctx.Text("No")
-				}
-				ctx.Text("Trainer")
-				if cartridge.HasTrainer {
-					ctx.Text("Yes")
-				} else {
-					ctx.Text("No")
-				}
-
-			})
-			//CPU Info
-			ctx.Header("CPU Info", false, func() {
-				ctx.SetGridLayout([]int{-1, -1}, nil)
-			})
-			//PPU Info
-			ctx.Header("PPU Info", false, func() {
-				ctx.SetGridLayout([]int{-1, -1}, nil)
-			})
-
-			//APU Info
-			ctx.Header("APU Info", false, func() {
-				ctx.SetGridLayout([]int{-1, -1}, nil)
-				ctx.GridCell(func(bounds image.Rectangle) {
-					ctx.TreeNode("Toggle Channels", func() {
-						ctx.Checkbox(&apu.Pulse1.ForceMute, "Square 1")
-						ctx.Checkbox(&apu.Pulse2.ForceMute, "Square 2")
-						ctx.Checkbox(&apu.Triangle.ForceMute, "Triangle")
-						ctx.Checkbox(&apu.Noise.ForceMute, "Noise")
-						ctx.Checkbox(&apu.DMC.ForceMute, "DMC")
+				ctx.Header("Functions", true, func() {
+					ctx.SetGridLayout([]int{-1, -1}, nil)
+					ctx.Button("Pause").On(func() {
+						common.PendingPause = true
+					})
+					ctx.Button("Reset").On(func() {
+						common.PendingReset = true
 					})
 				})
-				ctx.GridCell(func(bounds image.Rectangle) {
-					ctx.Button("Toggle Audio").On(func() {
-						common.MuteEmulator = !common.MuteEmulator
+				//Header Info
+				headerType := "iNES"
+				if cartridge.NES2_Header {
+					headerType = "NES 2.0"
+				}
+				ctx.Header("Header Info ("+headerType+")", false, func() {
+					ctx.SetGridLayout([]int{-1, -1}, nil)
+					ctx.Text("PRG-ROM Size:")
+					ctx.Text(SizeText[cartridge.PRGROM_Size])
+					ctx.Text("CHR-RAM Size:")
+					ctx.Text(SizeText[cartridge.CHRROM_Size])
+					ctx.Text("Mapper Chip:")
+					ctx.Text(fmt.Sprintf("%d", cartridge.MapperChipID))
+					ctx.Text("Submapper:")
+					ctx.Text(fmt.Sprintf("%d", cartridge.SubmapperID))
+					ctx.Text("Nametable Arrangement:")
+					if cartridge.IsNametableHorizontal {
+						ctx.Text("Horizontal")
+					} else {
+						ctx.Text("Vertical")
+					}
+					ctx.Text("Alt Nametable Arr:")
+					if cartridge.AltNametableLayout {
+						ctx.Text("Yes")
+					} else {
+						ctx.Text("No")
+					}
+					ctx.Text("SRAM")
+					if cartridge.HasBatteryRAM {
+						ctx.Text("Yes")
+					} else {
+						ctx.Text("No")
+					}
+					ctx.Text("Trainer")
+					if cartridge.HasTrainer {
+						ctx.Text("Yes")
+					} else {
+						ctx.Text("No")
+					}
+
+				})
+				//CPU Info
+				ctx.Header("CPU Info", false, func() {
+					ctx.SetGridLayout([]int{-1, -1}, nil)
+				})
+				//PPU Info
+				ctx.Header("PPU Info", false, func() {
+					ctx.SetGridLayout([]int{-1, -1}, nil)
+				})
+
+				//APU Info
+				ctx.Header("APU Info", false, func() {
+					ctx.SetGridLayout([]int{-1, -1}, nil)
+					ctx.GridCell(func(bounds image.Rectangle) {
+						ctx.TreeNode("Toggle Channels", func() {
+							ctx.Checkbox(&apu.Pulse1.ForceMute, "Square 1")
+							ctx.Checkbox(&apu.Pulse2.ForceMute, "Square 2")
+							ctx.Checkbox(&apu.Triangle.ForceMute, "Triangle")
+							ctx.Checkbox(&apu.Noise.ForceMute, "Noise")
+							ctx.Checkbox(&apu.DMC.ForceMute, "DMC")
+						})
+					})
+					ctx.GridCell(func(bounds image.Rectangle) {
+						ctx.Button("Toggle Audio").On(func() {
+							common.PendingMute = true
+						})
 					})
 				})
+
+				ctx.SetGridLayout([]int{100, -1}, nil)
+				//ctx.Text("Instruction Count:")
+				//ctx.Text(fmt.Sprintf("$%d", InstructionCount))
+				//ctx.Text("VRAM Address:")
+				//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
+				//ctx.Text("T Register:")
+				//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
+				//ctx.Text("Fine X Scroll:")
+				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+				//ctx.Text("Fine Y Scroll:")
+				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+				//ctx.Text("Nametable:")
+				//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
+
 			})
-
-			ctx.SetGridLayout([]int{100, -1}, nil)
-			//ctx.Text("Instruction Count:")
-			//ctx.Text(fmt.Sprintf("$%d", InstructionCount))
-			//ctx.Text("VRAM Address:")
-			//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
-			//ctx.Text("T Register:")
-			//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
-			//ctx.Text("Fine X Scroll:")
-			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-			//ctx.Text("Fine Y Scroll:")
-			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-			//ctx.Text("Nametable:")
-			//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
-
+			return nil
 		})
-		return nil
-	})
+	}
 }
 
 /*

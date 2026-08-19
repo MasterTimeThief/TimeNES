@@ -1,5 +1,7 @@
 package apu
 
+import "mtt/timenes/common"
+
 type APU struct {
 }
 
@@ -18,6 +20,7 @@ var apuDMAGetCycle, apuDoDMCDMA, apuDMCDMAHalt bool
 var apuDMCDMADelay, apuCannotDMCDMARightNow byte
 
 var apu4017ResetTimer int = 0
+var MuteEmulator bool = false
 
 //var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
 
@@ -113,6 +116,10 @@ func Emulate_APU() {
 	}*/
 
 	apuDMAGetCycle = !apuDMAGetCycle
+	if common.PendingMute {
+		MuteEmulator = !MuteEmulator
+		common.PendingMute = false
+	}
 }
 
 func DMA_Get() {
