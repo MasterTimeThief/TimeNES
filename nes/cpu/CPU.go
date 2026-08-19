@@ -1126,29 +1126,29 @@ func Emulate_CPU() {
 	//HLT Codes
 
 	case 0x02: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x12: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x22: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x32: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x42: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x52: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x62: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x72: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0x92: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0xB2: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0xD2: //HLT
-		CPU_Halted = true
+		Kill()
 	case 0xF2: //HLT
-		CPU_Halted = true
+		Kill()
 
 	//NOP Codes (unofficial)
 

@@ -13,4 +13,6 @@ const (
 	MenuBarHeight = 20
 	FontSize      = 16
 	MouseHeight   = 40
+
+	UIMessageTimerValue = 300
 )

@@ -48,10 +48,7 @@ type Game struct {
 var Emulator *Game
 
 func (g *Game) Update() error {
-	CheckForPause()
-	CheckForReset()
-	common.ParseHotkeys()
-
+	g.CheckCommonFunctions()
 	if common.Filepath != "" && !common.ROMLoaded {
 		Reset()
 		if !common.ROMLoaded { //Invalid file
@@ -60,7 +57,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	for common.ROMLoaded && !PauseEmulation {
+	for common.ROMLoaded && !PauseEmulation && !cpu.CPU_Halted {
 		cpu.Emulate_CPU()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
@@ -84,16 +81,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// This graphics context is used for managing the rendering state.
 
-	if !common.ROMExists {
-		ebitenutil.DebugPrintAt(screen, "No ROM File loaded!", 5, (240*common.ScreenScale)-20)
-	} else if cpu.CPU_Halted {
-		ebitenutil.DebugPrintAt(screen, "Game Crashed!", 5, (240*common.ScreenScale)-20)
-	} else if common.ROMLoaded {
+	if common.ROMLoaded && !cpu.CPU_Halted {
 		screenScaled := image.NewRGBA(image.Rect(0, 0, common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale))
 		draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
 		screen.WritePixels(screenScaled.Pix)
 	}
 
+	ShowMessages(screen)
 	debug.DisplayDebugging(screen)
 
 	//Only draw the UI if the mouse is close to it
@@ -176,7 +170,7 @@ func RenderFrame() {
 		Emulator.gameScreen.Pix[(i * 4)] = color.R
 		Emulator.gameScreen.Pix[(i*4)+1] = color.G
 		Emulator.gameScreen.Pix[(i*4)+2] = color.B
-		//Emulator.gameScreen.Pix[(i*4)+3] = color.A
+		Emulator.gameScreen.Pix[(i*4)+3] = color.A
 	}
 	ppu.FrameColorBufferPos = 0
 }
@@ -224,15 +218,50 @@ func MasterClockTick(location string) {
 	//cycleTest += fmt.Sprint("Cycle: " + location + "\n")
 }
 
-func CheckForReset() {
+func (g *Game) CheckCommonFunctions() {
+	common.ParseHotkeys()
+	g.CheckForPause()
+	g.CheckForReset()
+	g.CheckForScreenshot()
+}
+
+func (g *Game) CheckForReset() {
 	if common.PendingReset {
 		common.ROMLoaded = false
 		common.PendingReset = false
 	}
 }
-func CheckForPause() {
+func (g *Game) CheckForPause() {
 	if common.PendingPause {
 		PauseEmulation = !PauseEmulation
 		common.PendingPause = false
+	}
+}
+func (g *Game) CheckForScreenshot() {
+	if common.PendingScreenshot {
+		if !cpu.CPU_Halted && common.ROMLoaded {
+			common.SaveScreenshot(g.gameScreen)
+		}
+		common.PendingScreenshot = false
+	}
+}
+
+func ResizeWindow() {
+}
+
+func ShowMessages(screen *ebiten.Image) {
+	if !common.ROMExists && common.UIMessageTimer == 0 {
+		common.PrintUIMessage(screen, "No ROM File loaded")
+	} /* else if cpu.CPU_Halted {
+		common.PrintUIMessage(screen, "Game Crashed!")
+	}*/
+
+	if common.UIMessageTimer > 0 {
+		ebitenutil.DebugPrintAt(screen, common.UIMessage, 5, (240*common.ScreenScale)-20)
+		common.PrintUIMessage(screen, common.UIMessage)
+		common.UIMessageTimer--
+		if common.UIMessageTimer == 0 {
+			common.UIMessage = ""
+		}
 	}
 }

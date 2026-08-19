@@ -2,6 +2,9 @@ package common
 
 import (
 	"fmt"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 func BoolToInt(Flag bool) int {
@@ -40,4 +43,13 @@ func Print(s string) func() {
 
 func Combine2Bytes(Lo, Hi byte) uint16 {
 	return uint16(Hi)<<8 | uint16(Lo)
+}
+
+func SetUIMessage(message string) {
+	UIMessage = message
+	UIMessageTimer = UIMessageTimerValue
+}
+
+func PrintUIMessage(screen *ebiten.Image, message string) {
+	ebitenutil.DebugPrintAt(screen, message, 5, (240*ScreenScale)-20)
 }

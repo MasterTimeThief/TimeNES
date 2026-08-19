@@ -226,3 +226,12 @@ func Op_BIT(Value byte) {
 	flag_Negative = ((Value & 0x80) != 0)
 	flag_Overflow = ((Value & 0x40) != 0)
 }
+
+// CPU Kill function
+func Kill() {
+	CPU_Halted = true
+	common.Filepath = ""
+	common.ROMExists = false
+	common.ROMLoaded = false
+	common.SetUIMessage("Game Crashed!")
+}

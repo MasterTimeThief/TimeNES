@@ -29,6 +29,7 @@ func ParseHotkeys() {
 			PendingFPS = true
 		case ebiten.KeyF11: // Fullscreen
 		case ebiten.KeyF12: //Screenshot
+			PendingScreenshot = true
 
 		}
 	}

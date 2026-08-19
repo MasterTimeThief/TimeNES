@@ -262,6 +262,7 @@ func DebugWindow(ui *debugui.DebugUI) {
 		ui.Update(func(ctx *debugui.Context) error {
 			ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
 
+				screenScaleOptions := []string{"1x", "2x", "3x", "4x"}
 				ctx.Header("Functions", true, func() {
 					ctx.SetGridLayout([]int{-1, -1}, nil)
 					ctx.Button("Pause").On(func() {
@@ -269,6 +270,12 @@ func DebugWindow(ui *debugui.DebugUI) {
 					})
 					ctx.Button("Reset").On(func() {
 						common.PendingReset = true
+					})
+					ctx.Text("Window Scale:")
+					screenScale := common.ScreenScale - 1
+					ctx.Dropdown(&screenScale, screenScaleOptions).On(func() {
+						common.NewScreenScale = screenScale + 1
+						//g.writeLog(fmt.Sprintf("Selected option: %s", g.dropdownOptions1[g.selectedOption1]))
 					})
 				})
 				//Header Info
