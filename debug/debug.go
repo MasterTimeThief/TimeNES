@@ -53,7 +53,7 @@ var traceCycles int
 var cycleTest string
 var ShowFPS bool = false
 var PauseEmulation bool = false
-var ShowDebugWindow bool = true
+var ShowDebugWindow bool = false
 
 // Sets everything outside of operands for the tracelogger to run later
 func PrepTraceLogger() {
