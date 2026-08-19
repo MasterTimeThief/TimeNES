@@ -290,7 +290,7 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 
 	// Pause Emulator
 	toolbar.pauseButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		nes.PauseEmulation = !nes.PauseEmulation
+		debug.PauseEmulation = !debug.PauseEmulation
 	}))
 
 	// Reset Emulator

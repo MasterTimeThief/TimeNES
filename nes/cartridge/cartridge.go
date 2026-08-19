@@ -12,6 +12,7 @@ var ( // iNES Header Data
 	CHRROM_Size           uint32 // Byte 5: Size of CHR ROM in 8 KB units (value 0 means the board uses CHR RAM)
 	IsNametableHorizontal bool   // Byte 6, Bit 0: Nametable Arrangement (0: Vertical / 1: Horizontal)
 	HasBatteryRAM         bool   // Byte 6, Bit 1: Cartridge contains battery-backed PRG RAM ($6000-7FFF) or other persistent memory
+	HasTrainer            bool   // Byte 6, Bit 2: Trainer
 	AltNametableLayout    bool   // Byte 6, Bit 3: Alternative nametable layout
 	MapperChipID          byte   // Gotten from upper half of Bytes 6 and 7
 )
@@ -50,9 +51,11 @@ func ResetCartridge() {
 	CHRROM_Size = 0
 	IsNametableHorizontal = false
 	HasBatteryRAM = false
+	HasTrainer = false
 	AltNametableLayout = false
 	NES2_Header = false
 	MapperChipID = 0
+	SubmapperID = 0
 }
 
 func LoadCartridge() {
@@ -63,14 +66,7 @@ func LoadCartridge() {
 
 	//Header info
 	copy(Header[:], HeaderedROM[0x0:])
-	PRGROM_Size = uint32(Header[4]) * uint32(0x4000)
-	CHRROM_Size = uint32(Header[5]) * uint32(0x2000)
-	IsNametableHorizontal = (Header[6] & 1) == 0
-	HasBatteryRAM = (Header[6] & 0x02) != 0
-	AltNametableLayout = (Header[6] & 0x08) != 0
-	NES2_Header = ((Header[7] & 0xC) >> 2) == 2
-
-	MapperChipID = (Header[6] >> 4) | (Header[7] & 0xF0)
+	UpdateHeader(Header)
 
 	//size := uint16(Header[4])
 	ROM_Endpoint := uint32(0x10 + (PRGROM_Size))
@@ -98,4 +94,17 @@ func LoadCartridge() {
 	}
 	//}
 	common.ROMLoaded = true
+}
+
+func UpdateHeader(header [16]byte) {
+	PRGROM_Size = uint32(Header[4]) * uint32(0x4000)
+	CHRROM_Size = uint32(Header[5]) * uint32(0x2000)
+	IsNametableHorizontal = (Header[6] & 1) == 0
+	HasBatteryRAM = (Header[6] & 0x02) != 0
+	HasTrainer = (Header[6] & 0x04) != 0
+	AltNametableLayout = (Header[6] & 0x08) != 0
+	NES2_Header = ((Header[7] & 0xC) >> 2) == 2
+
+	MapperChipID = (Header[6] >> 4) | (Header[7] & 0xF0)
+	SubmapperID = (Header[8] & 0xF0) >> 4
 }

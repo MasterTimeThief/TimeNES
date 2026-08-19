@@ -29,7 +29,7 @@ func RenderTileData() {
 						}
 					}
 				}
-				PPU8Steps()
+				PPUNextTile8Steps()
 			}
 		}
 	}

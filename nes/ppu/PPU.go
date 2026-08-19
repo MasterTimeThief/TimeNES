@@ -170,23 +170,23 @@ func Emulate_PPU() {
 	}
 }
 
-func PPU8Steps() {
+func PPUNextTile8Steps() {
 	//What part of the 8-step process to run this cycle
 	cycleTick := byte((PPUDot - 1) & 7)
 	switch cycleTick {
-	case 0:
+	case 0: // Load the shift registers, and get the address for the nametable byte
 		ppuShiftRegister_patternL = ((ppuShiftRegister_patternL & 0xFF00) | uint16(ppu8Step_patternLowBitPlane))
 		ppuShiftRegister_patternH = ((ppuShiftRegister_patternH & 0xFF00) | uint16(ppu8Step_patternHighBitPlane))
 		ppuShiftRegister_attributeL = ((ppuShiftRegister_attributeL & 0xFF00) | common.Ternary((ppu8Step_attribute&1) == 1, 0xFF, 0x00))
 		ppuShiftRegister_attributeH = ((ppuShiftRegister_attributeH & 0xFF00) | common.Ternary((ppu8Step_attribute&2) == 2, 0xFF, 0x00))
 		PPUAddressBus = (0x2000 + (VRAMAddress & 0x0FFF))
 		ppu8Step_temp = ReadPPU()
-	case 1:
+	case 1: // Save the nametable byte
 		ppu8Step_NextCharacter = ppu8Step_temp
-	case 2:
+	case 2: // Get the address for the attribute byte
 		PPUAddressBus = (0x23C0 | (VRAMAddress & 0x0C00) | ((VRAMAddress >> 4) & 0x38) | ((VRAMAddress >> 2) & 0x07))
 		ppu8Step_temp = ReadPPU()
-	case 3:
+	case 3: // Save the attribute byte
 		ppu8Step_attribute = ppu8Step_temp
 		//1 byte of attribute data covers 4 tiles. determine which tile this is for
 		if (VRAMAddress & 3) >= 2 { //If this is in the right tile

@@ -1,7 +1,7 @@
 package nes
 
 import (
-	"fmt"
+	"flag"
 	"image"
 	"image/color"
 	"log"
@@ -12,7 +12,6 @@ import (
 	"mtt/timenes/nes/cartridge"
 	"mtt/timenes/nes/cpu"
 	"mtt/timenes/nes/ppu"
-	"os"
 
 	"github.com/ebitengine/debugui"
 	"github.com/ebitenui/ebitenui"
@@ -30,7 +29,6 @@ import (
 var MasterClock int = 0
 
 // Debugging
-var PauseEmulation bool = false
 var MenuBarSelected bool = false
 
 type Game struct {
@@ -59,7 +57,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	for common.ROMLoaded && !PauseEmulation {
+	for common.ROMLoaded && !debug.PauseEmulation {
 		cpu.Emulate_CPU()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
@@ -76,38 +74,7 @@ func (g *Game) Update() error {
 	// Update the UI
 	g.UI.Update()
 	if debug.ShowDebugWindow {
-		g.debugui.Update(func(ctx *debugui.Context) error {
-			ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
-				ctx.SetGridLayout([]int{100, -1}, nil)
-				ctx.Text("Instruction Count:")
-				ctx.Text(fmt.Sprintf("$%d", debug.InstructionCount))
-				//ctx.Text("VRAM Address:")
-				//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
-				//ctx.Text("T Register:")
-				//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
-				//ctx.Text("Fine X Scroll:")
-				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-				//ctx.Text("Fine Y Scroll:")
-				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-				//ctx.Text("Nametable:")
-				//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
-
-				//ctx.Text("Pause")
-
-				/*ctx.Button("Pause").On(func() {
-					nes.PauseEmulation = !pauseEmulation
-				})
-				ctx.Button("RESET").On(func() {
-					common.ROMLoaded = false
-				})*/
-				ctx.Checkbox(&apu.Pulse1.ForceMute, "Mute Square 1")
-				ctx.Checkbox(&apu.Pulse2.ForceMute, "Mute Square 2")
-				ctx.Checkbox(&apu.Triangle.ForceMute, "Mute Triangle")
-				ctx.Checkbox(&apu.Noise.ForceMute, "Mute Noise")
-				ctx.Checkbox(&apu.DMC.ForceMute, "Mute DMC")
-			})
-			return nil
-		})
+		debug.DebugWindow(&g.debugui)
 	}
 	return nil
 }
@@ -142,8 +109,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func InitGame(newUI *ebitenui.UI) {
-	if len(os.Args) > 1 && os.Args[1] != "" {
-		common.Filepath = os.Args[1]
+	arguments := flag.Args()
+	if len(arguments) > 0 && arguments[0] != "" {
+		common.Filepath = arguments[0]
 	}
 	if common.Filepath != "" {
 		common.ROMExists = true
