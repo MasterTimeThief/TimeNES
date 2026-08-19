@@ -15,13 +15,21 @@ import (
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
-	"golang.org/x/image/colornames"
 )
 
 //var FC_Red color.RGBA = color.RGBA{R: 160, G: 30, B: 37, A: 255}
 //var FC_Gold color.RGBA = color.RGBA{R: 185, G: 159, B: 119, A: 255}
 //var FC_White color.RGBA = color.RGBA{R: 232, G: 228, B: 224, A: 255}
 //var FC_Black color.RGBA = color.RGBA{R: 10, G: 10, B: 10, A: 255}
+
+const (
+	ToolbarBG                = "#303030"
+	ToolbarButtonHover       = "#808080"
+	ToolbarButtonPressed     = "#FFFFFF"
+	ToolbarFontColor         = "#FFFFFF"
+	ToolbarFontColorPressed  = "#000000"
+	ToolbarFontColorDisabled = "#555555"
+)
 
 // NOTE: It's not strictly necessary to store references to all the buttons in the toolbar struct, but this example does
 // so for completeness' sake. When you keep a reference to buttons in the struct, you can later configure them to respond
@@ -79,7 +87,7 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 	// Create a root container for the toolbar.
 	root := widget.NewContainer(
 		// Use black background for the toolbar.
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(color.RGBA{R: 0, G: 0, B: 0, A: 200})),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(common.HexToRGBA(ToolbarBG))),
 
 		// Toolbar components must be aligned horizontally.
 		widget.ContainerOpts.Layout(
@@ -168,20 +176,20 @@ func newToolbarButton(res *resources, label string) *widget.Button {
 	return widget.NewButton(
 		widget.ButtonOpts.Image(&widget.ButtonImage{
 			Idle:    image.NewNineSliceColor(color.Transparent),
-			Hover:   image.NewNineSliceColor(colornames.Dimgrey),
-			Pressed: image.NewNineSliceColor(colornames.Darkgrey),
+			Hover:   image.NewNineSliceColor(common.HexToRGBA(ToolbarButtonHover)),
+			Pressed: image.NewNineSliceColor(common.HexToRGBA(ToolbarButtonPressed)),
 		}),
 		widget.ButtonOpts.Text(label, &res.font, &widget.ButtonTextColor{
-			Idle:     color.White,
-			Disabled: colornames.Gray,
-			Hover:    color.White,
-			Pressed:  color.Black,
+			Idle:     common.HexToRGBA(ToolbarFontColor),
+			Disabled: common.HexToRGBA(ToolbarFontColorDisabled),
+			Hover:    common.HexToRGBA(ToolbarFontColor),
+			Pressed:  common.HexToRGBA(ToolbarFontColorPressed),
 		}),
 		widget.ButtonOpts.TextPadding(&widget.Insets{
-			Top:    2,
-			Left:   10,
-			Right:  10,
-			Bottom: 2,
+			Top:    4,
+			Left:   8,
+			Right:  8,
+			Bottom: 4,
 		}),
 	)
 }
@@ -191,17 +199,17 @@ func newToolbarMenuEntry(res *resources, label string) *widget.Button {
 	return widget.NewButton(
 		widget.ButtonOpts.Image(&widget.ButtonImage{
 			Idle:    image.NewNineSliceColor(color.Transparent),
-			Hover:   image.NewNineSliceColor(colornames.Dimgrey),
-			Pressed: image.NewNineSliceColor(colornames.Darkgrey),
+			Hover:   image.NewNineSliceColor(common.HexToRGBA(ToolbarButtonHover)),
+			Pressed: image.NewNineSliceColor(common.HexToRGBA(ToolbarButtonPressed)),
 		}),
 		widget.ButtonOpts.Text(label, &res.font, &widget.ButtonTextColor{
-			Idle:     color.White,
-			Disabled: colornames.Gray,
-			Hover:    color.White,
-			Pressed:  color.Black,
+			Idle:     common.HexToRGBA(ToolbarFontColor),
+			Disabled: common.HexToRGBA(ToolbarFontColorDisabled),
+			Hover:    common.HexToRGBA(ToolbarFontColor),
+			Pressed:  common.HexToRGBA(ToolbarFontColorPressed),
 		}),
 		widget.ButtonOpts.TextPosition(widget.TextPositionStart, widget.TextPositionCenter),
-		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 20, Right: 10, Top: 2, Bottom: 2}),
+		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 20, Right: 10, Top: 3, Bottom: 2}),
 		widget.ButtonOpts.WidgetOpts(
 			widget.WidgetOpts.LayoutData(widget.RowLayoutData{
 				Stretch: true,
@@ -213,7 +221,7 @@ func newToolbarMenuEntry(res *resources, label string) *widget.Button {
 func openToolbarMenu(opener *widget.Widget, ui *ebitenui.UI, entries ...*widget.Button) {
 	c := widget.NewContainer(
 		// Set the background to a translucent black.
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(color.RGBA{R: 0, G: 0, B: 0, A: 200})),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(common.HexToRGBA(ToolbarBG))),
 
 		// Menu entries should be arranged vertically.
 		widget.ContainerOpts.Layout(

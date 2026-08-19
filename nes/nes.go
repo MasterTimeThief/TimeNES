@@ -18,7 +18,6 @@ import (
 	"github.com/ebitenui/ebitenui/input"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"golang.org/x/image/draw"
 )
 
@@ -251,13 +250,13 @@ func ResizeWindow() {
 
 func ShowMessages(screen *ebiten.Image) {
 	if !common.ROMExists && common.UIMessageTimer == 0 {
-		common.PrintUIMessage(screen, "No ROM File loaded")
+		common.PrintUIMessage(screen, "No ROM file loaded")
 	} /* else if cpu.CPU_Halted {
 		common.PrintUIMessage(screen, "Game Crashed!")
 	}*/
 
 	if common.UIMessageTimer > 0 {
-		ebitenutil.DebugPrintAt(screen, common.UIMessage, 5, (240*common.ScreenScale)-20)
+		//ebitenutil.DebugPrintAt(screen, common.UIMessage, 5, (240*common.ScreenScale)-20)
 		common.PrintUIMessage(screen, common.UIMessage)
 		common.UIMessageTimer--
 		if common.UIMessageTimer == 0 {
