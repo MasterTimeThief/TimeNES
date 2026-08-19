@@ -423,7 +423,8 @@ func ReadPPU( /*Address uint16*/ ) byte {
 			return cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(PPUAddressBus, cartridge.CHRROM_Size)]
 		case 3: //CNROM
 			return cartridge.CHRROM[mappers.CNROM_FetchPPUAddress(PPUAddressBus)]
-		//case 4: //MMC3
+		case 4: //MMC3
+			return cartridge.CHRROM[mappers.MMC3_FetchPPUAddress(PPUAddressBus, cartridge.CHRROM_Size)]
 		//	return 0
 		default:
 			return cartridge.CHRROM[PPUAddressBus]
@@ -436,20 +437,12 @@ func ReadPPU( /*Address uint16*/ ) byte {
 		case 1: //MMC1
 			return cartridge.CartVRAM[mappers.MMC1_FetchNametable(PPUAddressBus)]
 		//case 3: //CNROM
-		//case 4: //MMC3
+		case 4: //MMC3
+			//return ReadFromNametable(PPUAddressBus, mappers.MMC3_IsHorizontalNametable)
+			return cartridge.CartVRAM[int(PPUAddressBus&0xFFF)]
 		default:
-			if !cartridge.AltNametableLayout {
-				if cartridge.IsNametableHorizontal {
-					// Horizontal Mirroring
-					return cartridge.VRAM[int(PPUAddressBus&0x3FF)|(int(PPUAddressBus&0x800)>>1)]
-				} else {
-					//Vertical Mirroring
-					return cartridge.VRAM[int(PPUAddressBus&0x7FF)]
-				}
-			}
+			return ReadFromNametable(PPUAddressBus, cartridge.IsNametableHorizontal)
 		}
-		return 0
-
 	} else {
 		//Read from Palette RAM
 		if (PPUAddressBus & 3) == 0 {
@@ -458,6 +451,20 @@ func ReadPPU( /*Address uint16*/ ) byte {
 			return cartridge.PaletteRAM[PPUAddressBus&0x1F]
 		}
 	}
+}
+
+func ReadFromNametable(Addr uint16, isHoriz bool) byte {
+	if cartridge.AltNametableLayout {
+	} else {
+		if cartridge.IsNametableHorizontal {
+			// Horizontal Mirroring
+			return cartridge.VRAM[int(Addr&0x3FF)|(int(Addr&0x800)>>1)]
+		} else {
+			//Vertical Mirroring
+			return cartridge.VRAM[int(Addr&0x7FF)]
+		}
+	}
+	return 0
 }
 
 var PPUBusDecay [8]int
