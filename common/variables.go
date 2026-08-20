@@ -12,9 +12,12 @@ var (
 	PendingPause      bool
 	PendingFPS        bool
 	PendingDebug      bool
+	PendingPT         bool
 	PendingMute       bool
 	PendingScreenshot bool
 	PendingFullscreen bool
+
+	PendingPatternUpdate bool
 )
 
 var (

@@ -21,6 +21,7 @@ func ParseHotkeys() {
 		case ebiten.KeyF4:
 		case ebiten.KeyF5:
 		case ebiten.KeyF6:
+			PendingPT = true
 		case ebiten.KeyF7:
 		case ebiten.KeyF8:
 		case ebiten.KeyF9: // Toggle Audio

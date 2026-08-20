@@ -52,7 +52,10 @@ var traceCycles int
 
 var cycleTest string
 var ShowFPS bool = false
-var ShowDebugWindow bool = false
+var ShowDebugWindow, ShowPatternTableWindow bool = false, false
+var PatternTables = ebiten.NewImage(256, 128)
+
+var PTValues [256][128]byte
 
 // Sets everything outside of operands for the tracelogger to run later
 func PrepTraceLogger() {
@@ -254,140 +257,186 @@ func Update(ui *debugui.DebugUI) {
 		ShowDebugWindow = !ShowDebugWindow
 		common.PendingDebug = false
 	}
-	DebugWindow(ui)
+	if common.PendingPT {
+		ShowPatternTableWindow = !ShowPatternTableWindow
+		common.PendingPT = false
+	}
+	if common.PendingPatternUpdate {
+		UpdatePatternTables()
+		common.PendingPatternUpdate = false
+	}
+	ui.Update(func(ctx *debugui.Context) error {
+		DebugWindow(ctx)
+		PatternTableWindow(ctx)
+		return nil
+	})
 }
 
-func DebugWindow(ui *debugui.DebugUI) {
+func DebugWindow(ctx *debugui.Context) {
 	if ShowDebugWindow {
-		ui.Update(func(ctx *debugui.Context) error {
-			ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
+		ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
 
-				screenScaleOptions := []string{"1x", "2x", "3x", "4x"}
-				ctx.Header("Functions", true, func() {
-					ctx.SetGridLayout([]int{-1, -1}, nil)
-					ctx.Button("Pause").On(func() {
-						common.PendingPause = true
-					})
-					ctx.Button("Reset").On(func() {
-						common.PendingReset = true
-					})
-					ctx.Text("Window Scale:")
-					screenScale := common.ScreenScale - 1
-					ctx.Dropdown(&screenScale, screenScaleOptions).On(func() {
-						common.NewScreenScale = screenScale + 1
-						//g.writeLog(fmt.Sprintf("Selected option: %s", g.dropdownOptions1[g.selectedOption1]))
-					})
+			screenScaleOptions := []string{"1x", "2x", "3x", "4x"}
+			ctx.Header("Functions", true, func() {
+				ctx.SetGridLayout([]int{-1, -1}, nil)
+				ctx.Button("Pause").On(func() {
+					common.PendingPause = true
 				})
-				//Header Info
-				headerType := "iNES"
-				if cartridge.NES2_Header {
-					headerType = "NES 2.0"
+				ctx.Button("Reset").On(func() {
+					common.PendingReset = true
+				})
+				ctx.Text("Window Scale:")
+				screenScale := common.ScreenScale - 1
+				ctx.Dropdown(&screenScale, screenScaleOptions).On(func() {
+					common.NewScreenScale = screenScale + 1
+					//g.writeLog(fmt.Sprintf("Selected option: %s", g.dropdownOptions1[g.selectedOption1]))
+				})
+			})
+			//Header Info
+			headerType := "iNES"
+			if cartridge.NES2_Header {
+				headerType = "NES 2.0"
+			}
+			ctx.Header("Header Info ("+headerType+")", false, func() {
+				ctx.SetGridLayout([]int{-1, -1}, nil)
+				ctx.Text("PRG-ROM Size:")
+				ctx.Text(SizeText[cartridge.PRGROM_Size])
+				ctx.Text("CHR-RAM Size:")
+				ctx.Text(SizeText[cartridge.CHRROM_Size])
+				ctx.Text("Mapper Chip:")
+				ctx.Text(fmt.Sprintf("%d", cartridge.MapperChipID))
+				ctx.Text("Submapper:")
+				ctx.Text(fmt.Sprintf("%d", cartridge.SubmapperID))
+				ctx.Text("Nametable Arrangement:")
+				if cartridge.IsNametableHorizontal {
+					ctx.Text("Horizontal")
+				} else {
+					ctx.Text("Vertical")
 				}
-				ctx.Header("Header Info ("+headerType+")", false, func() {
-					ctx.SetGridLayout([]int{-1, -1}, nil)
-					ctx.Text("PRG-ROM Size:")
-					ctx.Text(SizeText[cartridge.PRGROM_Size])
-					ctx.Text("CHR-RAM Size:")
-					ctx.Text(SizeText[cartridge.CHRROM_Size])
-					ctx.Text("Mapper Chip:")
-					ctx.Text(fmt.Sprintf("%d", cartridge.MapperChipID))
-					ctx.Text("Submapper:")
-					ctx.Text(fmt.Sprintf("%d", cartridge.SubmapperID))
-					ctx.Text("Nametable Arrangement:")
-					if cartridge.IsNametableHorizontal {
-						ctx.Text("Horizontal")
-					} else {
-						ctx.Text("Vertical")
-					}
-					ctx.Text("Alt Nametable Arr:")
-					if cartridge.AltNametableLayout {
-						ctx.Text("Yes")
-					} else {
-						ctx.Text("No")
-					}
-					ctx.Text("SRAM")
-					if cartridge.HasBatteryRAM {
-						ctx.Text("Yes")
-					} else {
-						ctx.Text("No")
-					}
-					ctx.Text("Trainer")
-					if cartridge.HasTrainer {
-						ctx.Text("Yes")
-					} else {
-						ctx.Text("No")
-					}
-
-				})
-				//CPU Info
-				ctx.Header("CPU Info", false, func() {
-					ctx.SetGridLayout([]int{-1, -1}, nil)
-				})
-				//PPU Info
-				ctx.Header("PPU Info", false, func() {
-					ctx.SetGridLayout([]int{-1, -1}, nil)
-				})
-
-				//APU Info
-				ctx.Header("APU Info", false, func() {
-					ctx.SetGridLayout([]int{-1, -1}, nil)
-					ctx.GridCell(func(bounds image.Rectangle) {
-						ctx.TreeNode("Toggle Channels", func() {
-							ctx.Checkbox(&apu.Pulse1.ForceMute, "Square 1")
-							ctx.Checkbox(&apu.Pulse2.ForceMute, "Square 2")
-							ctx.Checkbox(&apu.Triangle.ForceMute, "Triangle")
-							ctx.Checkbox(&apu.Noise.ForceMute, "Noise")
-							ctx.Checkbox(&apu.DMC.ForceMute, "DMC")
-						})
-					})
-					ctx.GridCell(func(bounds image.Rectangle) {
-						ctx.Button("Toggle Audio").On(func() {
-							common.PendingMute = true
-						})
-					})
-				})
-
-				ctx.SetGridLayout([]int{100, -1}, nil)
-				//ctx.Text("Instruction Count:")
-				//ctx.Text(fmt.Sprintf("$%d", InstructionCount))
-				//ctx.Text("VRAM Address:")
-				//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
-				//ctx.Text("T Register:")
-				//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
-				//ctx.Text("Fine X Scroll:")
-				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-				//ctx.Text("Fine Y Scroll:")
-				//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-				//ctx.Text("Nametable:")
-				//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
+				ctx.Text("Alt Nametable Arr:")
+				if cartridge.AltNametableLayout {
+					ctx.Text("Yes")
+				} else {
+					ctx.Text("No")
+				}
+				ctx.Text("SRAM")
+				if cartridge.HasBatteryRAM {
+					ctx.Text("Yes")
+				} else {
+					ctx.Text("No")
+				}
+				ctx.Text("Trainer")
+				if cartridge.HasTrainer {
+					ctx.Text("Yes")
+				} else {
+					ctx.Text("No")
+				}
 
 			})
-			return nil
+			//CPU Info
+			ctx.Header("CPU Info", false, func() {
+				ctx.SetGridLayout([]int{-1, -1}, nil)
+			})
+
+			//APU Info
+			ctx.Header("APU Info", false, func() {
+				ctx.SetGridLayout([]int{-1, -1}, nil)
+				ctx.GridCell(func(bounds image.Rectangle) {
+					ctx.TreeNode("Toggle Channels", func() {
+						ctx.Checkbox(&apu.Pulse1.ForceMute, "Square 1")
+						ctx.Checkbox(&apu.Pulse2.ForceMute, "Square 2")
+						ctx.Checkbox(&apu.Triangle.ForceMute, "Triangle")
+						ctx.Checkbox(&apu.Noise.ForceMute, "Noise")
+						ctx.Checkbox(&apu.DMC.ForceMute, "DMC")
+					})
+				})
+				ctx.GridCell(func(bounds image.Rectangle) {
+					ctx.Button("Toggle Audio").On(func() {
+						common.PendingMute = true
+					})
+				})
+			})
+
+			ctx.SetGridLayout([]int{100, -1}, nil)
+			//ctx.Text("Instruction Count:")
+			//ctx.Text(fmt.Sprintf("$%d", InstructionCount))
+			//ctx.Text("VRAM Address:")
+			//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
+			//ctx.Text("T Register:")
+			//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
+			//ctx.Text("Fine X Scroll:")
+			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+			//ctx.Text("Fine Y Scroll:")
+			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
+			//ctx.Text("Nametable:")
+			//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
+
 		})
 	}
 }
 
-/*
-Header info (iNES / NES 2.0)
+func PatternTableWindow(ctx *debugui.Context) {
+	if ShowPatternTableWindow {
+		px, py := 100, 20
+		ctx.Window("Pattern Tables", image.Rect(px, py, px+256+10, py+128+35), func(layout debugui.ContainerLayout) {
 
+			ctx.GridCell(func(bounds image.Rectangle) {
+				ctx.DrawOnlyWidget(func(screen *ebiten.Image) {
+					op := &ebiten.DrawImageOptions{}
+					scale := float64(1)
+					op.GeoM.Translate(float64(bounds.Min.X)/scale, float64(bounds.Min.Y)/scale)
+					op.GeoM.Scale(scale, scale)
 
-PRGROM Size
-CHRROM Size
-Nametable Arrangement
-Alt Nametable arrangement
+					DrawPatternTables()
+					screen.DrawImage(PatternTables, op)
+				})
+			})
 
+		})
+	}
+}
 
-Does it have any cart RAM?
-(SRAM, WRAM, etc.)
+func UpdatePatternTables() {
+	for table := 0; table < 2; table++ {
+		for row := 0; row < 16; row++ {
+			for col := 0; col < 16; col++ {
+				for y := 0; y < 8; y++ {
+					lowByte := cartridge.CHRROM[y+(col*16)+(row*256)+(table*4096)]
+					hiByte := cartridge.CHRROM[8+y+(col*16)+(row*256)+(table*4096)]
+					for x := 0; x < 8; x++ {
+						var TwoBit uint8
+						if ((lowByte >> (7 - x)) & 1) == 1 {
+							TwoBit += 1
+						}
+						if ((hiByte >> (7 - x)) & 1) == 1 {
+							TwoBit += 2
+						}
+						PTValues[x+(col*8)+(table*128)][y+(row*8)] = TwoBit * 85
+					}
+				}
+			}
+		}
+	}
+}
 
-PRGRAM, if any
+func ResetPatternTables() {
+	PatternTables.Fill(color.Black)
+	common.PendingPatternUpdate = true
+}
 
+func DrawPatternTables() {
+	screenPT := image.NewRGBA(image.Rect(0, 0, 256, 128))
+	index := 0
+	for y := 0; y < 128; y++ {
+		for x := 0; x < 256; x++ {
+			col := PTValues[x][y]
+			screenPT.Pix[index] = col
+			screenPT.Pix[index+1] = col
+			screenPT.Pix[index+2] = col
+			screenPT.Pix[index+3] = 0xFF
 
-
-APU
-Mute individual channels
-Mute all audio
-
-
-
-*/
+			index += 4
+		}
+	}
+	PatternTables.WritePixels(screenPT.Pix)
+}

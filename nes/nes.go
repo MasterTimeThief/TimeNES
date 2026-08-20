@@ -97,9 +97,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if _, my := input.CursorPosition(); my < common.MouseHeight || MenuBarSelected || !common.ROMExists {
 		g.UI.Draw(screen)
 	}
-	if debug.ShowDebugWindow {
-		g.debugui.Draw(screen)
-	}
+	//if debug.ShowDebugWindow {
+	g.debugui.Draw(screen)
+	//}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -148,6 +148,7 @@ func Reset() {
 	cartridge.ResetCartridge()
 
 	cartridge.LoadCartridge()
+	debug.ResetPatternTables()
 
 	//copy(CHRData[:], HeaderedROM[0x8010:])
 

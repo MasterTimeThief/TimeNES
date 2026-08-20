@@ -413,6 +413,8 @@ func WritePPU(Value byte) {
 			default:
 				cartridge.CHRROM[ppu.VRAMAddress] = Value
 			}
+			//For Pattern Table viewing
+			common.PendingPatternUpdate = true
 		}
 		//else, nothing happens because it's CHR-ROM
 	} else if ppu.VRAMAddress < 0x3F00 {
