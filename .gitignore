@@ -17,6 +17,7 @@ coverage.*
 *.coverprofile
 profile.cov
 roms/
+screenshots/
 other/
 backup/
 .vscode/

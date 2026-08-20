@@ -37,6 +37,9 @@ func FileSelectDialog() {
 func SaveScreenshot(screen image.Image) {
 	filename := "screenshot_" + time.Now().Format("20060102030405") + ".png"
 
+	if err := os.Mkdir("screenshots", 0777); err != nil {
+		log.Fatal(err)
+	}
 	f, err := os.Create("screenshots/" + filename)
 	if err != nil {
 		log.Fatal(err)

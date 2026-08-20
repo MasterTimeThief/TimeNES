@@ -14,6 +14,7 @@ var (
 	PendingDebug      bool
 	PendingMute       bool
 	PendingScreenshot bool
+	PendingFullscreen bool
 )
 
 var (

@@ -27,6 +27,7 @@ import (
 // var ppuClock int = 0 // 2C02
 var MasterClock int = 0
 
+var FullscreenMode bool = false
 var PauseEmulation bool = false
 var MenuBarSelected bool = false
 
@@ -99,7 +100,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return outsideWidth, outsideHeight
+	return common.ScreenWidth * common.ScreenScale, common.ScreenHeight * common.ScreenScale
 }
 
 func InitGame(newUI *ebitenui.UI) {
@@ -114,6 +115,7 @@ func InitGame(newUI *ebitenui.UI) {
 
 	ebiten.SetWindowSize(common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale)
 	ebiten.SetWindowTitle("TimeNES")
+	ebiten.SetFullscreen(FullscreenMode)
 	//ebiten.SetTPS(ebiten.SyncWithFPS)
 
 	Emulator = &Game{
@@ -222,6 +224,7 @@ func (g *Game) CheckCommonFunctions() {
 	g.CheckForPause()
 	g.CheckForReset()
 	g.CheckForScreenshot()
+	g.CheckForFullscreen()
 }
 
 func (g *Game) CheckForReset() {
@@ -242,6 +245,13 @@ func (g *Game) CheckForScreenshot() {
 			common.SaveScreenshot(g.gameScreen)
 		}
 		common.PendingScreenshot = false
+	}
+}
+func (g *Game) CheckForFullscreen() {
+	if common.PendingFullscreen {
+		FullscreenMode = !FullscreenMode
+		ebiten.SetFullscreen(FullscreenMode)
+		common.PendingFullscreen = false
 	}
 }
 
