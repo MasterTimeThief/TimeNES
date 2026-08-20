@@ -31,8 +31,15 @@ func ParseHotkeys() {
 			PendingFullscreen = true
 		case ebiten.KeyF12: //Screenshot
 			PendingScreenshot = true
+		case ebiten.KeyMinus:
+			if ScreenScale > 1 {
+				NewScreenScale = ScreenScale - 1
+			}
+		case ebiten.KeyEqual:
+			if ScreenScale < 4 {
+				NewScreenScale = ScreenScale + 1
+			}
 
 		}
 	}
-
 }

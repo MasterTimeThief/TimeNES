@@ -82,9 +82,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// This graphics context is used for managing the rendering state.
 
 	if common.ROMLoaded && !cpu.CPU_Halted {
-		screenScaled := image.NewRGBA(image.Rect(0, 0, common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale))
+		screenRect := image.Rect(0, 0, common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale)
+		screenScaled := image.NewRGBA(screenRect)
 		draw.NearestNeighbor.Scale(screenScaled, screenScaled.Rect, g.gameScreen, g.gameScreen.Bounds(), draw.Over, nil)
-		screen.WritePixels(screenScaled.Pix)
+		if screen.Bounds() == screenRect {
+			screen.WritePixels(screenScaled.Pix)
+		}
 	}
 
 	ShowMessages(screen)
@@ -225,6 +228,7 @@ func (g *Game) CheckCommonFunctions() {
 	g.CheckForReset()
 	g.CheckForScreenshot()
 	g.CheckForFullscreen()
+	g.CheckForWindowResize()
 }
 
 func (g *Game) CheckForReset() {
@@ -233,12 +237,14 @@ func (g *Game) CheckForReset() {
 		common.PendingReset = false
 	}
 }
+
 func (g *Game) CheckForPause() {
 	if common.PendingPause {
 		PauseEmulation = !PauseEmulation
 		common.PendingPause = false
 	}
 }
+
 func (g *Game) CheckForScreenshot() {
 	if common.PendingScreenshot {
 		if !cpu.CPU_Halted && common.ROMLoaded {
@@ -247,6 +253,7 @@ func (g *Game) CheckForScreenshot() {
 		common.PendingScreenshot = false
 	}
 }
+
 func (g *Game) CheckForFullscreen() {
 	if common.PendingFullscreen {
 		FullscreenMode = !FullscreenMode
@@ -255,7 +262,12 @@ func (g *Game) CheckForFullscreen() {
 	}
 }
 
-func ResizeWindow() {
+func (g *Game) CheckForWindowResize() {
+	if common.NewScreenScale != -1 {
+		common.ScreenScale = common.NewScreenScale
+		ebiten.SetWindowSize(common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale)
+		common.NewScreenScale = -1
+	}
 }
 
 func ShowMessages(screen *ebiten.Image) {
