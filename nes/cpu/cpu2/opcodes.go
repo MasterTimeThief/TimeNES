@@ -415,45 +415,89 @@ func (cpu *CPU) X98_TYA() {
 	cpu.CompleteInstruction()
 }
 
-/*
-	//Arithmetic
+//Arithmetic
 
-	//	ADC: Add Memory to Accumulator with Carry
-	//	A + M + C -> A, C
-	//	N	Z	C	I	D	V
-	//	+	+	+	-	-	+
+//	ADC: Add Memory to Accumulator with Carry
+//	A + M + C -> A, C
+//	N	Z	C	I	D	V
+//	+	+	+	-	-	+
 
-	func (cpu *CPU) X69_ADC_Immediate(){
-		Op_ADC(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) X65_ADC_ZeroPage(){
+func (cpu *CPU) X69_ADC_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_ADC(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X65_ADC_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) X75_ADC_ZeroPage_X(){
+	case 2:
+		cpu.Op_ADC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X75_ADC_ZeroPage_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X6D_ADC_Absolute(){
+	case 3:
+		cpu.Op_ADC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X6D_ADC_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X7D_ADC_Absolute_X(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndX(true)
-		Op_ADC(cpu.ReadFromAB())
-	func (cpu *CPU) X79_ADC_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
-		Op_ADC(cpu.ReadFromAB())
-	func (cpu *CPU) X61_ADC_Indirect_X(){
+	case 3:
+		cpu.Op_ADC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X7D_ADC_Absolute_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
+	case 4:
+		cpu.Op_ADC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X79_ADC_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.Op_ADC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X61_ADC_Indirect_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X71_ADC_Indirect_Y(){
-		// CPU_Cycles = 5
+	case 5:
+		cpu.Op_ADC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X71_ADC_Indirect_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
-		Op_ADC(cpu.ReadFromAB())
+	case 5:
+		cpu.Op_ADC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	SBC: Subtract Memory from Accumulator with Borrow
 	//	A - M - C̅ -> A
