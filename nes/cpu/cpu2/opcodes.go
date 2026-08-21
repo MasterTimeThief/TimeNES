@@ -1030,45 +1030,89 @@ func (cpu *CPU) X7E_ROR_Absolute_X() {
 	}
 }
 
-/*
-	//Bitwise
+//Bitwise
 
-	//	AND: AND Memory with Accumulator
-	//	A AND M -> A
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	AND: AND Memory with Accumulator
+//	A AND M -> A
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) X29_AND_Immediate(){
-		Op_AND(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) X25_AND_ZeroPage(){
+func (cpu *CPU) X29_AND_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_AND(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X25_AND_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_AND(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) X2D_AND_Absolute(){
+	case 2:
+		cpu.Op_AND(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X2D_AND_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_AND(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X35_AND_ZeroPage_X(){
+	case 3:
+		cpu.Op_AND(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X35_AND_ZeroPage_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_AND(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X3D_AND_Absolute_X(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndX(true)
-		Op_AND(cpu.ReadFromAB())
-	func (cpu *CPU) X39_AND_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
-		Op_AND(cpu.ReadFromAB())
-	func (cpu *CPU) X21_AND_Indirect_X(){
+	case 3:
+		cpu.Op_AND(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X3D_AND_Absolute_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
+	case 4:
+		cpu.Op_AND(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X39_AND_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.Op_AND(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X21_AND_Indirect_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_AND(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X31_AND_Indirect_Y(){
-		// CPU_Cycles = 5
+	case 5:
+		cpu.Op_AND(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X31_AND_Indirect_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
-		Op_AND(cpu.ReadFromAB())
+	case 5:
+		cpu.Op_AND(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	ORA: OR Memory with Accumulator
 	//	A OR M -> A
