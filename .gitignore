@@ -22,9 +22,6 @@ other/
 backup/
 .vscode/
 
-# ignore CPU test folder
-nes/cpu/cpu2/
-
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
