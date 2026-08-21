@@ -10,7 +10,9 @@ case 4:
 }}
 */
 
-//Access
+//----------------------------------------
+//	Access
+//----------------------------------------
 
 //	STA: Store Accumulator in Memory
 //	A -> M
@@ -361,49 +363,59 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 	}
 }
 
+//----------------------------------------
+//	Transfer
+//----------------------------------------
+
+//	TAX: Transfer Accumulator to Index X
+//	A -> X
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
+
+func (cpu *CPU) XAA_TAX() {
+	// CPU_Cycles = 2
+	cpu.X = cpu.A
+	cpu.SetZNFlags(cpu.X)
+	cpu.CompleteInstruction()
+}
+
+//	TAY: Transfer Accumulator to Index Y
+//	A -> Y
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
+
+func (cpu *CPU) XA8_TAY() {
+	// CPU_Cycles = 2
+	cpu.Y = cpu.A
+	cpu.SetZNFlags(cpu.Y)
+	cpu.CompleteInstruction()
+}
+
+//	TXA: Transfer Index X to Accumulator
+//	X -> A
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
+
+func (cpu *CPU) X8A_TXA() {
+	// CPU_Cycles = 2
+	cpu.A = cpu.X
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+
+//	TYA: Transfer Index Y to Accumulator
+//	Y -> A
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
+
+func (cpu *CPU) X98_TYA() {
+	// CPU_Cycles = 2
+	cpu.A = cpu.Y
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+
 /*
-	//Transfer
-
-	//	TAX: Transfer Accumulator to Index X
-	//	A -> X
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
-
-	func (cpu *CPU) XAA_TAX
-		X = A
-		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 2
-
-	//	TAY: Transfer Accumulator to Index Y
-	//	A -> Y
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
-
-	func (cpu *CPU) XA8_TAY
-		Y = A
-		cpu.SetZNFlags(cpu.Y)
-		// CPU_Cycles = 2
-
-	//	TXA: Transfer Index X to Accumulator
-	//	X -> A
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
-
-	func (cpu *CPU) X8A_TXA
-		A = X
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-
-	//	TYA: Transfer Index Y to Accumulator
-	//	Y -> A
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
-
-	func (cpu *CPU) X98_TYA
-		A = Y
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-
 	//Arithmetic
 
 	//	ADC: Add Memory to Accumulator with Carry
@@ -442,7 +454,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		// CPU_Cycles = 5
 		cpu.GetAddress_IndirectY(true)
 		Op_ADC(cpu.ReadFromAB())
-
+/*
 	//	SBC: Subtract Memory from Accumulator with Borrow
 	//	A - M - C̅ -> A
 	//	N	Z	C	I	D	V
@@ -479,7 +491,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		// CPU_Cycles = 5
 		cpu.GetAddress_IndirectY(true)
 		Op_SBC(cpu.ReadFromAB())
-
+/*
 	//	INC: Increment Memory by One
 	//	M + 1 -> M
 	//	N	Z	C	I	D	V
@@ -501,7 +513,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		cpu.GetAddress_AbsoluteIndX(false)
 		Op_INC(AddressBus, cpu.ReadFromAB())
 		// CPU_Cycles = 7
-
+/*
 	//	DEC: Decrement Memory by One
 	//	M - 1 -> M
 	//	N	Z	C	I	D	V
@@ -523,7 +535,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		cpu.GetAddress_AbsoluteIndX(false)
 		Op_DEC(AddressBus, cpu.ReadFromAB())
 		// CPU_Cycles = 7
-
+/*
 	//	INX: Increment Index X by One
 	//	X + 1 -> X
 	//	N	Z	C	I	D	V
@@ -534,7 +546,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		// CPU_Cycles = 2
 		//MasterClockTick("inx")
 		cpu.SetZNFlags(cpu.X)
-
+/*
 	//	DEX: Decrement Index X by One
 	//	X - 1 -> X
 	//	N	Z	C	I	D	V
@@ -545,7 +557,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		// CPU_Cycles = 2
 		//MasterClockTick("dex")
 		cpu.SetZNFlags(cpu.X)
-
+/*
 	//	INY: Increment Index Y by One
 	//	Y + 1 -> Y
 	//	N	Z	C	I	D	V
@@ -556,7 +568,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		// CPU_Cycles = 2
 		//MasterClockTick("iny")
 		cpu.SetZNFlags(cpu.Y)
-
+/*
 	//	DEY: Decrement Index Y by One
 	//	Y - 1 -> Y
 	//	N	Z	C	I	D	V
@@ -567,7 +579,7 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 		// CPU_Cycles = 2
 		//MasterClockTick("dey")
 		cpu.SetZNFlags(cpu.Y)
-
+/*
 	//Shift
 
 	//	ASL: Shift Left One Bit (Memory or Accumulator)
