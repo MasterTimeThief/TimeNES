@@ -94,105 +94,85 @@ func (cpu *CPU) X91_STA_Indirect_Y() {
 //	+	+	-	-	-	-
 
 func (cpu *CPU) XA9_LDA_Immediate() {
+	// CPU_Cycles = 2
 	cpu.A = cpu.ReadFromPC()
 	cpu.SetZNFlags(cpu.A)
-	// CPU_Cycles = 2
-	switch cpu.subCycle {
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-		cpu.CompleteInstruction()
-	}
+	cpu.CompleteInstruction()
 }
 func (cpu *CPU) XA5_LDA_ZeroPage() {
-	cpu.GetAddress_ZeroPage()
-	cpu.A = cpu.ReadFromAB()
-	cpu.SetZNFlags(cpu.A)
 	// CPU_Cycles = 3
 	switch cpu.subCycle {
 	case 1:
+		cpu.GetAddress_ZeroPage()
 	case 2:
-	case 3:
-	case 4:
+		cpu.A = cpu.ReadFromAB()
+		cpu.SetZNFlags(cpu.A)
 		cpu.CompleteInstruction()
 	}
 }
 func (cpu *CPU) XB5_LDA_ZeroPage_X() {
-	cpu.GetAddress_ZeroPageX()
-	cpu.A = cpu.ReadFromAB()
-	cpu.SetZNFlags(cpu.A)
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1:
-	case 2:
+	case 1, 2:
+		cpu.GetAddress_ZeroPageX()
 	case 3:
-	case 4:
+		cpu.A = cpu.ReadFromAB()
+		cpu.SetZNFlags(cpu.A)
 		cpu.CompleteInstruction()
 	}
 }
 func (cpu *CPU) XAD_LDA_Absolute() {
-	cpu.GetAddress_Absolute()
-	cpu.A = cpu.ReadFromAB()
-	cpu.SetZNFlags(cpu.A)
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1:
-	case 2:
+	case 1, 2:
+		cpu.GetAddress_Absolute()
 	case 3:
-	case 4:
+		cpu.A = cpu.ReadFromAB()
+		cpu.SetZNFlags(cpu.A)
 		cpu.CompleteInstruction()
 	}
 }
 func (cpu *CPU) XBD_LDA_Absolute_X() {
-	cpu.GetAddress_AbsoluteX(true)
-	cpu.A = cpu.ReadFromAB()
-	cpu.SetZNFlags(cpu.A)
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1:
-	case 2:
-	case 3:
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
 	case 4:
+		cpu.A = cpu.ReadFromAB()
+		cpu.SetZNFlags(cpu.A)
 		cpu.CompleteInstruction()
 	}
 }
 func (cpu *CPU) XB9_LDA_Absolute_Y() {
-	cpu.GetAddress_AbsoluteY(true)
-	cpu.A = cpu.ReadFromAB()
-	cpu.SetZNFlags(cpu.A)
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1:
-	case 2:
-	case 3:
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
 	case 4:
+		cpu.A = cpu.ReadFromAB()
+		cpu.SetZNFlags(cpu.A)
 		cpu.CompleteInstruction()
 	}
 }
 func (cpu *CPU) XA1_LDA_Indirect_X() {
-	cpu.GetAddress_IndirectX()
-	cpu.A = cpu.ReadFromAB()
-	cpu.SetZNFlags(cpu.A)
 	// CPU_Cycles = 6
 	switch cpu.subCycle {
-	case 1:
-	case 2:
-	case 3:
-	case 4:
+	case 1, 2, 3, 4:
+		cpu.GetAddress_IndirectX()
+	case 5:
+		cpu.A = cpu.ReadFromAB()
+		cpu.SetZNFlags(cpu.A)
 		cpu.CompleteInstruction()
 	}
 }
 func (cpu *CPU) XB1_LDA_Indirect_Y() {
-	cpu.GetAddress_IndirectY(true)
-	cpu.A = cpu.ReadFromAB()
-	cpu.SetZNFlags(cpu.A)
 	// CPU_Cycles = 5
 	switch cpu.subCycle {
-	case 1:
-	case 2:
-	case 3:
-	case 4:
+	case 1, 2, 3, 4:
+		cpu.GetAddress_IndirectY(true)
+	case 5:
+		cpu.A = cpu.ReadFromAB()
+		cpu.SetZNFlags(cpu.A)
 		cpu.CompleteInstruction()
 	}
 }
