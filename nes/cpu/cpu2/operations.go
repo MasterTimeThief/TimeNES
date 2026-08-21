@@ -102,48 +102,48 @@ func (cpu *CPU) PullFlags() {
 }
 
 // Performs Arithmetic Shift Left onto value at Address
-func (cpu *CPU) Op_ASL(Address uint16) {
-	Value := bus.Read(Address)
+func (cpu *CPU) Op_ASL() {
+	Value := bus.Read(cpu.AddressBus)
 	cpu.flag_Carry = (Value >= 0x80)
 	Value <<= 1
-	bus.Write(Address, Value)
+	bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 
 }
 
 // Performs Arithmetic Shift Right onto value at Address
-func (cpu *CPU) Op_LSR(Address uint16) {
-	Value := bus.Read(Address)
+func (cpu *CPU) Op_LSR() {
+	Value := bus.Read(cpu.AddressBus)
 	cpu.flag_Carry = (Value & 1) != 0
 	Value >>= 1
-	bus.Write(Address, Value)
+	bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Left onto value at Address
-func (cpu *CPU) Op_ROL(Address uint16) {
-	Value := bus.Read(Address)
+func (cpu *CPU) Op_ROL() {
+	Value := bus.Read(cpu.AddressBus)
 	futureCarry := (Value >= 0x80)
 	Value <<= 1
 	if cpu.flag_Carry {
 		Value |= 1
 	}
 	//MasterClockTick("rol")
-	bus.Write(Address, Value)
+	bus.Write(cpu.AddressBus, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Right onto value at Address
-func (cpu *CPU) Op_ROR(Address uint16) {
-	Value := bus.Read(Address)
+func (cpu *CPU) Op_ROR() {
+	Value := bus.Read(cpu.AddressBus)
 	futureCarry := (Value & 1) != 0
 	Value >>= 1
 	if cpu.flag_Carry {
 		Value |= 0x80
 	}
 	//MasterClockTick("ror")
-	bus.Write(Address, Value)
+	bus.Write(cpu.AddressBus, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }

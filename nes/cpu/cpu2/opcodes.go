@@ -751,42 +751,82 @@ func (cpu *CPU) X88_DEY() {
 	cpu.CompleteInstruction()
 }
 
-/*
-	//Shift
+//Shift
 
-	//	ASL: Shift Left One Bit (Memory or Accumulator)
-	//	C <- [76543210] <- 0
-	//	N	Z	C	I	D	V
-	//	+	+	+	-	-	-
+//	ASL: Shift Left One Bit (Memory or Accumulator)
+//	C <- [76543210] <- 0
+//	N	Z	C	I	D	V
+//	+	+	+	-	-	-
 
-	func (cpu *CPU) X0A_ASL A
-		flag_Carry = A > 127
-		A <<= 1
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-	func (cpu *CPU) X06_ASL_ZeroPage(){
+func (cpu *CPU) X0A_ASL() {
+	// CPU_Cycles = 2
+	cpu.flag_Carry = cpu.A > 127
+	cpu.A <<= 1
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X06_ASL_ZeroPage() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_ASL(AddressBus)
-		// CPU_Cycles = 5
-	func (cpu *CPU) X0E_ASL_Absolute(){
+	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
+		cpu.Op_ASL()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X0E_ASL_Absolute() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_ASL(AddressBus)
-		// CPU_Cycles = 6
-	func (cpu *CPU) X16_ASL_ZeroPage_X(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.Op_ASL()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X16_ASL_ZeroPage_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_ASL(AddressBus)
-		// CPU_Cycles = 6
-	func (cpu *CPU) X1E_ASL_Absolute_X(){
-		cpu.GetAddress_AbsoluteIndX(false)
-		Op_ASL(AddressBus)
-		// CPU_Cycles = 7
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.Op_ASL()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X1E_ASL_Absolute_X() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
+		cpu.GetAddress_AbsoluteX(false)
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.Op_ASL()
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	LSR: Shift One Bit Right (Memory or Accumulator)
 	//	0 -> [76543210] -> C
 	//	N	Z	C	I	D	V
 	//	0	+	+	-	-	-
 
-	func (cpu *CPU) X4ALSR A
+	func (cpu *CPU) X4ALSR(){
 		flag_Carry = (A & 1) != 0
 		A >>= 1
 		cpu.SetZNFlags(cpu.A)
@@ -813,7 +853,7 @@ func (cpu *CPU) X88_DEY() {
 	//	N	Z	C	I	D	V
 	//	+	+	+	-	-	-
 
-	func (cpu *CPU) X2AROL A
+	func (cpu *CPU) X2AROL(){
 		futureCarry := (A >= 0x80)
 		A <<= 1
 		if flag_Carry {
@@ -844,7 +884,7 @@ func (cpu *CPU) X88_DEY() {
 	//	N	Z	C	I	D	V
 	//	+	+	+	-	-	-
 
-	func (cpu *CPU) X6AROR A
+	func (cpu *CPU) X6AROR(){
 		futureCarry := (A & 1) != 0
 		A >>= 1
 		if flag_Carry {
