@@ -213,39 +213,63 @@ func (cpu *CPU) X8E_STX_Absolute() {
 	}
 }
 
-/*
-	//	LDX: Load Index X with Memory
-	//	M -> X
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	LDX: Load Index X with Memory
+//	M -> X
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) XA2LDX_Immediate(){
-		X = cpu.ReadFromPC()
-		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 2
-	func (cpu *CPU) XA6LDX_ZeroPage(){
+func (cpu *CPU) XA2_LDX_Immediate() {
+	// CPU_Cycles = 2
+	cpu.X = cpu.ReadFromPC()
+	cpu.SetZNFlags(cpu.X)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XA6_LDX_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		X = cpu.ReadFromAB()
+	case 2:
+		cpu.X = cpu.ReadFromAB()
 		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 3
-	func (cpu *CPU) XAELDX_Absolute(){
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XAE_LDX_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		X = cpu.ReadFromAB()
+	case 3:
+		cpu.X = cpu.ReadFromAB()
 		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 4
-	func (cpu *CPU) XB6LDX_ZeroPage_Y(){
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XB6_LDX_ZeroPage_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageY()
-		X = cpu.ReadFromAB()
+	case 3:
+		cpu.X = cpu.ReadFromAB()
 		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 4
-	func (cpu *CPU) XBELDX_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
-		X = cpu.ReadFromAB()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XBE_LDX_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.X = cpu.ReadFromAB()
 		cpu.SetZNFlags(cpu.X)
+		cpu.CompleteInstruction()
+	}
+}
 
-
-		/*
+/*
 	//	STY: Store Index Y in Memory
 	//	Y -> M
 	//	N	Z	C	I	D	V
