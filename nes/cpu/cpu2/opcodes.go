@@ -820,33 +820,74 @@ func (cpu *CPU) X1E_ASL_Absolute_X() {
 	}
 }
 
-/*
-	//	LSR: Shift One Bit Right (Memory or Accumulator)
-	//	0 -> [76543210] -> C
-	//	N	Z	C	I	D	V
-	//	0	+	+	-	-	-
+//	LSR: Shift One Bit Right (Memory or Accumulator)
+//	0 -> [76543210] -> C
+//	N	Z	C	I	D	V
+//	0	+	+	-	-	-
 
-	func (cpu *CPU) X4ALSR(){
-		flag_Carry = (A & 1) != 0
-		A >>= 1
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-	func (cpu *CPU) X46_LSR_ZeroPage(){
+func (cpu *CPU) X4A_LSR() {
+	// CPU_Cycles = 2
+	cpu.flag_Carry = (cpu.A & 1) != 0
+	cpu.A >>= 1
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X46_LSR_ZeroPage() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_LSR(AddressBus)
-		// CPU_Cycles = 5
-	func (cpu *CPU) X4E_LSR_Absolute(){
+	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
+		cpu.Op_LSR()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X4E_LSR_Absolute() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_LSR(AddressBus)
-		// CPU_Cycles = 6
-	func (cpu *CPU) X56_LSR_ZeroPage_X(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.Op_LSR()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X56_LSR_ZeroPage_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_LSR(AddressBus)
-		// CPU_Cycles = 6
-	func (cpu *CPU) X5E_LSR_Absolute_X(){
-		cpu.GetAddress_AbsoluteIndX(false)
-		Op_LSR(AddressBus)
-		// CPU_Cycles = 7
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.Op_LSR()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X5E_LSR_Absolute_X() {
+	cpu.GetAddress_AbsoluteX(false)
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
+		cpu.GetAddress_AbsoluteX(false)
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.Op_LSR()
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	ROL: Rotate One Bit Left (Memory or Accumulator)
 	//	C <- [76543210] <- C
