@@ -699,50 +699,58 @@ func (cpu *CPU) XDE_DEC_Absolute_X() {
 	}
 }
 
-/*
-	//	INX: Increment Index X by One
-	//	X + 1 -> X
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	INX: Increment Index X by One
+//	X + 1 -> X
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) XE8_INX
-		X++
-		// CPU_Cycles = 2
-		//MasterClockTick("inx")
-		cpu.SetZNFlags(cpu.X)
-/*
-	//	DEX: Decrement Index X by One
-	//	X - 1 -> X
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+func (cpu *CPU) XE8_INX() {
+	// CPU_Cycles = 2
+	cpu.ReadFromAB() // Dummy Read
+	cpu.X++
+	cpu.SetZNFlags(cpu.X)
+	cpu.CompleteInstruction()
+}
 
-	func (cpu *CPU) XCA_DEX
-		X--
-		// CPU_Cycles = 2
-		//MasterClockTick("dex")
-		cpu.SetZNFlags(cpu.X)
-/*
-	//	INY: Increment Index Y by One
-	//	Y + 1 -> Y
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	DEX: Decrement Index X by One
+//	X - 1 -> X
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) XC8_INY
-		Y++
-		// CPU_Cycles = 2
-		//MasterClockTick("iny")
-		cpu.SetZNFlags(cpu.Y)
-/*
-	//	DEY: Decrement Index Y by One
-	//	Y - 1 -> Y
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+func (cpu *CPU) XCA_DEX() {
+	// CPU_Cycles = 2
+	cpu.ReadFromAB() // Dummy Read
+	cpu.X--
+	cpu.SetZNFlags(cpu.X)
+	cpu.CompleteInstruction()
+}
 
-	func (cpu *CPU) X88_DEY
-		Y--
-		// CPU_Cycles = 2
-		//MasterClockTick("dey")
-		cpu.SetZNFlags(cpu.Y)
+//	INY: Increment Index Y by One
+//	Y + 1 -> Y
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
+
+func (cpu *CPU) XC8_INY() {
+	// CPU_Cycles = 2
+	cpu.ReadFromAB() // Dummy Read
+	cpu.Y++
+	cpu.SetZNFlags(cpu.Y)
+	cpu.CompleteInstruction()
+}
+
+//	DEY: Decrement Index Y by One
+//	Y - 1 -> Y
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
+
+func (cpu *CPU) X88_DEY() {
+	// CPU_Cycles = 2
+	cpu.ReadFromAB() // Dummy Read
+	cpu.Y--
+	cpu.SetZNFlags(cpu.Y)
+	cpu.CompleteInstruction()
+}
+
 /*
 	//Shift
 
