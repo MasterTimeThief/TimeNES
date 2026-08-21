@@ -590,6 +590,10 @@ func (cpu *CPU) XE6_INC_ZeroPage() {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
 		cpu.Op_INC(cpu.ReadFromAB())
 		cpu.CompleteInstruction()
 	}
@@ -600,6 +604,10 @@ func (cpu *CPU) XEE_INC_Absolute() {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
 		cpu.Op_INC(cpu.ReadFromAB())
 		cpu.CompleteInstruction()
 	}
@@ -610,6 +618,10 @@ func (cpu *CPU) XF6_INC_ZeroPage_X() {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
 		cpu.Op_INC(cpu.ReadFromAB())
 		cpu.CompleteInstruction()
 	}
@@ -627,28 +639,60 @@ func (cpu *CPU) XFE_INC_Absolute_X() {
 	}
 }
 
-/*
-	//	DEC: Decrement Memory by One
-	//	M - 1 -> M
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	DEC: Decrement Memory by One
+//	M - 1 -> M
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) XC6_DEC_ZeroPage(){
-		cpu.GetAddress_ZeroPage()
-		cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
-		// CPU_Cycles = 5
-	func (cpu *CPU) XCE_DEC_Absolute(){
-		cpu.GetAddress_Absolute()
-		cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) XD6_DEC_ZeroPage_X
-		cpu.GetAddress_ZeroPageX()
-		cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) XDE_DEC_Absolute_X(){
-		cpu.GetAddress_AbsoluteIndX(false)
-		cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
-		// CPU_Cycles = 7
+func (cpu *CPU) XC6_DEC_ZeroPage() {
+	cpu.GetAddress_ZeroPage()
+	cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XCE_DEC_Absolute() {
+	cpu.GetAddress_Absolute()
+	cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XD6_DEC_ZeroPage_X() {
+	cpu.GetAddress_ZeroPageX()
+	cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XDE_DEC_Absolute_X() {
+	cpu.GetAddress_AbsoluteIndX(false)
+	cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	INX: Increment Index X by One
 	//	X + 1 -> X
