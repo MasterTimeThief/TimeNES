@@ -959,37 +959,77 @@ func (cpu *CPU) X3E_ROL_Absolute_X() {
 	}
 }
 
-/*
-	//	ROR: Rotate One Bit Right (Memory or Accumulator)
-	//	C -> [76543210] -> C
-	//	N	Z	C	I	D	V
-	//	+	+	+	-	-	-
+//	ROR: Rotate One Bit Right (Memory or Accumulator)
+//	C -> [76543210] -> C
+//	N	Z	C	I	D	V
+//	+	+	+	-	-	-
 
-	func (cpu *CPU) X6A_ROR(){
-		futureCarry := (A & 1) != 0
-		A >>= 1
-		if flag_Carry {
-			A |= 0x80
-		}
-		flag_Carry = futureCarry
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-	func (cpu *CPU) X66_ROR_ZeroPage(){
+func (cpu *CPU) X6A_ROR() {
+	// CPU_Cycles = 2
+	futureCarry := (cpu.A & 1) != 0
+	cpu.A >>= 1
+	if cpu.flag_Carry {
+		cpu.A |= 0x80
+	}
+	cpu.flag_Carry = futureCarry
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X66_ROR_ZeroPage() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_ROR(AddressBus)
-		// CPU_Cycles = 5
-	func (cpu *CPU) X6E_ROR_Absolute(){
+	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
+		cpu.Op_ROR()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X6E_ROR_Absolute() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_ROR(AddressBus)
-		// CPU_Cycles = 6
-	func (cpu *CPU) X76_ROR_ZeroPage_X(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.Op_ROR()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X76_ROR_ZeroPage_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_ROR(AddressBus)
-		// CPU_Cycles = 6
-	func (cpu *CPU) X7E_ROR_Absolute_X(){
-		cpu.GetAddress_AbsoluteIndX(false)
-		Op_ROR(AddressBus)
-		// CPU_Cycles = 7
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.Op_ROR()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X7E_ROR_Absolute_X() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
+		cpu.GetAddress_AbsoluteX(false)
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.Op_ROR()
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//Bitwise
 
