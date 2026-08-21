@@ -498,43 +498,87 @@ func (cpu *CPU) X71_ADC_Indirect_Y() {
 	}
 }
 
-/*
-	//	SBC: Subtract Memory from Accumulator with Borrow
-	//	A - M - C̅ -> A
-	//	N	Z	C	I	D	V
-	//	+	+	+	-	-	+
+//	SBC: Subtract Memory from Accumulator with Borrow
+//	A - M - C̅ -> A
+//	N	Z	C	I	D	V
+//	+	+	+	-	-	+
 
-	func (cpu *CPU) XE9_SBC_Immediate(){
-		Op_SBC(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) XE5_SBC_ZeroPage(){
+func (cpu *CPU) XE9_SBC_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_SBC(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XE5_SBC_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) XED_SBC_Absolute(){
+	case 2:
+		cpu.Op_SBC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XED_SBC_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) XF5_SBC_ZeroPage_X(){
+	case 3:
+		cpu.Op_SBC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XF5_SBC_ZeroPage_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) XFD_SBC_Absolute_X(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndX(true)
-		Op_SBC(cpu.ReadFromAB())
-	func (cpu *CPU) XF9_SBC_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
-		Op_SBC(cpu.ReadFromAB())
-	func (cpu *CPU) XE1_SBC_Indirect_X(){
+	case 3:
+		cpu.Op_SBC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XFD_SBC_Absolute_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
+	case 4:
+		cpu.Op_SBC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XF9_SBC_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.Op_SBC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XE1_SBC_Indirect_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) XF1_SBC_Indirect_Y(){
-		// CPU_Cycles = 5
+	case 5:
+		cpu.Op_SBC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XF1_SBC_Indirect_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
-		Op_SBC(cpu.ReadFromAB())
+	case 5:
+		cpu.Op_SBC(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	INC: Increment Memory by One
 	//	M + 1 -> M
@@ -1666,37 +1710,37 @@ func (cpu *CPU) X71_ADC_Indirect_Y() {
 	func (cpu *CPU) XE7ISC_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		Op_INC(AddressBus, cpu.ReadFromAB())
-		Op_SBC(cpu.ReadFromAB())
+		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 5
 	func (cpu *CPU) XF7ISC_ZeroPage_X(){
 		cpu.GetAddress_ZeroPageX()
 		Op_INC(AddressBus, cpu.ReadFromAB())
-		Op_SBC(cpu.ReadFromAB())
+		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 6
 	func (cpu *CPU) XEFISC_Absolute(){
 		cpu.GetAddress_Absolute()
 		Op_INC(AddressBus, cpu.ReadFromAB())
-		Op_SBC(cpu.ReadFromAB())
+		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 6
 	func (cpu *CPU) XFFISC_Absolute_X(){
 		cpu.GetAddress_AbsoluteIndX(false)
 		Op_INC(AddressBus, cpu.ReadFromAB())
-		Op_SBC(cpu.ReadFromAB())
+		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 7
 	func (cpu *CPU) XFBISC_Absolute_Y(){
 		cpu.GetAddress_AbsoluteIndY(false)
 		Op_INC(AddressBus, cpu.ReadFromAB())
-		Op_SBC(cpu.ReadFromAB())
+		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 7
 	func (cpu *CPU) XE3ISC_Indirect_X(){
 		cpu.GetAddress_IndirectX()
 		Op_INC(AddressBus, cpu.ReadFromAB())
-		Op_SBC(cpu.ReadFromAB())
+		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 8
 	func (cpu *CPU) XF3ISC_Indirect_Y(){
 		cpu.GetAddress_IndirectY(false)
 		Op_INC(AddressBus, cpu.ReadFromAB())
-		Op_SBC(cpu.ReadFromAB())
+		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 8
 
 	//Immediates (unofficial)
@@ -1751,7 +1795,7 @@ func (cpu *CPU) X71_ADC_Indirect_Y() {
 		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 2
 	func (cpu *CPU) XEBSBC_Immediate(){
-		Op_SBC(cpu.ReadFromPC())
+		cpu.Op_SBC(cpu.ReadFromPC())
 		// CPU_Cycles = 2
 
 	func (cpu *CPU) X9BTAS (SHS)_Absolute_Y(){
