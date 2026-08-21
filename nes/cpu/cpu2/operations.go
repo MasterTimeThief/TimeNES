@@ -149,16 +149,16 @@ func (cpu *CPU) Op_ROR(Address uint16) {
 }
 
 // Increment Value, and save to Address
-func (cpu *CPU) Op_INC(Address uint16, Value byte) {
+func (cpu *CPU) Op_INC(Value byte) {
 	Value++
-	bus.Write(Address, Value)
+	bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Decrement Value, and save to Address
-func (cpu *CPU) Op_DEC(Address uint16, Value byte) {
+func (cpu *CPU) Op_DEC(Value byte) {
 	Value--
-	bus.Write(Address, Value)
+	bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 }
 
