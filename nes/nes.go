@@ -119,6 +119,7 @@ func InitGame(newUI *ebitenui.UI) {
 	ebiten.SetWindowSize(common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale)
 	ebiten.SetWindowTitle("TimeNES")
 	ebiten.SetFullscreen(FullscreenMode)
+	common.SetWindowIcon()
 	//ebiten.SetTPS(ebiten.SyncWithFPS)
 
 	Emulator = &Game{

@@ -4,10 +4,12 @@ import (
 	"embed"
 	"image"
 	"image/png"
+	"io/fs"
 	"log"
 	"os"
 	"time"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/sqweek/dialog"
 	"golang.org/x/image/draw"
@@ -20,6 +22,7 @@ var ROMLoaded bool = false
 //go:embed assets
 var embeddedAssets embed.FS
 var FontUI, FontMenu text.Face
+var icons []image.Image
 
 func SelectROM(fp string) {
 	Filepath = fp
@@ -77,6 +80,9 @@ func LoadFont(path string, size float64) (text.Face, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func(f fs.File) {
+		_ = f.Close()
+	}(fontFile)
 
 	s, err := text.NewGoTextFaceSource(fontFile)
 	if err != nil {
@@ -88,4 +94,32 @@ func LoadFont(path string, size float64) (text.Face, error) {
 		Source: s,
 		Size:   size,
 	}, nil
+}
+
+func LoadIcon(path string) image.Image {
+	iconFile, err := embeddedAssets.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer func(f fs.File) {
+		_ = f.Close()
+	}(iconFile)
+
+	icon, err := png.Decode(iconFile)
+	if err != nil {
+		return nil
+	}
+
+	return icon
+}
+
+func SetWindowIcon() {
+	//var iconSlice []image.Image
+	icons = append(icons, LoadIcon("assets/icons/16.png"))
+	icons = append(icons, LoadIcon("assets/icons/32.png"))
+	icons = append(icons, LoadIcon("assets/icons/48.png"))
+	icons = append(icons, LoadIcon("assets/icons/64.png"))
+	icons = append(icons, LoadIcon("assets/icons/128.png"))
+	icons = append(icons, LoadIcon("assets/icons/256.png"))
+	ebiten.SetWindowIcon(icons)
 }
