@@ -7,7 +7,7 @@ case 2:
 case 3:
 case 4:
 	cpu.CompleteInstruction()
-}
+}}
 */
 
 //Access
@@ -177,27 +177,43 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 	}
 }
 
-/*
-	//	STX: Store Index X in Memory
-	//	X -> M
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
+//	STX: Store Index X in Memory
+//	X -> M
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
 
-	func (cpu *CPU) X86_STX_ZeroPage(){
+func (cpu *CPU) X86_STX_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		cpu.WriteToAB(X)
-		// CPU_Cycles = 3
-	func (cpu *CPU) X96_STX_ZeroPage_Y(){
+	case 2:
+		cpu.WriteToAB(cpu.X)
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X96_STX_ZeroPage_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageY()
-		cpu.WriteToAB(X)
-		// CPU_Cycles = 4
-	func (cpu *CPU) X8E_STX_Absolute(){
+	case 3:
+		cpu.WriteToAB(cpu.X)
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X8E_STX_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		cpu.WriteToAB(X)
-		// CPU_Cycles = 4
+	case 3:
+		cpu.WriteToAB(cpu.X)
+		cpu.CompleteInstruction()
+	}
+}
 
-
-		/*
+/*
 	//	LDX: Load Index X with Memory
 	//	M -> X
 	//	N	Z	C	I	D	V
@@ -205,28 +221,28 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 
 	func (cpu *CPU) XA2LDX_Immediate(){
 		X = cpu.ReadFromPC()
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 2
 	func (cpu *CPU) XA6LDX_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		X = cpu.ReadFromAB()
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 3
 	func (cpu *CPU) XAELDX_Absolute(){
 		cpu.GetAddress_Absolute()
 		X = cpu.ReadFromAB()
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 4
 	func (cpu *CPU) XB6LDX_ZeroPage_Y(){
 		cpu.GetAddress_ZeroPageY()
 		X = cpu.ReadFromAB()
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 4
 	func (cpu *CPU) XBELDX_Absolute_Y(){
 		// CPU_Cycles = 4
 		cpu.GetAddress_AbsoluteIndY(true)
 		X = cpu.ReadFromAB()
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 
 
 		/*
@@ -237,15 +253,15 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 
 	func (cpu *CPU) X84STY_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
-		cpu.WriteToAB(Y)
+		cpu.WriteToAB(cpu.Y)
 		// CPU_Cycles = 3
 	func (cpu *CPU) X94STY_ZeroPage_X(){
 		cpu.GetAddress_ZeroPageX()
-		cpu.WriteToAB(Y)
+		cpu.WriteToAB(cpu.Y)
 		// CPU_Cycles = 4
 	func (cpu *CPU) X8CSTY_Absolute(){
 		cpu.GetAddress_Absolute()
-		cpu.WriteToAB(Y)
+		cpu.WriteToAB(cpu.Y)
 		// CPU_Cycles = 4
 
 		/*
@@ -256,28 +272,28 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 
 	func (cpu *CPU) XA0LDY_Immediate(){
 		Y = cpu.ReadFromPC()
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 		// CPU_Cycles = 2
 	func (cpu *CPU) XA4LDY_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 		// CPU_Cycles = 3
 	func (cpu *CPU) XACLDY_Absolute(){
 		cpu.GetAddress_Absolute()
 		Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 		// CPU_Cycles = 4
 	func (cpu *CPU) XB4LDY_ZeroPage_X(){
 		cpu.GetAddress_ZeroPageX()
 		Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 		// CPU_Cycles = 4
 	func (cpu *CPU) XBCLDY_Absolute_X(){
 		// CPU_Cycles = 4
 		cpu.GetAddress_AbsoluteIndX(true)
 		Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 
 
 		/*
@@ -290,7 +306,7 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 
 	func (cpu *CPU) XAATAX
 		X = A
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 2
 
 	//	TAY: Transfer Accumulator to Index Y
@@ -300,7 +316,7 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 
 	func (cpu *CPU) XA8TAY
 		Y = A
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 		// CPU_Cycles = 2
 
 	//	TXA: Transfer Index X to Accumulator
@@ -452,7 +468,7 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 		X++
 		// CPU_Cycles = 2
 		//MasterClockTick("inx")
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 
 	//	DEX: Decrement Index X by One
 	//	X - 1 -> X
@@ -463,7 +479,7 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 		X--
 		// CPU_Cycles = 2
 		//MasterClockTick("dex")
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 
 	//	INY: Increment Index Y by One
 	//	Y + 1 -> Y
@@ -474,7 +490,7 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 		Y++
 		// CPU_Cycles = 2
 		//MasterClockTick("iny")
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 
 	//	DEY: Decrement Index Y by One
 	//	Y - 1 -> Y
@@ -485,7 +501,7 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 		Y--
 		// CPU_Cycles = 2
 		//MasterClockTick("dey")
-		cpu.SetZNFlags(Y)
+		cpu.SetZNFlags(cpu.Y)
 
 	//Shift
 
@@ -1041,7 +1057,7 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 
 	func (cpu *CPU) XBATSX
 		X = SP
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 2
 
 	//	TXS: Transfer Index X to Stack Register
@@ -1273,38 +1289,38 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 		cpu.GetAddress_ZeroPage()
 		cpu.A = cpu.ReadFromAB()
 		X = A
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 3
 	func (cpu *CPU) XB7LAX_ZeroPage_Y(){
 		cpu.GetAddress_ZeroPageY()
 		cpu.A = cpu.ReadFromAB()
 		X = A
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 4
 	func (cpu *CPU) XAFLAX_Absolute(){
 		cpu.GetAddress_Absolute()
 		cpu.A = cpu.ReadFromAB()
 		X = A
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 4
 	func (cpu *CPU) XBFLAX_Absolute_Y(){
 		// CPU_Cycles = 4
 		cpu.GetAddress_AbsoluteIndY(true)
 		cpu.A = cpu.ReadFromAB()
 		X = A
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 	func (cpu *CPU) XA3LAX_Indirect_X(){
 		cpu.GetAddress_IndirectX()
 		cpu.A = cpu.ReadFromAB()
 		X = A
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 6
 	func (cpu *CPU) XB3LAX_Indirect_Y(){
 		// CPU_Cycles = 5
 		cpu.GetAddress_IndirectY(true)
 		cpu.A = cpu.ReadFromAB()
 		X = A
-		cpu.SetZNFlags(X)
+		cpu.SetZNFlags(cpu.X)
 
 	//SLO: ASL + ORA
 
@@ -1610,8 +1626,8 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 	func (cpu *CPU) XCBSBX_Immediate(){
 		//(A AND X) - oper -> X
 		X = (A & X) - cpu.ReadFromPC()
-		Op_CMP(X)
-		cpu.SetZNFlags(X)
+		Op_CMP(cpu.X)
+		cpu.SetZNFlags(cpu.X)
 		// CPU_Cycles = 2
 	func (cpu *CPU) XEBSBC_Immediate(){
 		Op_SBC(cpu.ReadFromPC())
