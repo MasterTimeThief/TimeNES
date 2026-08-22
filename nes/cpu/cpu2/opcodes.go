@@ -1308,45 +1308,89 @@ func (cpu *CPU) X2C_BIT_Absolute() {
 	}
 }
 
-/*
-	//Compare
+//Compare
 
-	//	CMP: Compare Memory with Accumulator
-	//	A - M
-	//	N	Z	C	I	D	V
-	//	+	+	+	-	-	-
+//	CMP: Compare Memory with Accumulator
+//	A - M
+//	N	Z	C	I	D	V
+//	+	+	+	-	-	-
 
-	func (cpu *CPU) XC9_CMP_Immediate(){
-		Op_CMP(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) XC5_CMP_ZeroPage(){
+func (cpu *CPU) XC9_CMP_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_CMP(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XC5_CMP_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_CMP(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) XCD_CMP_Absolute(){
+	case 2:
+		cpu.Op_CMP(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XCD_CMP_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_CMP(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) XD5_CMP_ZeroPage_X(){
+	case 3:
+		cpu.Op_CMP(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XD5_CMP_ZeroPage_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_CMP(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) XDD_CMP_Absolute_X(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndX(true)
-		Op_CMP(cpu.ReadFromAB())
-	func (cpu *CPU) XD9_CMP_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
-		Op_CMP(cpu.ReadFromAB())
-	func (cpu *CPU) XC1_CMP_Indirect_X(){
+	case 3:
+		cpu.Op_CMP(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XDD_CMP_Absolute_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
+	case 4:
+		cpu.Op_CMP(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XD9_CMP_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.Op_CMP(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XC1_CMP_Indirect_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_CMP(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) XD1_CMP_Indirect_Y(){
-		// CPU_Cycles = 5
+	case 5:
+		cpu.Op_CMP(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XD1_CMP_Indirect_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
-		Op_CMP(cpu.ReadFromAB())
+	case 5:
+		cpu.Op_CMP(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	CPX: Compare Memory and Index X
 	//	X - M
