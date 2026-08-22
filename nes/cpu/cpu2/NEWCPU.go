@@ -3,7 +3,6 @@ package cpu2
 import (
 	"fmt"
 	"mtt/timenes/nes/apu"
-	c "mtt/timenes/nes/cpu"
 	"mtt/timenes/nes/ppu"
 )
 
@@ -74,7 +73,7 @@ func (cpu *CPU) ResetCPU() {
 func (cpu *CPU) CPU_Cycle() {
 
 	if cpu.subCycle == 0 {
-		cpu.SetOpcode(c.ReadFromPC())
+		cpu.SetOpcode(cpu.ReadFromPC())
 
 		if cpu.BreakSource != 0 {
 			cpu.SetOpcode(0x00)
@@ -124,6 +123,13 @@ func (cpu *CPU) RunInstruction() {
 	case 0xF0:
 		cpu.OpcodeFX()
 	}
+
+	//Temporary
+	ppu.Emulate_PPU()
+	ppu.Emulate_PPU()
+	ppu.Emulate_PPU()
+
+	apu.Emulate_APU()
 }
 
 func (cpu *CPU) Opcode0X() {
@@ -157,7 +163,6 @@ func (cpu *CPU) Opcode0X() {
 		cpu.UnknownOpcode()
 	}
 }
-
 func (cpu *CPU) Opcode1X() {
 	switch cpu.opcode & 0xF {
 	case 0x0:
