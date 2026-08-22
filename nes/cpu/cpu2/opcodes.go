@@ -1194,43 +1194,87 @@ func (cpu *CPU) X11_ORA_Indirect_Y() {
 	}
 }
 
-/*
-	//	EOR: Exclusive-OR Memory with Accumulator
-	//	A EOR M -> A
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	EOR: Exclusive-OR Memory with Accumulator
+//	A EOR M -> A
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) X49_EOR_Immediate(){
-		Op_EOR(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) X45_EOR_ZeroPage(){
+func (cpu *CPU) X49_EOR_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_EOR(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X45_EOR_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) X4D_EOR_Absolute(){
+	case 2:
+		cpu.Op_EOR(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X4D_EOR_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X55_EOR_ZeroPage_X(){
+	case 3:
+		cpu.Op_EOR(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X55_EOR_ZeroPage_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X5D_EOR_Absolute_X(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndX(true)
-		Op_EOR(cpu.ReadFromAB())
-	func (cpu *CPU) X59_EOR_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
-		Op_EOR(cpu.ReadFromAB())
-	func (cpu *CPU) X41_EOR_Indirect_X(){
+	case 3:
+		cpu.Op_EOR(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X5D_EOR_Absolute_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
+	case 4:
+		cpu.Op_EOR(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X59_EOR_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.Op_EOR(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X41_EOR_Indirect_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X51_EOR_Indirect_Y(){
-		// CPU_Cycles = 5
+	case 5:
+		cpu.Op_EOR(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X51_EOR_Indirect_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
-		Op_EOR(cpu.ReadFromAB())
+	case 5:
+		cpu.Op_EOR(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	BIT: Test Bits in Memory with Accumulator
 	//	bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V);
