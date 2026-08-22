@@ -417,7 +417,9 @@ func (cpu *CPU) X98_TYA() {
 	cpu.CompleteInstruction()
 }
 
-//Arithmetic
+//----------------------------------------
+//	Arithmetic
+//----------------------------------------
 
 //	ADC: Add Memory to Accumulator with Carry
 //	A + M + C -> A, C
@@ -753,7 +755,9 @@ func (cpu *CPU) X88_DEY() {
 	cpu.CompleteInstruction()
 }
 
-//Shift
+//----------------------------------------
+//	Shift
+//----------------------------------------
 
 //	ASL: Shift Left One Bit (Memory or Accumulator)
 //	C <- [76543210] <- 0
@@ -1032,7 +1036,9 @@ func (cpu *CPU) X7E_ROR_Absolute_X() {
 	}
 }
 
-//Bitwise
+//----------------------------------------
+//	Bitwise
+//----------------------------------------
 
 //	AND: AND Memory with Accumulator
 //	A AND M -> A
@@ -1310,7 +1316,9 @@ func (cpu *CPU) X2C_BIT_Absolute() {
 	}
 }
 
-//Compare
+//----------------------------------------
+//	Compare
+//----------------------------------------
 
 //	CMP: Compare Memory with Accumulator
 //	A - M
@@ -1455,7 +1463,9 @@ func (cpu *CPU) XCC_CPY_Absolute() {
 	}
 }
 
-//Branch
+//----------------------------------------
+//	Branch
+//----------------------------------------
 
 //	BCC: Branch on Carry Clear
 //	branch on C = 0
@@ -1553,7 +1563,9 @@ func (cpu *CPU) X70_BVS() {
 	}
 }
 
-//Jump
+//----------------------------------------
+//	Jump
+//----------------------------------------
 
 //	JMP: Jump to New Location
 //	operand 1st byte -> PCL
@@ -1614,22 +1626,30 @@ func (cpu *CPU) X20_JSR() {
 	}
 }
 
+//	RTS: Return from Subroutine
+//	pull PC, PC+1 -> PC
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) X60_RTS() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1:
+		cpu.ReadFromPC() // Dummy read to advance PC
+		cpu.AddressBus = cpu.PC
+	case 2:
+		cpu.SP--
+		cpu.Pull() // Dummy Read (Pull)
+	case 3: // Target byte low
+		cpu.DL = cpu.Pull()
+	case 4: // Target byte high
+		cpu.PC = cpu.BuildAddress(cpu.DL, cpu.Pull())
+	case 5:
+		cpu.ReadFromPC() // Dummy read to advance PC
+	}
+}
+
 /*
-	//	RTS: Return from Subroutine
-	//	pull PC, PC+1 -> PC
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) X60RTS
-		temp_low := Pull()
-		temp_high := Pull()
-		//MasterClockTick("rts Pull1")
-		//MasterClockTick("rts Pull2")
-		PC = BuildAddress(temp_low, temp_high)
-		PC++
-		//MasterClockTick("rts pc++")
-		// CPU_Cycles = 6
-
 	//	BRK: Force Break
 	//	BRK initiates a software interrupt similar to a hardware
 	//	interrupt (IRQ). The return address pushed to the stack is
@@ -1661,7 +1681,7 @@ func (cpu *CPU) X20_JSR() {
 		PC = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
 		DoNMI = false
 		// CPU_Cycles = 7
-
+/*
 	//	RTI: Return from Interrupt
 	//	The status register is pulled with the break flag
 	//	and bit 5 ignored. Then PC is pulled from the stack.
@@ -1684,8 +1704,10 @@ func (cpu *CPU) X20_JSR() {
 		temp_high := Pull()
 		PC = BuildAddress(temp_low, temp_high)
 		// CPU_Cycles = 6
-
-	//Stack
+/*
+//----------------------------------------
+	//	Stack
+//----------------------------------------
 
 	//	PHA: Push Accumulator on Stack
 	//	push A
@@ -1747,8 +1769,10 @@ func (cpu *CPU) X20_JSR() {
 	func (cpu *CPU) X9ATXS
 		SP = X
 		// CPU_Cycles = 2
-
-	//Flags
+/*
+//----------------------------------------
+	//	Flags
+//----------------------------------------
 
 	//	CLC: Clear Carry Flag
 	//	0 -> C
@@ -1819,8 +1843,10 @@ func (cpu *CPU) X20_JSR() {
 		flag_Overflow = false
 		//MasterClockTick("clv")
 		// CPU_Cycles = 2
-
-	//Other
+/*
+//----------------------------------------
+	//	Other
+//----------------------------------------
 
 	//	NOP: No Operation
 	//	N	Z	C	I	D	V
