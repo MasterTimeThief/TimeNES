@@ -71,22 +71,19 @@ func (cpu *CPU) Branch(condition bool) {
 	}
 }
 
+// Store to the stack, and decrement the stack pointer
 func (cpu *CPU) Push(Value byte) {
-	//Store to the stack, and decrement the stack pointer
 	bus.Write(uint16(cpu.SP)+0x100, Value)
-	////MasterClockTick("push")
 	cpu.SP--
 }
 
+// Increment the stack pointer, and read from the stack
 func (cpu *CPU) Pull() byte {
-	//Increment the stack pointer, and read from the stack
 	cpu.SP++
-	//MasterClockTick("pull SP++")
-	temp := bus.Read(uint16(cpu.SP) + 0x100)
-	//MasterClockTick("pull")
-	return temp
+	return bus.Read(uint16(cpu.SP) + 0x100)
 }
 
+// Push the Status Register to the Stack
 func (cpu *CPU) PushFlags() {
 	temp := byte(0)
 	temp += byte(common.Ternary(cpu.flag_Carry, 0x01, 0x00))
@@ -98,9 +95,9 @@ func (cpu *CPU) PushFlags() {
 	temp += byte(common.Ternary(cpu.flag_Overflow, 0x40, 0x00))
 	temp += byte(common.Ternary(cpu.flag_Negative, 0x80, 0x00))
 	cpu.Push(temp)
-
 }
 
+// Pull the Status Register from the Stack
 func (cpu *CPU) PullFlags() {
 	temp := cpu.Pull()
 	cpu.flag_Carry = (temp & 0x01) != 0
@@ -110,7 +107,6 @@ func (cpu *CPU) PullFlags() {
 	cpu.flag_B = (temp & 0x10) != 0
 	cpu.flag_Overflow = (temp & 0x40) != 0
 	cpu.flag_Negative = (temp & 0x80) != 0
-	//MasterClockTick("pull flags")
 }
 
 // Performs Arithmetic Shift Left onto value at Address
@@ -120,7 +116,6 @@ func (cpu *CPU) Op_ASL() {
 	Value <<= 1
 	bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
-
 }
 
 // Performs Arithmetic Shift Right onto value at Address
@@ -140,7 +135,6 @@ func (cpu *CPU) Op_ROL() {
 	if cpu.flag_Carry {
 		Value |= 1
 	}
-	//MasterClockTick("rol")
 	bus.Write(cpu.AddressBus, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
@@ -154,7 +148,6 @@ func (cpu *CPU) Op_ROR() {
 	if cpu.flag_Carry {
 		Value |= 0x80
 	}
-	//MasterClockTick("ror")
 	bus.Write(cpu.AddressBus, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
@@ -231,9 +224,8 @@ func (cpu *CPU) Op_CPY(Value byte) {
 	cpu.flag_Negative = ((cpu.Y - Value) >= 0x80)
 }
 
-// Uhh
+// Bit Test
 func (cpu *CPU) Op_BIT(Value byte) {
-	//Bit Test
 	cpu.flag_Zero = ((cpu.A & Value) == 0)
 	cpu.flag_Negative = ((Value & 0x80) != 0)
 	cpu.flag_Overflow = ((Value & 0x40) != 0)

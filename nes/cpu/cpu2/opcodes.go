@@ -1,5 +1,7 @@
 package cpu2
 
+import "mtt/timenes/nes/bus"
+
 /*
 switch cpu.subCycle {
 case 1:
@@ -1551,40 +1553,67 @@ func (cpu *CPU) X70_BVS() {
 	}
 }
 
-/*
-	//Jump
+//Jump
 
-	//	JMP: Jump to New Location
-	//	operand 1st byte -> PCL
-	//	operand 2nd byte -> PCH
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
+//	JMP: Jump to New Location
+//	operand 1st byte -> PCL
+//	operand 2nd byte -> PCH
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
 
-	func (cpu *CPU) X4CJMP
-		cpu.GetAddress_Absolute(true)
-		PC = AddressBus
-		// CPU_Cycles = 3
+func (cpu *CPU) X4C_JMP() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
+		cpu.GetAddress_Absolute()
+	case 2:
+		cpu.GetAddress_Absolute()
+		cpu.PC = cpu.AddressBus
+		cpu.CompleteInstruction()
+	}
+}
 
-	func (cpu *CPU) X6CJMP Indirect
-		cpu.GetAddress_Indirect()
-		PC = AddressBus
-		// CPU_Cycles = 5 //TODO: What the fuck
+func (cpu *CPU) X6C_JMP_Indirect() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2:
+		cpu.GetAddress_Absolute()
+	case 3:
+		cpu.SB = cpu.ReadFromAB()
+	case 4:
+		cpu.DL = bus.Read((cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + 1) & 0xFF))
+		cpu.PC = cpu.BuildAddress(cpu.SB, cpu.DL)
+		cpu.CompleteInstruction()
+	}
+}
 
-	//	JSR: Jump to New Location Saving Return Address
-	//	push (PC+2),
-	//	operand 1st byte -> PCL
-	//	operand 2nd byte -> PCH
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
+//	JSR: Jump to New Location Saving Return Address
+//	push (PC+2),
+//	operand 1st byte -> PCL
+//	operand 2nd byte -> PCH
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
 
-	func (cpu *CPU) X20JSR
-		temp_low := cpu.ReadFromPC()
-		Push(byte(PC / 0x100))
-		Push(byte(PC))
-		temp_high := cpu.ReadFromPC()
-		PC = BuildAddress(temp_low, temp_high)
-		//MasterClockTick("jsr")
-		// CPU_Cycles = 6
+func (cpu *CPU) X20_JSR() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1: // fetch the byte that will be PC low
+		//cpu.AddressBus = cpu.PC
+		cpu.DL = cpu.ReadFromPC()
+	case 2: // transfer stack pointer to address bus, and alu to stack pointer. I'm just reusing `dl` here, but this instruction actually uses the Arithmetic Logic Unit for this.
+		cpu.AddressBus = uint16(cpu.SP) | 0x100
+		//cpu.SP = cpu.DL
+		cpu.ReadFromAB() // Dummy Read
+	case 3: // push PC high to stack via address bus
+		cpu.Push(byte(cpu.PC / 0x100))
+	case 4: // push PC low to stack via address bus
+		cpu.Push(byte(cpu.PC))
+	case 5: // fetch PC High, transfer stack pointer to PC low, address bus to stack pointer.
+		cpu.PC = cpu.BuildAddress(cpu.DL, cpu.ReadFromPC())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//	RTS: Return from Subroutine
 	//	pull PC, PC+1 -> PC

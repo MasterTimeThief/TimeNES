@@ -16,6 +16,7 @@ type CPU struct {
 	Y  byte   // Y-Index
 	H  byte   // High byte of address (Used by some unnoficial ops, and for page crossing checks)
 	DL byte   // Data Latch, holds data between instructions
+	SB byte   // Special Bus, used in certain instructions (halg-cycle stuff)
 
 	// Status Register
 	flag_Carry            bool // Bit 0: Carry Flag
