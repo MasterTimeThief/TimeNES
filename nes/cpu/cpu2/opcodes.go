@@ -1113,82 +1113,126 @@ func (cpu *CPU) X31_AND_Indirect_Y() {
 	}
 }
 
-/*
-	//	ORA: OR Memory with Accumulator
-	//	A OR M -> A
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	ORA: OR Memory with Accumulator
+//	A OR M -> A
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) X09ORA_Immediate(){
-		Op_ORA(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) X05ORA_ZeroPage(){
+func (cpu *CPU) X09_ORA_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_ORA(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X05_ORA_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) X0DORA_Absolute(){
+	case 2:
+		cpu.Op_ORA(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X0D_ORA_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X15ORA_ZeroPage_X(){
+	case 3:
+		cpu.Op_ORA(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X15_ORA_ZeroPage_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-	func (cpu *CPU) X1DORA_Absolute_X(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndX(true)
-		Op_ORA(cpu.ReadFromAB())
-	func (cpu *CPU) X19ORA_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
-		Op_ORA(cpu.ReadFromAB())
-	func (cpu *CPU) X01ORA_Indirect_X(){
+	case 3:
+		cpu.Op_ORA(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X1D_ORA_Absolute_X() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
+	case 4:
+		cpu.Op_ORA(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X19_ORA_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.Op_ORA(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X01_ORA_Indirect_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X11ORA_Indirect_Y(){
-		// CPU_Cycles = 5
+	case 5:
+		cpu.Op_ORA(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X11_ORA_Indirect_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
-		Op_ORA(cpu.ReadFromAB())
+	case 5:
+		cpu.Op_ORA(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
 
+/*
 	//	EOR: Exclusive-OR Memory with Accumulator
 	//	A EOR M -> A
 	//	N	Z	C	I	D	V
 	//	+	+	-	-	-	-
 
-	func (cpu *CPU) X49EOR_Immediate(){
+	func (cpu *CPU) X49_EOR_Immediate(){
 		Op_EOR(cpu.ReadFromPC())
 		// CPU_Cycles = 2
-	func (cpu *CPU) X45EOR_ZeroPage(){
+	func (cpu *CPU) X45_EOR_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		Op_EOR(cpu.ReadFromAB())
 		// CPU_Cycles = 3
-	func (cpu *CPU) X4DEOR_Absolute(){
+	func (cpu *CPU) X4D_EOR_Absolute(){
 		cpu.GetAddress_Absolute()
 		Op_EOR(cpu.ReadFromAB())
 		// CPU_Cycles = 4
-	func (cpu *CPU) X55EOR_ZeroPage_X(){
+	func (cpu *CPU) X55_EOR_ZeroPage_X(){
 		cpu.GetAddress_ZeroPageX()
 		Op_EOR(cpu.ReadFromAB())
 		// CPU_Cycles = 4
-	func (cpu *CPU) X5DEOR_Absolute_X(){
+	func (cpu *CPU) X5D_EOR_Absolute_X(){
 		// CPU_Cycles = 4
 		cpu.GetAddress_AbsoluteIndX(true)
 		Op_EOR(cpu.ReadFromAB())
-	func (cpu *CPU) X59EOR_Absolute_Y(){
+	func (cpu *CPU) X59_EOR_Absolute_Y(){
 		// CPU_Cycles = 4
 		cpu.GetAddress_AbsoluteIndY(true)
 		Op_EOR(cpu.ReadFromAB())
-	func (cpu *CPU) X41EOR_Indirect_X(){
+	func (cpu *CPU) X41_EOR_Indirect_X(){
 		cpu.GetAddress_IndirectX()
 		Op_EOR(cpu.ReadFromAB())
 		// CPU_Cycles = 6
-	func (cpu *CPU) X51EOR_Indirect_Y(){
+	func (cpu *CPU) X51_EOR_Indirect_Y(){
 		// CPU_Cycles = 5
 		cpu.GetAddress_IndirectY(true)
 		Op_EOR(cpu.ReadFromAB())
-
-	//	BITTest Bits in Memory with Accumulator
+/*
+	//	BIT: Test Bits in Memory with Accumulator
 	//	bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V);
 	//	the zero-flag is set according to the result of the operand AND
 	//	the accumulator (set, if the result is zero, unset otherwise).
@@ -1200,15 +1244,15 @@ func (cpu *CPU) X31_AND_Indirect_Y() {
 	//	N	Z	C	I	D	V
 	//	M7	+	-	-	-	M6
 
-	func (cpu *CPU) X24BIT_ZeroPage(){
+	func (cpu *CPU) X24_BIT_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		Op_BIT(cpu.ReadFromAB())
 		// CPU_Cycles = 3
-	func (cpu *CPU) X2CBIT_Absolute(){
+	func (cpu *CPU) X2C_BIT_Absolute(){
 		cpu.GetAddress_Absolute()
 		Op_BIT(cpu.ReadFromAB())
 		// CPU_Cycles = 4
-
+/*
 	//Compare
 
 	//	CMP: Compare Memory with Accumulator
@@ -1216,72 +1260,72 @@ func (cpu *CPU) X31_AND_Indirect_Y() {
 	//	N	Z	C	I	D	V
 	//	+	+	+	-	-	-
 
-	func (cpu *CPU) XC9CMP_Immediate(){
+	func (cpu *CPU) XC9_CMP_Immediate(){
 		Op_CMP(cpu.ReadFromPC())
 		// CPU_Cycles = 2
-	func (cpu *CPU) XC5CMP_ZeroPage(){
+	func (cpu *CPU) XC5_CMP_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		Op_CMP(cpu.ReadFromAB())
 		// CPU_Cycles = 3
-	func (cpu *CPU) XCDCMP_Absolute(){
+	func (cpu *CPU) XCD_CMP_Absolute(){
 		cpu.GetAddress_Absolute()
 		Op_CMP(cpu.ReadFromAB())
 		// CPU_Cycles = 4
-	func (cpu *CPU) XD5CMP_ZeroPage_X(){
+	func (cpu *CPU) XD5_CMP_ZeroPage_X(){
 		cpu.GetAddress_ZeroPageX()
 		Op_CMP(cpu.ReadFromAB())
 		// CPU_Cycles = 4
-	func (cpu *CPU) XDDCMP_Absolute_X(){
+	func (cpu *CPU) XDD_CMP_Absolute_X(){
 		// CPU_Cycles = 4
 		cpu.GetAddress_AbsoluteIndX(true)
 		Op_CMP(cpu.ReadFromAB())
-	func (cpu *CPU) XD9CMP_Absolute_Y(){
+	func (cpu *CPU) XD9_CMP_Absolute_Y(){
 		// CPU_Cycles = 4
 		cpu.GetAddress_AbsoluteIndY(true)
 		Op_CMP(cpu.ReadFromAB())
-	func (cpu *CPU) XC1CMP_Indirect_X(){
+	func (cpu *CPU) XC1_CMP_Indirect_X(){
 		cpu.GetAddress_IndirectX()
 		Op_CMP(cpu.ReadFromAB())
 		// CPU_Cycles = 6
-	func (cpu *CPU) XD1CMP_Indirect_Y(){
+	func (cpu *CPU) XD1_CMP_Indirect_Y(){
 		// CPU_Cycles = 5
 		cpu.GetAddress_IndirectY(true)
 		Op_CMP(cpu.ReadFromAB())
-
+/*
 	//	CPX: Compare Memory and Index X
 	//	X - M
 	//	N	Z	C	I	D	V
 	//	+	+	+	-	-	-
 
-	func (cpu *CPU) XE0CPX_Immediate(){
+	func (cpu *CPU) XE0_CPX_Immediate(){
 		Op_CPX(cpu.ReadFromPC())
 		// CPU_Cycles = 2
-	func (cpu *CPU) XE4CPX_ZeroPage(){
+	func (cpu *CPU) XE4_CPX_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		Op_CPX(cpu.ReadFromAB())
 		// CPU_Cycles = 3
-	func (cpu *CPU) XECCPX_Absolute(){
+	func (cpu *CPU) XEC_CPX_Absolute(){
 		cpu.GetAddress_Absolute()
 		Op_CPX(cpu.ReadFromAB())
 		// CPU_Cycles = 4
-
+/*
 	//	CPY: Compare Memory and Index Y
 	//	Y - M
 	//	N	Z	C	I	D	V
 	//	+	+	+	-	-	-
 
-	func (cpu *CPU) XC0CPY_Immediate(){
+	func (cpu *CPU) XC0_CPY_Immediate(){
 		Op_CPY(cpu.ReadFromPC())
 		// CPU_Cycles = 2
-	func (cpu *CPU) XC4CPY_ZeroPage(){
+	func (cpu *CPU) XC4_CPY_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
 		Op_CPY(cpu.ReadFromAB())
 		// CPU_Cycles = 3
-	func (cpu *CPU) XCCCPY_Absolute(){
+	func (cpu *CPU) XCC_CPY_Absolute(){
 		cpu.GetAddress_Absolute()
 		Op_CPY(cpu.ReadFromAB())
 		// CPU_Cycles = 4
-
+/*
 	//Branch
 
 	//	BCC: Branch on Carry Clear

@@ -703,7 +703,7 @@ func Emulate_CPU() {
 		ReadOperands_IndirectAddressed_YIndexed(true)
 		Op_EOR(ReadFromAB())
 
-	//	BIT: //Test Bits in Memory with Accumulator
+	//	BIT: Test Bits in Memory with Accumulator
 	//	bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V);
 	//	the zero-flag is set according to the result of the operand AND
 	//	the accumulator (set, if the result is zero, unset otherwise).

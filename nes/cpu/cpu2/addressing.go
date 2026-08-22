@@ -229,7 +229,7 @@ func (cpu *CPU) GetAddress_IndirectX() {
 // Low byte of the new Address Bus location,
 // then add Y to that.
 //
-// 4 Steps
+// 3-4 Steps
 func (cpu *CPU) GetAddress_IndirectY(pbCheck bool) {
 
 	// Some instructions will always take 4 cycles to determine the address,
