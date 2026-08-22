@@ -1752,71 +1752,112 @@ func (cpu *CPU) X40_RTI() {
 	}
 }
 
-/*
 //----------------------------------------
-	//	Stack
+//	Stack
 //----------------------------------------
 
-	//	PHA: Push Accumulator on Stack
-	//	push A
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
+//	PHA: Push Accumulator on Stack
+//	push A
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
 
-	func (cpu *CPU) X48PHA
-		Push(cpu.A)
-		// CPU_Cycles = 3
+func (cpu *CPU) X48_PHA() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
+		cpu.DL = cpu.ReadFromAB() // Dummy read
+	case 2:
+		cpu.Push(cpu.A)
+		cpu.CompleteInstruction()
+	}
+}
 
-	//	PLA: Pull Accumulator from Stack
-	//	pull A
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	PLA: Pull Accumulator from Stack
+//	pull A
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) X68PLA
-		A = Pull()
-		//MasterClockTick("pla")
+func (cpu *CPU) X68_PLA() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1:
+		cpu.AddressBus = cpu.PC
+		cpu.ReadFromAB() // Dummy Read
+	case 2:
+		cpu.AddressBus = uint16(cpu.SP) | 0x100
+		cpu.ReadFromAB() //Dummy read
+	case 3:
+		cpu.A = cpu.Pull()
 		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 4
+		cpu.CompleteInstruction()
+	}
+}
 
-	//	PHP: Push Processor Status on Stack
-	//	The status register will be pushed with the break
-	//	flag and bit 5 set to 1.
-	//	push SR
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-	func (cpu *CPU) X08PHP
-		flag_B = true
-		PushFlags()
-		// CPU_Cycles = 3
+//	PHP: Push Processor Status on Stack
+//	The status register will be pushed with the break
+//	flag and bit 5 set to 1.
+//	push SR
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+func (cpu *CPU) X08_PHP() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
+		cpu.ReadFromAB() // Dummy read
+	case 2:
+		cpu.flag_B = true
+		cpu.PushFlags()
+		cpu.CompleteInstruction()
+	}
+}
 
-	//	PLP: Pull Processor Status from Stack
-	//	The status register will be pulled with the break
-	//	flag and bit 5 ignored.
-	//	pull SR
-	//	N	Z	C	I	D	V
-	//	from stack
+//	PLP: Pull Processor Status from Stack
+//	The status register will be pulled with the break
+//	flag and bit 5 ignored.
+//	pull SR
+//	N	Z	C	I	D	V
+//	from stack
 
-	func (cpu *CPU) X28PLP
-		PullFlags()
-		// CPU_Cycles = 4
+func (cpu *CPU) X28_PLP() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1:
+		cpu.AddressBus = cpu.PC
+		cpu.ReadFromAB() // Dummy Read
+	case 2:
+		cpu.AddressBus = uint16(cpu.SP) | 0x100
+		cpu.ReadFromAB() //Dummy read
+	case 3:
+		cpu.PullFlags()
+		cpu.CompleteInstruction()
+	}
+}
 
-	//	TSX: Transfer Stack Pointer to Index X
-	//	SP -> X
-	//	N	Z	C	I	D	V
-	//	+	+	-	-	-	-
+//	TSX: Transfer Stack Pointer to Index X
+//	SP -> X
+//	N	Z	C	I	D	V
+//	+	+	-	-	-	-
 
-	func (cpu *CPU) XBATSX
-		X = SP
-		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 2
+func (cpu *CPU) XBA_TSX() {
+	// CPU_Cycles = 2
+	cpu.X = cpu.SP
+	cpu.ReadFromAB() // Dummy read
+	cpu.SetZNFlags(cpu.X)
+	cpu.CompleteInstruction()
+}
 
-	//	TXS: Transfer Index X to Stack Register
-	//	X -> SP
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
+//	TXS: Transfer Index X to Stack Register
+//	X -> SP
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
 
-	func (cpu *CPU) X9ATXS
-		SP = X
-		// CPU_Cycles = 2
+func (cpu *CPU) X9A_TXS() {
+	// CPU_Cycles = 2
+	cpu.SP = cpu.X
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
 /*
 //----------------------------------------
 	//	Flags
