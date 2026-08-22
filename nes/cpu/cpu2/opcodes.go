@@ -1453,81 +1453,105 @@ func (cpu *CPU) XCC_CPY_Absolute() {
 	}
 }
 
+//Branch
+
+//	BCC: Branch on Carry Clear
+//	branch on C = 0
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) X90_BCC() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(!cpu.flag_Carry)
+	}
+}
+
+//	BCS: Branch on Carry Set
+//	branch on C = 1
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) XB0_BCS() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(cpu.flag_Carry)
+	}
+}
+
+//	BEQ: Branch on Result Zero
+//	branch on Z = 1
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) XF0_BEQ() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(cpu.flag_Zero)
+	}
+}
+
+//	BNE: Branch on Result not Zero
+//	branch on Z = 0
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) XD0_BNE() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(!cpu.flag_Zero)
+	}
+}
+
+//	BPL: Branch on Result Plus
+//	branch on N = 0
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) X10_BPL() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(!cpu.flag_Negative)
+	}
+}
+
+//	BMI: Branch on Result Minus
+//	branch on N = 1
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) X30_BMI() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(cpu.flag_Negative)
+	}
+}
+
+//	BVC: Branch on Overflow Clear
+//	branch on V = 0
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) X50_BVC() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(!cpu.flag_Overflow)
+	}
+}
+
+//	BVS: Branch on Overflow Set
+//	branch on V = 1
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) X70_BVS() {
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.Branch(cpu.flag_Overflow)
+	}
+}
+
 /*
-	//Branch
-
-	//	BCC: Branch on Carry Clear
-	//	branch on C = 0
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) X90BCC (Branch on Carry Clear)
-		temp := cpu.ReadFromPC()
-		Branch(!flag_Carry, temp)
-
-	//	BCS: Branch on Carry Set
-	//	branch on C = 1
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) XB0BCS (Branch on Carry Set)
-		temp := cpu.ReadFromPC()
-		Branch(flag_Carry, temp)
-
-	//	BEQ: Branch on Result Zero
-	//	branch on Z = 1
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) XF0BEQ (Branch on Equal)
-		temp := cpu.ReadFromPC()
-		Branch(flag_Zero, temp)
-
-	//	BNE: Branch on Result not Zero
-	//	branch on Z = 0
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) XD0BNE (Branch on Not Equal)
-		temp := cpu.ReadFromPC()
-		Branch(!flag_Zero, temp)
-
-	//	BPL: Branch on Result Plus
-	//	branch on N = 0
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) X10BPL (Branch on Plus)
-		temp := cpu.ReadFromPC()
-		Branch(!flag_Negative, temp)
-
-	//	BMI: Branch on Result Minus
-	//	branch on N = 1
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) X30BMI (Branch on Minus)
-		temp := cpu.ReadFromPC()
-		Branch(flag_Negative, temp)
-
-	//	BVC: Branch on Overflow Clear
-	//	branch on V = 0
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) X50BVC (Branch on Overflow Clear)
-		temp := cpu.ReadFromPC()
-		Branch(!flag_Overflow, temp)
-
-	//	BVS: Branch on Overflow Set
-	//	branch on V = 1
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) X70BVS (Branch on Overflow Set)
-		temp := cpu.ReadFromPC()
-		Branch(flag_Overflow, temp)
-
 	//Jump
 
 	//	JMP: Jump to New Location
@@ -1561,7 +1585,7 @@ func (cpu *CPU) XCC_CPY_Absolute() {
 		PC = BuildAddress(temp_low, temp_high)
 		//MasterClockTick("jsr")
 		// CPU_Cycles = 6
-
+/*
 	//	RTS: Return from Subroutine
 	//	pull PC, PC+1 -> PC
 	//	N	Z	C	I	D	V

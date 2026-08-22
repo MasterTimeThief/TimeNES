@@ -196,6 +196,18 @@ func (cpu *CPU) PollInterrupts() {
 	}
 }
 
+func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
+	if cpu.RunningInterrupt {
+		return
+	}
+
+	if cpu.PollNMI() {
+		cpu.BreakSource = Break_NMI
+	} else if cpu.BreakSource != Break_IRQ && cpu.PollIRQ() {
+		cpu.BreakSource = Break_IRQ
+	}
+}
+
 func (cpu *CPU) UnknownOpcode() {
 	fmt.Println("Unknown Opcode: " + fmt.Sprintf("%02X", cpu.opcode))
 }

@@ -39,23 +39,35 @@ func (cpu *CPU) SetZNFlags(Value byte) {
 	cpu.flag_Negative = (Value >= 0x80)
 }
 
-func (cpu *CPU) Branch(Condition bool, Value byte) {
-	if Condition {
-		//fmt.Println("branch taken")
-		signedVal := int(Value)
-		if signedVal > 127 {
+// Branch to new address if condition is true
+//
+// 2-4 Steps
+func (cpu *CPU) Branch(condition bool) {
+	switch cpu.subCycle {
+	case 1:
+		cpu.PollInterrupts()
+		cpu.DL = cpu.ReadFromPC()
+		cpu.AddressBus = cpu.PC
+		if !condition {
+			cpu.CompleteInstruction()
+		}
+	case 2:
+		cpu.ReadFromAB() // Dummy read
+		signedVal := int(cpu.DL)
+		if signedVal >= 128 {
 			signedVal -= 256 //range from -128 to 127
 		}
-		//CPU_Cycles = 3
-		if byte((cpu.PC&0xFF00)>>4) != byte(((cpu.PC+uint16(signedVal))&0xFF00)>>4) {
-			//CPU_Cycles++ //Extra cycle for crossing page boundary
-			//MasterClockTick("branch page cross")
+		cpu.TempAddress = uint16(cpu.PC + uint16(signedVal))
+		cpu.PC = (cpu.PC & 0xFF00) | ((cpu.PC + uint16(cpu.DL)) & 0xFF)
+		cpu.AddressBus = cpu.PC
+		if (cpu.TempAddress & 0xFF00) == (cpu.PC & 0xFF00) {
+			cpu.CompleteInstruction()
 		}
-		cpu.PC = uint16(cpu.PC + uint16(signedVal))
-		//MasterClockTick("branch taken")
-	} else {
-		//fmt.Println("branch not taken")
-		//CPU_Cycles = 2
+	case 3:
+		cpu.PollInterrupts_CantDisableIRQ() // If the first poll detected an IRQ, this second poll should not be allowed to un-set the IRQ.
+		cpu.ReadFromAB()                    // Dummy read
+		cpu.PC = (cpu.TempAddress & 0xFF00) | (cpu.PC & 0xFF)
+		cpu.CompleteInstruction()
 	}
 }
 
