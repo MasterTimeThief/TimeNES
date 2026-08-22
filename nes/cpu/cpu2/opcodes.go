@@ -1799,6 +1799,7 @@ func (cpu *CPU) X68_PLA() {
 //	push SR
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
+
 func (cpu *CPU) X08_PHP() {
 	// CPU_Cycles = 3
 	switch cpu.subCycle {
@@ -1858,94 +1859,111 @@ func (cpu *CPU) X9A_TXS() {
 	cpu.CompleteInstruction()
 }
 
+//----------------------------------------
+//	Flags
+//----------------------------------------
+
+//	CLC: Clear Carry Flag
+//	0 -> C
+//	N	Z	C	I	D	V
+//	-	-	0	-	-	-
+
+func (cpu *CPU) X18_CLC() {
+	// CPU_Cycles = 2
+	cpu.flag_Carry = false
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
+//	SEC: Set Carry Flag
+//	1 -> C
+//	N	Z	C	I	D	V
+//	-	-	1	-	-	-
+
+func (cpu *CPU) X38_SEC() {
+	// CPU_Cycles = 2
+	cpu.flag_Carry = true
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
+//	CLI: Clear Interrupt Disable Bit
+//	0 -> I
+//	N	Z	C	I	D	V
+//	-	-	-	0	-	-
+
+func (cpu *CPU) X58_CLI() {
+	// CPU_Cycles = 2
+	cpu.flag_InterruptDisable = false
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
+//	SEI: Set Interrupt Disable Status
+//	1 -> I
+//	N	Z	C	I	D	V
+//	-	-	-	1	-	-
+
+func (cpu *CPU) X78_SEI() {
+	// CPU_Cycles = 2
+	cpu.flag_InterruptDisable = true
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
+//	CLD: Clear Decimal Mode
+//	0 -> D
+//	N	Z	C	I	D	V
+//	-	-	-	-	0	-
+
+func (cpu *CPU) XD8_CLD() {
+	// CPU_Cycles = 2
+	cpu.flag_Decimal = false
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
+//	SED: Set Decimal Flag
+//	1 -> D
+//	N	Z	C	I	D	V
+//	-	-	-	-	1	-
+
+func (cpu *CPU) XF8_SED() {
+	// CPU_Cycles = 2
+	cpu.flag_Decimal = true
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
+//	CLV: Clear Overflow Flag
+//	0 -> V
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	0
+
+func (cpu *CPU) XB8_CLV() {
+	// CPU_Cycles = 2
+	cpu.flag_Overflow = false
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
+//----------------------------------------
+//	Other
+//----------------------------------------
+
+//	NOP: No Operation
+//	N	Z	C	I	D	V
+//	-	-	-	-	-	-
+
+func (cpu *CPU) XEA_NOP() {
+	// CPU_Cycles = 2
+	cpu.ReadFromAB() // Dummy read
+	cpu.CompleteInstruction()
+}
+
 /*
-//----------------------------------------
-	//	Flags
-//----------------------------------------
-
-	//	CLC: Clear Carry Flag
-	//	0 -> C
-	//	N	Z	C	I	D	V
-	//	-	-	0	-	-	-
-
-	func (cpu *CPU) X18CLC
-		flag_Carry = false
-		//MasterClockTick("clc")
-		// CPU_Cycles = 2
-
-	//	SEC: Set Carry Flag
-	//	1 -> C
-	//	N	Z	C	I	D	V
-	//	-	-	1	-	-	-
-
-	func (cpu *CPU) X38SEC
-		flag_Carry = true
-		//MasterClockTick("sec")
-		// CPU_Cycles = 2
-
-	//	CLI: Clear Interrupt Disable Bit
-	//	0 -> I
-	//	N	Z	C	I	D	V
-	//	-	-	-	0	-	-
-
-	func (cpu *CPU) X58CLI
-		flag_InterruptDisable = false
-		//MasterClockTick("cli")
-		// CPU_Cycles = 2
-
-	//	SEI: Set Interrupt Disable Status
-	//	1 -> I
-	//	N	Z	C	I	D	V
-	//	-	-	-	1	-	-
-
-	func (cpu *CPU) X78SEI
-		flag_InterruptDisable = true
-		//MasterClockTick("sei")
-		// CPU_Cycles = 2
-
-	//	CLD: Clear Decimal Mode
-	//	0 -> D
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	0	-
-
-	func (cpu *CPU) XD8CLD
-		flag_Decimal = false
-		//MasterClockTick("cld")
-		// CPU_Cycles = 2
-
-	//	SED: Set Decimal Flag
-	//	1 -> D
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	1	-
-
-	func (cpu *CPU) XF8SED
-		flag_Decimal = true
-		//MasterClockTick("sed")
-		// CPU_Cycles = 2
-
-	//	CLV: Clear Overflow Flag
-	//	0 -> V
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	0
-
-	func (cpu *CPU) XB8CLV
-		flag_Overflow = false
-		//MasterClockTick("clv")
-		// CPU_Cycles = 2
-/*
-//----------------------------------------
-	//	Other
-//----------------------------------------
-
-	//	NOP: No Operation
-	//	N	Z	C	I	D	V
-	//	-	-	-	-	-	-
-
-	func (cpu *CPU) XEANOP
-		// CPU_Cycles = 2
-
 	//----------------------------------------------------------------------
-	//Unofficial Opcodes
+	//	Unofficial Opcodes
 	//----------------------------------------------------------------------
 
 	//HLT Codes
