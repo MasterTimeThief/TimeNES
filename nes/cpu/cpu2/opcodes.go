@@ -2,16 +2,6 @@ package cpu2
 
 import "mtt/timenes/nes/bus"
 
-/*
-switch cpu.subCycle {
-case 1:
-case 2:
-case 3:
-case 4:
-	cpu.CompleteInstruction()
-}}
-*/
-
 //----------------------------------------
 //	Access
 //----------------------------------------
@@ -1677,14 +1667,12 @@ func (cpu *CPU) X00_BRK() {
 			cpu.Push(byte(cpu.PC >> 8))
 		} else {
 			cpu.ResetReadPush()
-
 		}
 	case 3:
 		if cpu.BreakSource != Break_Reset {
 			cpu.Push(byte(cpu.PC))
 		} else {
 			cpu.ResetReadPush()
-
 		}
 	case 4:
 		if cpu.BreakSource != Break_Reset {
@@ -1693,10 +1681,8 @@ func (cpu *CPU) X00_BRK() {
 				cpu.flag_B = true
 			}
 			cpu.PushFlags()
-
 		} else {
 			cpu.ResetReadPush()
-
 		}
 	case 5:
 		if cpu.BreakSource == Break_NMI {
