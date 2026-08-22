@@ -1391,40 +1391,68 @@ func (cpu *CPU) XD1_CMP_Indirect_Y() {
 	}
 }
 
-/*
-	//	CPX: Compare Memory and Index X
-	//	X - M
-	//	N	Z	C	I	D	V
-	//	+	+	+	-	-	-
+//	CPX: Compare Memory and Index X
+//	X - M
+//	N	Z	C	I	D	V
+//	+	+	+	-	-	-
 
-	func (cpu *CPU) XE0_CPX_Immediate(){
-		Op_CPX(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) XE4_CPX_ZeroPage(){
+func (cpu *CPU) XE0_CPX_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_CPX(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XE4_CPX_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_CPX(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) XEC_CPX_Absolute(){
+	case 2:
+		cpu.Op_CPX(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XEC_CPX_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_CPX(cpu.ReadFromAB())
-		// CPU_Cycles = 4
-/*
-	//	CPY: Compare Memory and Index Y
-	//	Y - M
-	//	N	Z	C	I	D	V
-	//	+	+	+	-	-	-
+	case 3:
+		cpu.Op_CPX(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
 
-	func (cpu *CPU) XC0_CPY_Immediate(){
-		Op_CPY(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-	func (cpu *CPU) XC4_CPY_ZeroPage(){
+//	CPY: Compare Memory and Index Y
+//	Y - M
+//	N	Z	C	I	D	V
+//	+	+	+	-	-	-
+
+func (cpu *CPU) XC0_CPY_Immediate() {
+	// CPU_Cycles = 2
+	cpu.Op_CPY(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XC4_CPY_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_CPY(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) XCC_CPY_Absolute(){
+	case 2:
+		cpu.Op_CPY(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XCC_CPY_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_CPY(cpu.ReadFromAB())
-		// CPU_Cycles = 4
+	case 3:
+		cpu.Op_CPY(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//Branch
 
