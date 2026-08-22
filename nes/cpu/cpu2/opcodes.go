@@ -1275,27 +1275,39 @@ func (cpu *CPU) X51_EOR_Indirect_Y() {
 	}
 }
 
-/*
-	//	BIT: Test Bits in Memory with Accumulator
-	//	bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V);
-	//	the zero-flag is set according to the result of the operand AND
-	//	the accumulator (set, if the result is zero, unset otherwise).
-	//	This allows a quick check of a few bits at once without affecting
-	//	any of the registers, other than the status register (SR).
-	//
-	//	A AND M -> Z, M[7] -> N, M[6] -> V
-	//
-	//	N	Z	C	I	D	V
-	//	M7	+	-	-	-	M6
+//	BIT: Test Bits in Memory with Accumulator
+//	bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V);
+//	the zero-flag is set according to the result of the operand AND
+//	the accumulator (set, if the result is zero, unset otherwise).
+//	This allows a quick check of a few bits at once without affecting
+//	any of the registers, other than the status register (SR).
+//
+//	A AND M -> Z, M[7] -> N, M[6] -> V
+//
+//	N	Z	C	I	D	V
+//	M7	+	-	-	-	M6
 
-	func (cpu *CPU) X24_BIT_ZeroPage(){
+func (cpu *CPU) X24_BIT_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_BIT(cpu.ReadFromAB())
-		// CPU_Cycles = 3
-	func (cpu *CPU) X2C_BIT_Absolute(){
+	case 2:
+		cpu.Op_BIT(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X2C_BIT_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_BIT(cpu.ReadFromAB())
-		// CPU_Cycles = 4
+	case 3:
+		cpu.Op_BIT(cpu.ReadFromAB())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//Compare
 
