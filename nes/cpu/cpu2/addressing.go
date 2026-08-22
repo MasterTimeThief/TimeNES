@@ -65,6 +65,14 @@ func (cpu *CPU) SetTargetLow(Value byte) {
 
 // Addressing Modes
 
+// Fetch the value at the program counter, store it in the DataLatch, and increment the Program Counter.
+//
+// 1 Step
+func (cpu *CPU) GetAddress_Immediate() {
+	cpu.DL = cpu.ReadFromPC()
+	cpu.AddressBus = cpu.PC
+}
+
 // Fetch the value at the PC, and write to either the
 // High byte or Low byte of the 16 bit address bus.
 // Also increment the Program Counter.

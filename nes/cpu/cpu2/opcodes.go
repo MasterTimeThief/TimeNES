@@ -1610,8 +1610,7 @@ func (cpu *CPU) X20_JSR() {
 	// CPU_Cycles = 6
 	switch cpu.subCycle {
 	case 1: // fetch the byte that will be PC low
-		//cpu.AddressBus = cpu.PC
-		cpu.DL = cpu.ReadFromPC()
+		cpu.GetAddress_Immediate()
 	case 2: // transfer stack pointer to address bus, and alu to stack pointer. I'm just reusing `dl` here, but this instruction actually uses the Arithmetic Logic Unit for this.
 		cpu.AddressBus = uint16(cpu.SP) | 0x100
 		//cpu.SP = cpu.DL
@@ -1635,8 +1634,7 @@ func (cpu *CPU) X60_RTS() {
 	// CPU_Cycles = 6
 	switch cpu.subCycle {
 	case 1:
-		cpu.ReadFromPC() // Dummy read to advance PC
-		cpu.AddressBus = cpu.PC
+		cpu.GetAddress_Immediate() // Dummy read to advance PC
 	case 2:
 		cpu.SP--
 		cpu.Pull() // Dummy Read (Pull)
@@ -1646,64 +1644,114 @@ func (cpu *CPU) X60_RTS() {
 		cpu.PC = cpu.BuildAddress(cpu.DL, cpu.Pull())
 	case 5:
 		cpu.ReadFromPC() // Dummy read to advance PC
+		cpu.CompleteInstruction()
 	}
 }
 
-/*
-	//	BRK: Force Break
-	//	BRK initiates a software interrupt similar to a hardware
-	//	interrupt (IRQ). The return address pushed to the stack is
-	//	PC+2, providing an extra byte of spacing for a break mark
-	//	(identifying a reason for the break.)
-	//	The status register will be pushed to the stack with the break
-	//	flag set to 1. However, when retrieved during RTI or by a PLP
-	//	instruction, the break flag will be ignored.
-	//	The interrupt disable flag is not set automatically.
-	//
-	//	interrupt,
-	//	push PC+2, push SR
-	//	N	Z	C	I	D	V
-	//	-	-	-	1	-	-
+//	BRK: Force Break
+//	BRK initiates a software interrupt similar to a hardware
+//	interrupt (IRQ). The return address pushed to the stack is
+//	PC+2, providing an extra byte of spacing for a break mark
+//	(identifying a reason for the break.)
+//	The status register will be pushed to the stack with the break
+//	flag set to 1. However, when retrieved during RTI or by a PLP
+//	instruction, the break flag will be ignored.
+//	The interrupt disable flag is not set automatically.
+//
+//	interrupt,
+//	push PC+2, push SR
+//	N	Z	C	I	D	V
+//	-	-	-	1	-	-
 
-	func (cpu *CPU) X00BRK
-		flag_B = false
-		if !DoNMI {
-			PC++
-			flag_B = true
+func (cpu *CPU) X00_BRK() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1:
+		if cpu.BreakSource == Break_Software {
+			cpu.GetAddress_Immediate() // Dummy read that increments PC
+		} else {
+			cpu.ReadFromAB() // Dummy read that does not increment PC
 		}
-		Push(byte(PC >> 8))
-		Push(byte(PC))
-		PushFlags()
-		//flag_InterruptDisable = true
+	case 2:
+		if cpu.BreakSource != Break_Reset {
+			cpu.Push(byte(cpu.PC >> 8))
+		} else {
+			cpu.ResetReadPush()
 
-		PCL := bus.Read(common.Ternary(DoNMI, 0xFFFA, 0xFFFE))
-		PCH := bus.Read(common.Ternary(DoNMI, 0xFFFB, 0xFFFF))
-		PC = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //BuildAddress(PCL, PCH)
-		DoNMI = false
-		// CPU_Cycles = 7
-/*
-	//	RTI: Return from Interrupt
-	//	The status register is pulled with the break flag
-	//	and bit 5 ignored. Then PC is pulled from the stack.
-	//
-	//	pull SR, pull PC
-	//	N	Z	C	I	D	V
-	//	from stack
+		}
+	case 3:
+		if cpu.BreakSource != Break_Reset {
+			cpu.Push(byte(cpu.PC))
+		} else {
+			cpu.ResetReadPush()
 
-	func (cpu *CPU) X40RTI
-		temp := Pull()
-		flag_Carry = (temp & 1) != 0
-		flag_Zero = (temp & 2) != 0
-		flag_InterruptDisable = (temp & 4) != 0
-		flag_Decimal = (temp & 8) != 0
-		flag_Overflow = (temp & 64) != 0
-		flag_Negative = (temp & 128) != 0
-		//MasterClockTick("rti Pull1")
-		//MasterClockTick("rti Pull2")
-		temp_low := Pull()
-		temp_high := Pull()
-		PC = BuildAddress(temp_low, temp_high)
-		// CPU_Cycles = 6
+		}
+	case 4:
+		if cpu.BreakSource != Break_Reset {
+			cpu.flag_B = false
+			if cpu.BreakSource == Break_Software {
+				cpu.flag_B = true
+			}
+			cpu.PushFlags()
+
+		} else {
+			cpu.ResetReadPush()
+
+		}
+	case 5:
+		if cpu.BreakSource == Break_NMI {
+			cpu.PC = (cpu.PC & 0xFF00) | uint16(bus.Read(0xFFFA))
+		} else if cpu.BreakSource == Break_Reset {
+			cpu.PC = (cpu.PC & 0xFF00) | uint16(bus.Read(0xFFFC))
+		} else {
+			cpu.PC = (cpu.PC & 0xFF00) | uint16(bus.Read(0xFFFE))
+		}
+	case 6:
+		if cpu.BreakSource == Break_NMI {
+			cpu.PC = (cpu.PC & 0xFF) | (uint16(bus.Read(0xFFFB)) << 8)
+		} else if cpu.BreakSource == Break_Reset {
+			cpu.PC = (cpu.PC & 0xFF) | (uint16(bus.Read(0xFFFD)) << 8)
+		} else {
+			cpu.PC = (cpu.PC & 0xFF) | (uint16(bus.Read(0xFFFF)) << 8)
+		}
+		cpu.BreakSource = Break_None
+		cpu.flag_InterruptDisable = true
+		cpu.CompleteInstruction()
+	}
+}
+
+//	RTI: Return from Interrupt
+//	The status register is pulled with the break flag
+//	and bit 5 ignored. Then PC is pulled from the stack.
+//
+//	pull SR, pull PC
+//	N	Z	C	I	D	V
+//	from stack
+
+func (cpu *CPU) X40_RTI() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1:
+		cpu.GetAddress_Immediate()
+	case 2:
+		cpu.AddressBus = uint16(cpu.SP) | 0x100
+		cpu.ReadFromAB() //Dummy read
+	case 3:
+		status := cpu.Pull()
+		cpu.flag_Carry = (status & 1) != 0
+		cpu.flag_Zero = (status & 2) != 0
+		cpu.flag_InterruptDisable = (status & 4) != 0
+		cpu.flag_Decimal = (status & 8) != 0
+		cpu.flag_Overflow = (status & 64) != 0
+		cpu.flag_Negative = (status & 128) != 0
+	case 4:
+		cpu.DL = cpu.Pull()
+	case 5:
+		cpu.PC = cpu.BuildAddress(cpu.DL, cpu.Pull())
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 //----------------------------------------
 	//	Stack

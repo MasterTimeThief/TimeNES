@@ -71,6 +71,12 @@ func (cpu *CPU) Branch(condition bool) {
 	}
 }
 
+// The RESET instruction has unique behavior where it reads from the stack, and decrements the stack pointer.
+func (cpu *CPU) ResetReadPush() {
+	bus.Read(uint16(cpu.SP) + 0x100)
+	cpu.SP--
+}
+
 // Store to the stack, and decrement the stack pointer
 func (cpu *CPU) Push(Value byte) {
 	bus.Write(uint16(cpu.SP)+0x100, Value)
