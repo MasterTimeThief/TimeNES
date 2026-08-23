@@ -194,7 +194,7 @@ func MasterClockTick(location string) {
 	//
 
 	MasterClock++
-	cpu.CPU_Cycles_New++
+	//cpu.CPU_Cycles_New++
 	/*switch MasterClock {
 	case 1:
 		Emulate_CPU(g)

@@ -222,7 +222,7 @@ func (cpu *CPU) GetAddress_IndirectX() {
 	case 3: // Fetch address low
 		cpu.DL = cpu.ReadFromAB()
 	case 4: // fetch address high
-		cpu.AddressBus++
+		cpu.AddressBus += (cpu.AddressBus + 1) & 0xFF
 		cpu.AddressBus = (uint16(cpu.ReadFromAB())<<8 | uint16(cpu.DL))
 	}
 }

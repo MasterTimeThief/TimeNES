@@ -29,7 +29,6 @@ type CPU struct {
 	opcode           byte
 	operands         []byte
 	subCycle         int
-	CPU_Halted       bool
 	MagicConstant    byte //Might be needed for some of the illegal opcodes
 	BreakSource      BreakType
 	NMILevelDetector bool
@@ -41,6 +40,8 @@ type CPU struct {
 	Target      uint16
 }
 
+var CPU_Halted bool
+
 type BreakType int
 
 const (
@@ -51,13 +52,17 @@ const (
 	Break_Reset
 )
 
+func New() *CPU {
+	cpu := CPU{}
+	return &cpu
+}
+
 func (cpu *CPU) ResetCPU() {
 	cpu.SP = 0xFD
 	cpu.A, cpu.X, cpu.Y = 0, 0, 0
 	cpu.opcode = 0
 	cpu.operands = nil
 	cpu.subCycle = 0
-	cpu.CPU_Halted = false
 	cpu.MagicConstant = 0xFF
 	cpu.NMILevelDetector, cpu.RunningInterrupt = false, false
 
@@ -68,24 +73,25 @@ func (cpu *CPU) ResetCPU() {
 	cpu.flag_Overflow = false
 	cpu.flag_Negative = false
 	cpu.flag_B = false
+
+	CPU_Halted = false
 }
 
 func (cpu *CPU) CPU_Cycle() {
-
 	if cpu.subCycle == 0 {
-		cpu.SetOpcode(cpu.ReadFromPC())
-
 		if cpu.BreakSource != Break_None {
 			cpu.SetOpcode(0x00)
-		} else if cpu.opcode == 0x00 {
-			cpu.BreakSource = Break_Software
+		} else {
+			cpu.SetOpcode(cpu.ReadFromPC())
+			if cpu.opcode == 0x00 {
+				cpu.BreakSource = Break_Software
+			}
 		}
 		cpu.subCycle++
 	} else {
 		cpu.RunInstruction()
 		cpu.subCycle++
 	}
-
 }
 
 func (cpu *CPU) RunInstruction() {

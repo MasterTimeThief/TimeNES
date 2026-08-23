@@ -14,9 +14,6 @@ func (cpu *CPU) BuildAddress(low, high byte) uint16 {
 // Read from the Program Counter, and return the result
 func (cpu *CPU) ReadFromPC() byte {
 	Value := bus.Read(cpu.PC)
-	//if LoggingCPU {
-	//	operands = append(operands, Value)
-	//}
 	cpu.PC++
 	return Value
 }
@@ -239,7 +236,7 @@ func (cpu *CPU) Op_BIT(Value byte) {
 
 // CPU Kill function
 func (cpu *CPU) Kill() {
-	cpu.CPU_Halted = true
+	CPU_Halted = true
 	common.Filepath = ""
 	common.ROMExists = false
 	common.ROMLoaded = false
