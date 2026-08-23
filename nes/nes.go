@@ -58,7 +58,7 @@ func (g *Game) Update() error {
 	}
 
 	for common.ROMLoaded && !PauseEmulation && !cpu.CPU_Halted {
-		cpu.Emulate_CPU()
+		Emulator.cpu.Emulate_CPU()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
 			break
@@ -125,6 +125,7 @@ func InitGame(newUI *ebitenui.UI) {
 	Emulator = &Game{
 		gameScreen: image.NewRGBA(image.Rect(0, 0, common.ScreenWidth, common.ScreenHeight)),
 		UI:         newUI,
+		cpu:        cpu.New(),
 	}
 
 	if Emulator.audioContext == nil {
@@ -141,7 +142,7 @@ func InitGame(newUI *ebitenui.UI) {
 
 func Reset() {
 	//var HeaderedROM []byte := os.ReadFile()
-	cpu.ResetCPU()
+	Emulator.cpu.ResetCPU()
 	ppu.ResetPPU()
 	apu.ResetAPU()
 
@@ -155,7 +156,7 @@ func Reset() {
 
 	PCL := bus.Read(0xFFFC)
 	PCH := bus.Read(0xFFFD)
-	cpu.PC = cpu.BuildAddress(PCL, PCH)
+	Emulator.cpu.PC = Emulator.cpu.BuildAddress(PCL, PCH)
 	//fmt.Printf("%#x", ProgramCounter)
 
 	bus.OutsideCodeRead = 0

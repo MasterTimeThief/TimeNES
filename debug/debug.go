@@ -8,8 +8,6 @@ import (
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
-	"mtt/timenes/nes/cpu"
-	"mtt/timenes/nes/ppu"
 
 	"github.com/ebitengine/debugui"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -59,13 +57,13 @@ var PTValues [256][128]byte
 
 // Sets everything outside of operands for the tracelogger to run later
 func PrepTraceLogger() {
-	tracePC = cpu.PC
-	traceVRAM = ppu.VRAMAddress
+	//tracePC = cpu.PC
+	//traceVRAM = ppu.VRAMAddress
 
-	traceA = cpu.A
-	traceX = cpu.X
-	tracyY = cpu.Y
-	traceSP = cpu.SP
+	//traceA = cpu.A
+	//traceX = cpu.X
+	//tracyY = cpu.Y
+	//traceSP = cpu.SP
 
 	/*traceFlagC = nes.flag_Carry
 	traceFlagZ = nes.flag_Zero
@@ -74,7 +72,7 @@ func PrepTraceLogger() {
 	traceFlagV = nes.flag_Overflow
 	traceFlagN = nes.flag_Negative*/
 
-	traceCycles = common.CPU_TotalCycles
+	//traceCycles = common.CPU_TotalCycles
 }
 
 /*

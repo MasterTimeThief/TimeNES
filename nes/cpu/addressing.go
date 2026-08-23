@@ -60,17 +60,17 @@ func SetTargetLow(Value byte) {
 	Target += uint16(Value)
 }
 
-func ReadOperands_AbsoluteAddressed(isJMP bool) {
-	AddressBus = uint16(ReadFromPC())
-	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
+func (cpu *CPU) ReadOperands_AbsoluteAddressed(isJMP bool) {
+	AddressBus = uint16(cpu.ReadFromPC())
+	AddressBus = (uint16(cpu.ReadFromPC())<<8 | AddressBus)
 	if !isJMP {
 		//MasterClockTick("abs add, not jmp")
 	}
 }
 
-func ReadOperands_IndirectAddressed() {
-	AddressBus = uint16(ReadFromPC())
-	AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
+func (cpu *CPU) ReadOperands_IndirectAddressed() {
+	AddressBus = uint16(cpu.ReadFromPC())
+	AddressBus = (uint16(cpu.ReadFromPC())<<8 | AddressBus)
 	//Now read from HERE
 	low := bus.Read(AddressBus)
 	var high byte
@@ -80,46 +80,46 @@ func ReadOperands_IndirectAddressed() {
 	} else {
 		high = bus.Read(AddressBus + 1)
 	}
-	AddressBus = BuildAddress(low, high)
+	AddressBus = cpu.BuildAddress(low, high)
 }
 
-func ReadOperands_AbsoluteAddressed_XIndexed(pbCheck bool) {
-	low := ReadFromPC()
-	high := ReadFromPC()
-	AddressBus = BuildAddress(low, high) + uint16(X)
+func (cpu *CPU) ReadOperands_AbsoluteAddressed_XIndexed(pbCheck bool) {
+	low := cpu.ReadFromPC()
+	high := cpu.ReadFromPC()
+	AddressBus = cpu.BuildAddress(low, high) + uint16(cpu.X)
 	PageCrossingCheck(pbCheck, AddressBus, low, high)
 }
 
-func ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
-	low := ReadFromPC()
-	high := ReadFromPC()
-	AddressBus = BuildAddress(low, high) + uint16(Y)
+func (cpu *CPU) ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
+	low := cpu.ReadFromPC()
+	high := cpu.ReadFromPC()
+	AddressBus = cpu.BuildAddress(low, high) + uint16(cpu.Y)
 	PageCrossingCheck(pbCheck, AddressBus, low, high)
 }
 
-func ReadOperands_IndirectAddressed_XIndexed() {
-	TempAddress := ReadFromPC() + X
+func (cpu *CPU) ReadOperands_IndirectAddressed_XIndexed() {
+	TempAddress := cpu.ReadFromPC() + cpu.X
 	low := bus.Read(uint16(TempAddress))
 	high := bus.Read(uint16(TempAddress + 1))
-	AddressBus = BuildAddress(low, high)
+	AddressBus = cpu.BuildAddress(low, high)
 }
 
-func ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) {
-	TempAddress := ReadFromPC()
+func (cpu *CPU) ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) {
+	TempAddress := cpu.ReadFromPC()
 	low := bus.Read(uint16(TempAddress))
 	high := bus.Read(uint16(TempAddress + 1))
-	AddressBus = BuildAddress(low, high) + uint16(Y)
+	AddressBus = cpu.BuildAddress(low, high) + uint16(cpu.Y)
 	PageCrossingCheck(pbCheck, AddressBus, low, high)
 }
 
-func ReadOperands_ZeroPageAddressed() {
-	AddressBus = BuildAddress(ReadFromPC(), 0x00)
+func (cpu *CPU) ReadOperands_ZeroPageAddressed() {
+	AddressBus = cpu.BuildAddress(cpu.ReadFromPC(), 0x00)
 }
 
-func ReadOperands_ZeroPageAddressed_XIndexed() {
-	AddressBus = BuildAddress(ReadFromPC()+X, 0x00)
+func (cpu *CPU) ReadOperands_ZeroPageAddressed_XIndexed() {
+	AddressBus = cpu.BuildAddress(cpu.ReadFromPC()+cpu.X, 0x00)
 }
 
-func ReadOperands_ZeroPageAddressed_YIndexed() {
-	AddressBus = BuildAddress(ReadFromPC()+Y, 0x00)
+func (cpu *CPU) ReadOperands_ZeroPageAddressed_YIndexed() {
+	AddressBus = cpu.BuildAddress(cpu.ReadFromPC()+cpu.Y, 0x00)
 }
