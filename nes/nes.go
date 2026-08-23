@@ -58,7 +58,7 @@ func (g *Game) Update() error {
 	}
 
 	for common.ROMLoaded && !PauseEmulation && !cpu.CPU_Halted {
-		Emulator.cpu.Emulate_CPU()
+		Emulator.cpu.CPU_Cycle()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
 			break

@@ -75,12 +75,12 @@ func (cpu *CPU) CPU_Cycle() {
 	if cpu.subCycle == 0 {
 		cpu.SetOpcode(cpu.ReadFromPC())
 
-		if cpu.BreakSource != 0 {
+		if cpu.BreakSource != Break_None {
 			cpu.SetOpcode(0x00)
 		} else if cpu.opcode == 0x00 {
 			cpu.BreakSource = Break_Software
 		}
-
+		cpu.subCycle++
 	} else {
 		cpu.RunInstruction()
 		cpu.subCycle++

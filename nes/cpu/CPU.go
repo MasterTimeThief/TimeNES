@@ -35,7 +35,6 @@ var CPU_Halted = false
 var MagicConstant byte = 0xFF //Might be needed for some of the illegal opcodes
 var NMILevelDetector, DoNMI bool
 
-var apuRun bool
 var AddressBus uint16
 var Pointer uint16
 var Target uint16
@@ -63,7 +62,7 @@ func (cpu *CPU) ResetCPU() {
 	cpu.flag_B = false
 }
 
-func (cpu *CPU) Emulate_CPU() {
+func (cpu *CPU) CPU_Cycle() {
 	//Non Maskable Interrupt check
 	prevNMILevelDetector := NMILevelDetector
 	NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
@@ -1669,11 +1668,7 @@ func (cpu *CPU) Emulate_CPU() {
 		ppu.Emulate_PPU()
 		ppu.Emulate_PPU()
 
-		//Run the APU
-		//apuRun = !apuRun
-		//if apuRun {
 		apu.Emulate_APU()
-		//}
 	}
 
 	//Force Stop, just in case
