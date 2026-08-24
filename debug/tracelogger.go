@@ -317,6 +317,7 @@ func TraceLogger(opcode, A, X, Y, SP, status byte, pc uint16) {
 	Traceline += "\t" + fmt.Sprintf("%02X ", opcode)
 
 	// operands, if any
+	bus := bus.NewBUS()
 	for i := 0; i < OP.operands; i++ {
 		Traceline += fmt.Sprintf("%02X ", bus.Read(pc+uint16(i)))
 	}

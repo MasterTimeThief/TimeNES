@@ -17,8 +17,13 @@ var CPUBus byte
 var OAMBusAddress byte
 var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0
 
+func NewBUS() *BUS {
+	bus := BUS{}
+	return &bus
+}
+
 // Read from Address, and return that byte
-func Read(Address uint16) byte {
+func (b *BUS) Read(Address uint16) byte {
 	//var CPUBus byte
 	if Address < 0x2000 {
 		//Read from RAM (Accounting for RAM Mirroring)
@@ -129,7 +134,7 @@ func Read(Address uint16) byte {
 }
 
 // Write the Value into the Address given (PPU may have extra steps)
-func Write(Address uint16, Value byte) {
+func (b *BUS) Write(Address uint16, Value byte) {
 	if Address < 0x2000 {
 		cartridge.RAM[Address&0x7FF] = Value
 	} else if Address < 0x4000 {
@@ -299,15 +304,15 @@ func Write(Address uint16, Value byte) {
 		case 0x4012:
 			apu.DMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
 			apu.DMC.CurrentAddress = apu.DMC.SampleAddress
-			PrebufferDMCSamples()
+			b.PrebufferDMCSamples()
 		case 0x4013:
 			apu.DMC.SampleLength = ((uint16(Value) << 4) | 1)
 			apu.DMC.BytesRemaining = apu.DMC.SampleLength
-			PrebufferDMCSamples()
+			b.PrebufferDMCSamples()
 
 		case 0x4014: //OAMDMA
 			for i := 0; i < 256; i++ {
-				ppu.OAM[OAMBusAddress] = Read((uint16(Value) << 8) + uint16(i))
+				ppu.OAM[OAMBusAddress] = b.Read((uint16(Value) << 8) + uint16(i))
 				OAMBusAddress++
 			}
 		case 0x4015: //APU Status
@@ -365,7 +370,7 @@ func Write(Address uint16, Value byte) {
 		case 1: //MMC1
 			mappers.MMC1_WriteToPRGRAM(Value, Address)
 		case 3: //CNROM
-			prgValue := Read(Address)
+			prgValue := b.Read(Address)
 			mappers.CNROM_WriteToPRGRAM(Value&prgValue, Address) // Can have bus conflicts
 		case 4: //MMC3
 			mappers.MMC3_WriteToPRGRAM(Value, Address)
@@ -381,7 +386,7 @@ func Write(Address uint16, Value byte) {
 		case 2: //UxROM
 			mappers.UxROM_Write(Value, Address)
 		case 3: //CNROM
-			prgValue := Read(Address)
+			prgValue := b.Read(Address)
 			mappers.CNROM_Write(Value&prgValue, Address) // Can have bus conflicts
 		case 4: //MMC3
 			mappers.MMC3_Write(Value, Address)
@@ -464,7 +469,7 @@ func WriteToNametable(Value byte, isHoriz bool) {
 	}
 }
 
-func PrebufferDMCSamples() {
+func (b *BUS) PrebufferDMCSamples() {
 
 	if apu.DMC.SampleLength > 0 && apu.DMC.SampleAddress > 0x7FFF {
 		apu.DMC.SampleBuffer = nil
@@ -476,7 +481,7 @@ func PrebufferDMCSamples() {
 				sampleAddr += 0x8000
 			}
 
-			apu.DMC.SampleBuffer = append(apu.DMC.SampleBuffer, Read(sampleAddr))
+			apu.DMC.SampleBuffer = append(apu.DMC.SampleBuffer, b.Read(sampleAddr))
 		}
 		apu.DMC.SampleBufferPos = 0
 	}

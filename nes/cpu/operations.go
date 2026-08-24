@@ -2,7 +2,6 @@ package cpu
 
 import (
 	"mtt/timenes/common"
-	"mtt/timenes/nes/bus"
 )
 
 func (cpu *CPU) BuildAddress(low, high byte) uint16 {
@@ -13,22 +12,22 @@ func (cpu *CPU) BuildAddress(low, high byte) uint16 {
 
 // Read from the Program Counter, and return the result
 func (cpu *CPU) ReadFromPC() byte {
-	Value := bus.Read(cpu.PC)
+	Value := cpu.bus.Read(cpu.PC)
 	cpu.PC++
 	return Value
 }
 
 // Read from the Address Bus, and return the result
 func (cpu *CPU) ReadFromAB() byte {
-	return bus.Read(AddressBus)
+	return cpu.bus.Read(AddressBus)
 }
 
 func (cpu *CPU) WriteToPC(Value byte) {
-	bus.Write(cpu.PC, Value)
+	cpu.bus.Write(cpu.PC, Value)
 }
 
 func (cpu *CPU) WriteToAB(Value byte) {
-	bus.Write(AddressBus, Value)
+	cpu.bus.Write(AddressBus, Value)
 }
 
 func (cpu *CPU) SetZNFlags(Value byte) {
@@ -58,14 +57,14 @@ func (cpu *CPU) Branch(Condition bool, Value byte) {
 
 func (cpu *CPU) Push(Value byte) {
 	//Store to the stack, and decrement the stack pointer
-	bus.Write(uint16(cpu.SP)+0x100, Value)
+	cpu.bus.Write(uint16(cpu.SP)+0x100, Value)
 	cpu.SP--
 }
 
 func (cpu *CPU) Pull() byte {
 	//Increment the stack pointer, and read from the stack
 	cpu.SP++
-	temp := bus.Read(uint16(cpu.SP) + 0x100)
+	temp := cpu.bus.Read(uint16(cpu.SP) + 0x100)
 	return temp
 }
 
@@ -97,47 +96,47 @@ func (cpu *CPU) PullFlags() {
 
 // Performs Arithmetic Shift Left onto value at Address
 func (cpu *CPU) Op_ASL(Address uint16) {
-	Value := bus.Read(Address)
+	Value := cpu.bus.Read(Address)
 	cpu.flag_Carry = (Value >= 0x80)
 	Value <<= 1
-	bus.Write(Address, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
 
 }
 
 // Performs Arithmetic Shift Right onto value at Address
 func (cpu *CPU) Op_LSR(Address uint16) {
-	Value := bus.Read(Address)
+	Value := cpu.bus.Read(Address)
 	cpu.flag_Carry = (Value & 1) != 0
 	Value >>= 1
-	bus.Write(Address, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Left onto value at Address
 func (cpu *CPU) Op_ROL(Address uint16) {
-	Value := bus.Read(Address)
+	Value := cpu.bus.Read(Address)
 	futureCarry := (Value >= 0x80)
 	Value <<= 1
 	if cpu.flag_Carry {
 		Value |= 1
 	}
 	//MasterClockTick("rol")
-	bus.Write(Address, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Right onto value at Address
 func (cpu *CPU) Op_ROR(Address uint16) {
-	Value := bus.Read(Address)
+	Value := cpu.bus.Read(Address)
 	futureCarry := (Value & 1) != 0
 	Value >>= 1
 	if cpu.flag_Carry {
 		Value |= 0x80
 	}
 	//MasterClockTick("ror")
-	bus.Write(Address, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }
@@ -145,14 +144,14 @@ func (cpu *CPU) Op_ROR(Address uint16) {
 // Increment Value, and save to Address
 func (cpu *CPU) Op_INC(Address uint16, Value byte) {
 	Value++
-	bus.Write(Address, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Decrement Value, and save to Address
 func (cpu *CPU) Op_DEC(Address uint16, Value byte) {
 	Value--
-	bus.Write(Address, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
 }
 

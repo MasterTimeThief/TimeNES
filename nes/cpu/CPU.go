@@ -5,12 +5,17 @@ import (
 	"mtt/timenes/common"
 	"mtt/timenes/debug"
 	"mtt/timenes/nes/apu"
-	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge/mappers"
 	"mtt/timenes/nes/ppu"
 )
 
+type BUS interface {
+	Read(uint16) byte
+	Write(uint16, byte)
+}
+
 type CPU struct {
+	bus BUS
 	// CPU Registers
 	PC uint16 // Program Counter
 	SP byte   // Stack Pointer
@@ -46,6 +51,10 @@ func NewCPU() *CPU {
 	return &cpu
 }
 
+func (cpu *CPU) SetBUS(b BUS) {
+	cpu.bus = b
+}
+
 func (cpu *CPU) ResetCPU() {
 	cpu.SP = 0xFD
 	cpu.A, cpu.X, cpu.Y = 0, 0, 0
@@ -77,7 +86,7 @@ func (cpu *CPU) CPU_Cycle() {
 	//var opcode byte
 	if !DoNMI {
 		//If we're not running an NMI
-		opcode = bus.Read(cpu.PC)
+		opcode = cpu.bus.Read(cpu.PC)
 		//if debug.LoggingCPU {
 		//	debug.prepTraceLogger()
 		//}
@@ -952,8 +961,8 @@ func (cpu *CPU) CPU_Cycle() {
 		cpu.PushFlags()
 		//flag_InterruptDisable = true
 
-		PCL := bus.Read(common.Ternary(DoNMI, 0xFFFA, 0xFFFE))
-		PCH := bus.Read(common.Ternary(DoNMI, 0xFFFB, 0xFFFF))
+		PCL := cpu.bus.Read(common.Ternary(DoNMI, 0xFFFA, 0xFFFE))
+		PCH := cpu.bus.Read(common.Ternary(DoNMI, 0xFFFB, 0xFFFF))
 		cpu.PC = uint16((uint16(PCH) * 0x100) + uint16(PCL)) //cpu.BuildAddress(PCL, PCH)
 		DoNMI = false
 		CPU_Cycles = 7
@@ -1243,19 +1252,19 @@ func (cpu *CPU) CPU_Cycle() {
 
 	case 0x87: //SAX Zero Page
 		cpu.ReadOperands_ZeroPageAddressed()
-		bus.Write(AddressBus, (cpu.A & cpu.X))
+		cpu.bus.Write(AddressBus, (cpu.A & cpu.X))
 		CPU_Cycles = 3
 	case 0x97: //SAX Zero Page, Y
 		cpu.ReadOperands_ZeroPageAddressed_YIndexed()
-		bus.Write(AddressBus, (cpu.A & cpu.X))
+		cpu.bus.Write(AddressBus, (cpu.A & cpu.X))
 		CPU_Cycles = 4
 	case 0x8F: //SAX Absolute
 		cpu.ReadOperands_AbsoluteAddressed(false)
-		bus.Write(AddressBus, (cpu.A & cpu.X))
+		cpu.bus.Write(AddressBus, (cpu.A & cpu.X))
 		CPU_Cycles = 4
 	case 0x83: //SAX Indirect, X
 		cpu.ReadOperands_IndirectAddressed_XIndexed()
-		bus.Write(AddressBus, (cpu.A & cpu.X))
+		cpu.bus.Write(AddressBus, (cpu.A & cpu.X))
 		CPU_Cycles = 6
 
 	//LAX: LDA + LDX
@@ -1378,11 +1387,11 @@ func (cpu *CPU) CPU_Cycle() {
 	case 0x9F: //SHA Absolute, Y
 		cpu.ReadOperands_AbsoluteAddressed_YIndexed(false)
 		HiByte := byte(AddressBus >> 8)
-		bus.Write(AddressBus, cpu.A&cpu.X&(HiByte+1))
+		cpu.bus.Write(AddressBus, cpu.A&cpu.X&(HiByte+1))
 		CPU_Cycles = 5
 	case 0x93: //SHA Indirect, Y
 		cpu.ReadOperands_IndirectAddressed_YIndexed(false)
-		bus.Write(AddressBus, cpu.A&cpu.X&byte((AddressBus>>8)+1))
+		cpu.bus.Write(AddressBus, cpu.A&cpu.X&byte((AddressBus>>8)+1))
 		CPU_Cycles = 6
 
 	//SHX: Stores X AND (high-byte of addr. + 1) at addr.
@@ -1390,7 +1399,7 @@ func (cpu *CPU) CPU_Cycle() {
 	case 0x9E: //SHX Absolute, Y
 		cpu.ReadOperands_AbsoluteAddressed_YIndexed(false)
 		val := (cpu.X & byte(((AddressBus&0xFF00)>>8)+1))
-		bus.Write(AddressBus, val)
+		cpu.bus.Write(AddressBus, val)
 		CPU_Cycles = 5
 
 	//SHY: Stores Y AND (high-byte of addr. + 1) at addr.
@@ -1398,7 +1407,7 @@ func (cpu *CPU) CPU_Cycle() {
 	case 0x9C: //SHY Absolute, X
 		cpu.ReadOperands_AbsoluteAddressed_XIndexed(false)
 		val := (cpu.Y & byte(((AddressBus&0xFF00)>>8)+1))
-		bus.Write(AddressBus, val)
+		cpu.bus.Write(AddressBus, val)
 		CPU_Cycles = 5
 
 	//RLA: ROL + AND
@@ -1613,7 +1622,7 @@ func (cpu *CPU) CPU_Cycle() {
 		temp := cpu.A & cpu.X
 		cpu.Push(temp)
 		cpu.ReadOperands_AbsoluteAddressed_YIndexed(false)
-		bus.Write(AddressBus, (cpu.A&cpu.X)&(byte(AddressBus&0xFF00)+1))
+		cpu.bus.Write(AddressBus, (cpu.A&cpu.X)&(byte(AddressBus&0xFF00)+1))
 		CPU_Cycles = 5
 
 	case 0xBB: //LAS (LAE) Absolute, Y
@@ -1653,8 +1662,8 @@ func (cpu *CPU) CPU_Cycle() {
 		cpu.Push(byte(cpu.PC))
 		cpu.PushFlags()
 
-		PCL := bus.Read(0xFFFE)
-		PCH := bus.Read(0xFFFF)
+		PCL := cpu.bus.Read(0xFFFE)
+		PCH := cpu.bus.Read(0xFFFF)
 		cpu.PC = cpu.BuildAddress(PCL, PCH)
 
 		//Disable interrupts

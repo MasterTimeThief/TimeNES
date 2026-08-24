@@ -1,7 +1,5 @@
 package cpu
 
-import "mtt/timenes/nes/bus"
-
 /* Addressing Modes (Taken from NESDEV.org)
  	Abbr	Name				Cycles		Formula
 	d,x		Zero page indexed	4			val = PEEK((arg + X) % 256)
@@ -72,13 +70,13 @@ func (cpu *CPU) ReadOperands_IndirectAddressed() {
 	AddressBus = uint16(cpu.ReadFromPC())
 	AddressBus = (uint16(cpu.ReadFromPC())<<8 | AddressBus)
 	//Now read from HERE
-	low := bus.Read(AddressBus)
+	low := cpu.bus.Read(AddressBus)
 	var high byte
 	if AddressBus&0x00FF == 0xFF {
 		//Original NMOS Bug
-		high = bus.Read(AddressBus & 0xFF00)
+		high = cpu.bus.Read(AddressBus & 0xFF00)
 	} else {
-		high = bus.Read(AddressBus + 1)
+		high = cpu.bus.Read(AddressBus + 1)
 	}
 	AddressBus = cpu.BuildAddress(low, high)
 }
@@ -99,15 +97,15 @@ func (cpu *CPU) ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
 
 func (cpu *CPU) ReadOperands_IndirectAddressed_XIndexed() {
 	TempAddress := cpu.ReadFromPC() + cpu.X
-	low := bus.Read(uint16(TempAddress))
-	high := bus.Read(uint16(TempAddress + 1))
+	low := cpu.bus.Read(uint16(TempAddress))
+	high := cpu.bus.Read(uint16(TempAddress + 1))
 	AddressBus = cpu.BuildAddress(low, high)
 }
 
 func (cpu *CPU) ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) {
 	TempAddress := cpu.ReadFromPC()
-	low := bus.Read(uint16(TempAddress))
-	high := bus.Read(uint16(TempAddress + 1))
+	low := cpu.bus.Read(uint16(TempAddress))
+	high := cpu.bus.Read(uint16(TempAddress + 1))
 	AddressBus = cpu.BuildAddress(low, high) + uint16(cpu.Y)
 	PageCrossingCheck(pbCheck, AddressBus, low, high)
 }

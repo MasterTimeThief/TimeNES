@@ -67,7 +67,9 @@ func InitGame(newUI *ebitenui.UI) {
 		cpu:        cpu.NewCPU(),
 		ppu:        ppu.NewPPU(),
 		apu:        apu.NewAPU(),
+		bus:        bus.NewBUS(),
 	}
+	Emulator.cpu.SetBUS(Emulator.bus)
 
 	if Emulator.audioContext == nil {
 		Emulator.audioContext = apu.NewAudioContext()
@@ -95,8 +97,8 @@ func Reset() {
 
 	//copy(CHRData[:], HeaderedROM[0x8010:])
 
-	PCL := bus.Read(0xFFFC)
-	PCH := bus.Read(0xFFFD)
+	PCL := Emulator.bus.Read(0xFFFC)
+	PCH := Emulator.bus.Read(0xFFFD)
 	Emulator.cpu.PC = Emulator.cpu.BuildAddress(PCL, PCH)
 	//fmt.Printf("%#x", ProgramCounter)
 
@@ -157,9 +159,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if _, my := input.CursorPosition(); my < common.MouseHeight || MenuBarSelected || !common.ROMExists {
 		g.UI.Draw(screen)
 	}
-	//if debug.ShowDebugWindow {
+
+	//Draw debugging window, if enabled
 	g.debugui.Draw(screen)
-	//}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
