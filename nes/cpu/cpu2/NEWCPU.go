@@ -6,8 +6,15 @@ import (
 	"mtt/timenes/nes/ppu"
 )
 
-// CPU Registers
+type BUS interface {
+	Read(uint16) byte
+	Write(uint16, byte)
+}
+
 type CPU struct {
+	bus BUS
+
+	// CPU Registers
 	PC uint16 // Program Counter
 	SP byte   // Stack Pointer
 	A  byte   // Accumulator
@@ -52,9 +59,13 @@ const (
 	Break_Reset
 )
 
-func New() *CPU {
+func NewCPU() *CPU {
 	cpu := CPU{}
 	return &cpu
+}
+
+func (cpu *CPU) SetBUS(b BUS) {
+	cpu.bus = b
 }
 
 func (cpu *CPU) ResetCPU() {

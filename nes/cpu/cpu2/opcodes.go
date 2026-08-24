@@ -1,7 +1,5 @@
 package cpu2
 
-import "mtt/timenes/nes/bus"
-
 //----------------------------------------
 //	Access
 //----------------------------------------
@@ -1583,7 +1581,7 @@ func (cpu *CPU) X6C_JMP_Indirect() {
 	case 3:
 		cpu.SB = cpu.ReadFromAB()
 	case 4:
-		cpu.DL = bus.Read((cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + 1) & 0xFF))
+		cpu.DL = cpu.bus.Read((cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + 1) & 0xFF))
 		cpu.PC = cpu.BuildAddress(cpu.SB, cpu.DL)
 		cpu.CompleteInstruction()
 	}
@@ -1686,19 +1684,19 @@ func (cpu *CPU) X00_BRK() {
 		}
 	case 5:
 		if cpu.BreakSource == Break_NMI {
-			cpu.PC = (cpu.PC & 0xFF00) | uint16(bus.Read(0xFFFA))
+			cpu.PC = (cpu.PC & 0xFF00) | uint16(cpu.bus.Read(0xFFFA))
 		} else if cpu.BreakSource == Break_Reset {
-			cpu.PC = (cpu.PC & 0xFF00) | uint16(bus.Read(0xFFFC))
+			cpu.PC = (cpu.PC & 0xFF00) | uint16(cpu.bus.Read(0xFFFC))
 		} else {
-			cpu.PC = (cpu.PC & 0xFF00) | uint16(bus.Read(0xFFFE))
+			cpu.PC = (cpu.PC & 0xFF00) | uint16(cpu.bus.Read(0xFFFE))
 		}
 	case 6:
 		if cpu.BreakSource == Break_NMI {
-			cpu.PC = (cpu.PC & 0xFF) | (uint16(bus.Read(0xFFFB)) << 8)
+			cpu.PC = (cpu.PC & 0xFF) | (uint16(cpu.bus.Read(0xFFFB)) << 8)
 		} else if cpu.BreakSource == Break_Reset {
-			cpu.PC = (cpu.PC & 0xFF) | (uint16(bus.Read(0xFFFD)) << 8)
+			cpu.PC = (cpu.PC & 0xFF) | (uint16(cpu.bus.Read(0xFFFD)) << 8)
 		} else {
-			cpu.PC = (cpu.PC & 0xFF) | (uint16(bus.Read(0xFFFF)) << 8)
+			cpu.PC = (cpu.PC & 0xFF) | (uint16(cpu.bus.Read(0xFFFF)) << 8)
 		}
 		cpu.BreakSource = Break_None
 		cpu.flag_InterruptDisable = true

@@ -2,7 +2,6 @@ package cpu2
 
 import (
 	"mtt/timenes/common"
-	"mtt/timenes/nes/bus"
 )
 
 func (cpu *CPU) BuildAddress(low, high byte) uint16 {
@@ -13,22 +12,22 @@ func (cpu *CPU) BuildAddress(low, high byte) uint16 {
 
 // Read from the Program Counter, and return the result
 func (cpu *CPU) ReadFromPC() byte {
-	Value := bus.Read(cpu.PC)
+	Value := cpu.bus.Read(cpu.PC)
 	cpu.PC++
 	return Value
 }
 
 // Read from the Address Bus, and return the result
 func (cpu *CPU) ReadFromAB() byte {
-	return bus.Read(cpu.AddressBus)
+	return cpu.bus.Read(cpu.AddressBus)
 }
 
 func (cpu *CPU) WriteToPC(Value byte) {
-	bus.Write(cpu.PC, Value)
+	cpu.bus.Write(cpu.PC, Value)
 }
 
 func (cpu *CPU) WriteToAB(Value byte) {
-	bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(cpu.AddressBus, Value)
 }
 
 func (cpu *CPU) SetZNFlags(Value byte) {
@@ -70,20 +69,20 @@ func (cpu *CPU) Branch(condition bool) {
 
 // The RESET instruction has unique behavior where it reads from the stack, and decrements the stack pointer.
 func (cpu *CPU) ResetReadPush() {
-	bus.Read(uint16(cpu.SP) + 0x100)
+	cpu.bus.Read(uint16(cpu.SP) + 0x100)
 	cpu.SP--
 }
 
 // Store to the stack, and decrement the stack pointer
 func (cpu *CPU) Push(Value byte) {
-	bus.Write(uint16(cpu.SP)+0x100, Value)
+	cpu.bus.Write(uint16(cpu.SP)+0x100, Value)
 	cpu.SP--
 }
 
 // Increment the stack pointer, and read from the stack
 func (cpu *CPU) Pull() byte {
 	cpu.SP++
-	return bus.Read(uint16(cpu.SP) + 0x100)
+	return cpu.bus.Read(uint16(cpu.SP) + 0x100)
 }
 
 // Push the Status Register to the Stack
@@ -114,44 +113,44 @@ func (cpu *CPU) PullFlags() {
 
 // Performs Arithmetic Shift Left onto value at Address
 func (cpu *CPU) Op_ASL() {
-	Value := bus.Read(cpu.AddressBus)
+	Value := cpu.bus.Read(cpu.AddressBus)
 	cpu.flag_Carry = (Value >= 0x80)
 	Value <<= 1
-	bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Performs Arithmetic Shift Right onto value at Address
 func (cpu *CPU) Op_LSR() {
-	Value := bus.Read(cpu.AddressBus)
+	Value := cpu.bus.Read(cpu.AddressBus)
 	cpu.flag_Carry = (Value & 1) != 0
 	Value >>= 1
-	bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Left onto value at Address
 func (cpu *CPU) Op_ROL() {
-	Value := bus.Read(cpu.AddressBus)
+	Value := cpu.bus.Read(cpu.AddressBus)
 	futureCarry := (Value >= 0x80)
 	Value <<= 1
 	if cpu.flag_Carry {
 		Value |= 1
 	}
-	bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(cpu.AddressBus, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Right onto value at Address
 func (cpu *CPU) Op_ROR() {
-	Value := bus.Read(cpu.AddressBus)
+	Value := cpu.bus.Read(cpu.AddressBus)
 	futureCarry := (Value & 1) != 0
 	Value >>= 1
 	if cpu.flag_Carry {
 		Value |= 0x80
 	}
-	bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(cpu.AddressBus, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }
@@ -159,14 +158,14 @@ func (cpu *CPU) Op_ROR() {
 // Increment Value, and save to Address
 func (cpu *CPU) Op_INC(Value byte) {
 	Value++
-	bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Decrement Value, and save to Address
 func (cpu *CPU) Op_DEC(Value byte) {
 	Value--
-	bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(cpu.AddressBus, Value)
 	cpu.SetZNFlags(Value)
 }
 
