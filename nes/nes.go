@@ -56,6 +56,9 @@ func (g *Game) Update() error {
 			common.Filepath = ""
 		}
 	}
+	if debug.LoggingCPU {
+		debug.SetupTraceLogger()
+	}
 
 	for common.ROMLoaded && !PauseEmulation && !cpu.CPU_Halted {
 		Emulator.cpu.CPU_Cycle()

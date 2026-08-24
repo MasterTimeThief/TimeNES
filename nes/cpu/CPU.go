@@ -3,6 +3,7 @@ package cpu
 import (
 	"fmt"
 	"mtt/timenes/common"
+	"mtt/timenes/debug"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge/mappers"
@@ -29,7 +30,8 @@ type CPU struct {
 }
 
 var opcode byte
-var operands []byte
+
+// var operands []byte
 var CPU_Cycles, CPU_Cycles_New int
 var CPU_Halted = false
 var MagicConstant byte = 0xFF //Might be needed for some of the illegal opcodes
@@ -48,7 +50,7 @@ func (cpu *CPU) ResetCPU() {
 	cpu.SP = 0xFD
 	cpu.A, cpu.X, cpu.Y = 0, 0, 0
 	opcode = 0
-	operands = nil
+	//operands = nil
 	CPU_Cycles, CPU_Cycles_New, common.CPU_TotalCycles = 0, 0, 0
 	CPU_Halted = false
 	NMILevelDetector, DoNMI = false, false
@@ -84,6 +86,10 @@ func (cpu *CPU) CPU_Cycle() {
 	} else {
 		//If we're running an NMI, force opcode $00
 		opcode = 0x00
+	}
+
+	if debug.LoggingCPU {
+		cpu.SendToTracelogger()
 	}
 
 	CPU_Cycles = 0
@@ -1659,7 +1665,7 @@ func (cpu *CPU) CPU_Cycle() {
 	}
 
 	//CartRAMLogger()
-	operands = nil
+	//operands = nil
 
 	common.CPU_TotalCycles += CPU_Cycles
 	for CPU_Cycles > 0 {
@@ -1680,4 +1686,18 @@ func (cpu *CPU) CPU_Cycle() {
 	//}
 
 	//InstructionCount++
+}
+
+func (cpu *CPU) SendToTracelogger() {
+	status := byte(0)
+	status += byte(common.Ternary(cpu.flag_Carry, 0x01, 0x00))
+	status += byte(common.Ternary(cpu.flag_Zero, 0x02, 0x00))
+	status += byte(common.Ternary(cpu.flag_InterruptDisable, 0x04, 0x00))
+	status += byte(common.Ternary(cpu.flag_Decimal, 0x08, 0x00))
+	status += byte(common.Ternary(cpu.flag_B, 0x10, 0x00)) //B Flag
+	status += 0x20
+	status += byte(common.Ternary(cpu.flag_Overflow, 0x40, 0x00))
+	status += byte(common.Ternary(cpu.flag_Negative, 0x80, 0x00))
+
+	debug.TraceLogger(opcode, cpu.A, cpu.X, cpu.Y, cpu.SP, status, cpu.PC)
 }

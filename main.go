@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"mtt/timenes/common"
 	"mtt/timenes/nes"
 	"mtt/timenes/ui"
@@ -16,6 +17,7 @@ func main() {
 	//go func() {
 	//	log.Println(http.ListenAndServe("localhost:6060", nil))
 	//}()
+	log.SetFlags(0)
 	flag.IntVar(&common.ScreenScale, "scale", 2, "Screen scale")
 	flag.Parse()
 
