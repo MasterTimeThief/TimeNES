@@ -14,7 +14,6 @@ type BUS struct {
 }
 
 var CPUBus byte
-var OAMBusAddress byte
 var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0
 
 func NewBUS() *BUS {
@@ -54,7 +53,7 @@ func (b *BUS) Read(Address uint16) byte {
 					CPUBus = ppu.PPUBus
 				}
 			} else {
-				ppu.PPUBus = ppu.OAM[OAMBusAddress]
+				ppu.PPUBus = ppu.OAM[ppu.GetOAMBusAddress()]
 			}
 			ppu.UpdatePPUBus(ppu.PPUBus)
 		case 0x2005: //PPUSCROLL
@@ -163,18 +162,20 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			ppu.PPUMASK_EmphasisBlue = (Value & 0x80) != 0
 		case 0x2002: //PPUSTATUS
 		case 0x2003: //OAMADDR
-			OAMBusAddress = Value
+			ppu.SetOAMBusAddress(Value)
 		case 0x2004: //OAMDATA
+			oamAddr := ppu.GetOAMBusAddress()
 			if ((ppu.PPUScanline >= 240 && ppu.PPUScanline < 261) && (ppu.PPUMASK_RenderBG || ppu.PPUMASK_RenderSprites)) || (!ppu.PPUMASK_RenderBG && !ppu.PPUMASK_RenderSprites) {
-				if (OAMBusAddress & 3) == 2 {
+				if (oamAddr & 3) == 2 {
 					Value &= 0xE3
 				}
-				ppu.OAM[OAMBusAddress] = Value
-				OAMBusAddress++
+				ppu.OAM[oamAddr] = Value
+				oamAddr++
 			} else {
-				OAMBusAddress += 4
-				OAMBusAddress &= 0xFC
+				oamAddr += 4
+				oamAddr &= 0xFC
 			}
+			ppu.SetOAMBusAddress(oamAddr)
 		case 0x2005: //PPUSCROLL
 			if !ppu.WriteLatch {
 				ppu.PPUScrollFineX = byte(Value & 7)
@@ -196,7 +197,7 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			}
 			ppu.WriteLatch = !ppu.WriteLatch
 		case 0x2007: //PPUDATA
-			WritePPU(Value)
+			ppu.WritePPU(Value)
 
 			ppu.VRAMAddress += common.Ternary(ppu.PPUCTRL_VRAMInc32Mode, 0x20, 0x01)
 			ppu.VRAMAddress &= 0x3FFF
@@ -311,9 +312,10 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			b.PrebufferDMCSamples()
 
 		case 0x4014: //OAMDMA
+			oamAddr := ppu.GetOAMBusAddress()
 			for i := 0; i < 256; i++ {
-				ppu.OAM[OAMBusAddress] = b.Read((uint16(Value) << 8) + uint16(i))
-				OAMBusAddress++
+				ppu.OAM[oamAddr] = b.Read((uint16(Value) << 8) + uint16(i))
+				oamAddr++
 			}
 		case 0x4015: //APU Status
 			//apuDMC.BytesRemaining = int((Value & 0x10) >> 4)
@@ -398,75 +400,6 @@ func (b *BUS) Write(Address uint16, Value byte) {
 		}
 	}
 	//MasterClockTick("WRITE")
-}
-
-func WritePPU(Value byte) {
-	if ppu.VRAMAddress < 0x2000 {
-		//Write to pattern table. (If the cartridge supports it)
-		if cartridge.CHRROM_Size == 0 {
-			switch cartridge.MapperChipID {
-			case 1: //MMC1
-				//if AltNametableLayout {
-				//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(ppu.VRAMAddress, CHRROM_Size)] = Value
-				//} else {
-				cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(ppu.VRAMAddress, cartridge.CHRROM_Size)] = Value
-				//}
-			case 3: //CNROM
-				cartridge.CHRROM[mappers.CNROM_FetchPPUAddress(ppu.VRAMAddress)] = Value
-			case 4: //MMC3
-				cartridge.CHRROM[mappers.MMC3_FetchPPUAddress(ppu.VRAMAddress, cartridge.CHRROM_Size)] = Value
-			default:
-				cartridge.CHRROM[ppu.VRAMAddress] = Value
-			}
-			//For Pattern Table viewing
-			common.PendingPatternUpdate = true
-		}
-		//else, nothing happens because it's CHR-ROM
-	} else if ppu.VRAMAddress < 0x3F00 {
-		//Write to the Nametables
-
-		switch cartridge.MapperChipID {
-		case 1: //MMC1
-			switch mappers.MMC1_GetNametableArrangement() {
-			case 0: //Screen A only
-				cartridge.CartVRAM[int(ppu.VRAMAddress&0x3FF)] = Value
-			case 1: //Screen B Only
-				cartridge.CartVRAM[int(ppu.VRAMAddress&0x3FF)+0x400] = Value
-			case 2: //Horizontal
-				cartridge.CartVRAM[int(ppu.VRAMAddress&0x7FF)] = Value
-			case 3: //Vertical
-				cartridge.CartVRAM[int(ppu.VRAMAddress&0x3FF)|int(ppu.VRAMAddress&0x800)>>1] = Value
-			}
-			//cartridge.CartVRAM[ppu.VRAMAddress&0xFFF] = Value
-		//case 3: //CNROM
-		case 4: //MMC3
-			//WriteToNametable(Value, mappers.MMC3_IsHorizontalNametable)
-			cartridge.CartVRAM[int(ppu.VRAMAddress&0xFFF)] = Value
-		default:
-			WriteToNametable(Value, cartridge.IsNametableHorizontal)
-		}
-
-	} else {
-		//Write to Palette RAM
-		if (ppu.VRAMAddress & 3) == 0 {
-			cartridge.PaletteRAM[ppu.VRAMAddress&0x0F] = Value
-		} else {
-			cartridge.PaletteRAM[ppu.VRAMAddress&0x1F] = Value
-		}
-	}
-}
-
-func WriteToNametable(Value byte, isHoriz bool) {
-	if cartridge.AltNametableLayout {
-	} else {
-		if cartridge.IsNametableHorizontal {
-			// Horizontal Mirroring
-			cartridge.VRAM[int(ppu.VRAMAddress&0x3FF)|int(ppu.VRAMAddress&0x800)>>1] = Value
-		} else {
-			//Vertical Mirroring
-			cartridge.VRAM[int(ppu.VRAMAddress&0x7FF)] = Value
-		}
-	}
 }
 
 func (b *BUS) PrebufferDMCSamples() {

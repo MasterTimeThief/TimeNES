@@ -30,6 +30,7 @@ type AudioBufferStruct struct {
 var audBuf *AudioBufferStruct
 var squareTable [31]float32
 var tndTable [203]float32
+var EmulatorVolume float64 = 0.1
 
 func (abs *AudioBufferStruct) Read(p []byte) (int, error) {
 
@@ -64,7 +65,7 @@ func NewAudioPlayer(context *audio.Context) *audio.Player {
 	common.Check(err)
 
 	player.SetBufferSize(time.Second / 60)
-	player.SetVolume(0.5)
+	player.SetVolume(EmulatorVolume)
 	go func() {
 		player.Play()
 	}()

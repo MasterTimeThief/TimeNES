@@ -57,6 +57,7 @@ var OAM [0x100]byte
 var SecondaryOAM [0x20]byte
 var ppuSpriteEvalTemp byte
 var ppuOAMAddress byte
+var OAMBusAddress byte
 var ppuSecondaryOAMAddress, ppuSecondaryOAMSize uint16
 var ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
 var ppuSpriteEvalTick int
@@ -458,6 +459,62 @@ func ReadPPU( /*Address uint16*/ ) byte {
 	}
 }
 
+func WritePPU(Value byte) {
+	if VRAMAddress < 0x2000 {
+		//Write to pattern table. (If the cartridge supports it)
+		if cartridge.CHRROM_Size == 0 {
+			switch cartridge.MapperChipID {
+			case 1: //MMC1
+				//if AltNametableLayout {
+				//	mappers.MMC1_VRAM[mappers.MMC1_FetchPPUAddress(VRAMAddress, CHRROM_Size)] = Value
+				//} else {
+				cartridge.CHRROM[mappers.MMC1_FetchPPUAddress(VRAMAddress, cartridge.CHRROM_Size)] = Value
+				//}
+			case 3: //CNROM
+				cartridge.CHRROM[mappers.CNROM_FetchPPUAddress(VRAMAddress)] = Value
+			case 4: //MMC3
+				cartridge.CHRROM[mappers.MMC3_FetchPPUAddress(VRAMAddress, cartridge.CHRROM_Size)] = Value
+			default:
+				cartridge.CHRROM[VRAMAddress] = Value
+			}
+			//For Pattern Table viewing
+			common.PendingPatternUpdate = true
+		}
+		//else, nothing happens because it's CHR-ROM
+	} else if VRAMAddress < 0x3F00 {
+		//Write to the Nametables
+
+		switch cartridge.MapperChipID {
+		case 1: //MMC1
+			switch mappers.MMC1_GetNametableArrangement() {
+			case 0: //Screen A only
+				cartridge.CartVRAM[int(VRAMAddress&0x3FF)] = Value
+			case 1: //Screen B Only
+				cartridge.CartVRAM[int(VRAMAddress&0x3FF)+0x400] = Value
+			case 2: //Horizontal
+				cartridge.CartVRAM[int(VRAMAddress&0x7FF)] = Value
+			case 3: //Vertical
+				cartridge.CartVRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+			}
+			//cartridge.CartVRAM[VRAMAddress&0xFFF] = Value
+		//case 3: //CNROM
+		case 4: //MMC3
+			//WriteToNametable(Value, mappers.MMC3_IsHorizontalNametable)
+			cartridge.CartVRAM[int(VRAMAddress&0xFFF)] = Value
+		default:
+			WriteToNametable(Value, cartridge.IsNametableHorizontal)
+		}
+
+	} else {
+		//Write to Palette RAM
+		if (VRAMAddress & 3) == 0 {
+			cartridge.PaletteRAM[VRAMAddress&0x0F] = Value
+		} else {
+			cartridge.PaletteRAM[VRAMAddress&0x1F] = Value
+		}
+	}
+}
+
 func ReadFromNametable(Addr uint16, isHoriz bool) byte {
 	if cartridge.AltNametableLayout {
 	} else {
@@ -470,6 +527,19 @@ func ReadFromNametable(Addr uint16, isHoriz bool) byte {
 		}
 	}
 	return 0
+}
+
+func WriteToNametable(Value byte, isHoriz bool) {
+	if cartridge.AltNametableLayout {
+	} else {
+		if cartridge.IsNametableHorizontal {
+			// Horizontal Mirroring
+			cartridge.VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
+		} else {
+			//Vertical Mirroring
+			cartridge.VRAM[int(VRAMAddress&0x7FF)] = Value
+		}
+	}
 }
 
 var PPUBusDecay [8]int
@@ -512,4 +582,12 @@ func DecayPPUDataBus() {
 			}
 		}
 	}
+}
+
+func GetOAMBusAddress() byte {
+	return OAMBusAddress
+}
+
+func SetOAMBusAddress(Value byte) {
+	OAMBusAddress = Value
 }
