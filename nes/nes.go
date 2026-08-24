@@ -3,7 +3,6 @@ package nes
 import (
 	"flag"
 	"image"
-	"image/color"
 	"log"
 	"mtt/timenes/common"
 	"mtt/timenes/debug"
@@ -68,7 +67,7 @@ func (g *Game) Update() error {
 			//return nil
 		}
 	}
-	RenderFrame()
+	ppu.RenderFrame(Emulator.gameScreen)
 	apu.TransferBuffer()
 
 	if /*CPU_Halted ||*/ g.Exit {
@@ -164,25 +163,6 @@ func Reset() {
 
 	bus.OutsideCodeRead = 0
 	bus.OutsideCodeWrite = 0
-}
-
-func RenderPixel(color color.RGBA) {
-	pixIndex := uint64((((ppu.PPUScanline) * common.ScreenWidth) + (ppu.PPUDot - 1)) * 4)
-
-	Emulator.gameScreen.Pix[pixIndex] = color.R
-	Emulator.gameScreen.Pix[pixIndex+1] = color.G
-	Emulator.gameScreen.Pix[pixIndex+2] = color.B
-	Emulator.gameScreen.Pix[pixIndex+3] = color.A
-}
-
-func RenderFrame() {
-	for i, color := range ppu.FrameColorBuffer {
-		Emulator.gameScreen.Pix[(i * 4)] = color.R
-		Emulator.gameScreen.Pix[(i*4)+1] = color.G
-		Emulator.gameScreen.Pix[(i*4)+2] = color.B
-		Emulator.gameScreen.Pix[(i*4)+3] = color.A
-	}
-	ppu.FrameColorBufferPos = 0
 }
 
 func MasterClockTick(location string) {

@@ -1,6 +1,7 @@
 package ppu
 
 import (
+	"image"
 	"mtt/timenes/common"
 	"mtt/timenes/nes/cartridge"
 )
@@ -106,4 +107,14 @@ func RenderNextPixel( /*g *Game*/ ) {
 
 		//g.gameScreen.Set(PPUDot-1, PPUScanline, color)
 	}
+}
+
+func RenderFrame(screen *image.RGBA) {
+	for i, color := range FrameColorBuffer {
+		screen.Pix[(i * 4)] = color.R
+		screen.Pix[(i*4)+1] = color.G
+		screen.Pix[(i*4)+2] = color.B
+		screen.Pix[(i*4)+3] = color.A
+	}
+	FrameColorBufferPos = 0
 }
