@@ -24,6 +24,12 @@ var MuteEmulator bool = false
 
 //var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
 
+func NewAPU() *APU {
+	InitAudioOutput()
+	apu := APU{}
+	return &apu
+}
+
 func ResetAPU() {
 
 	//Reset Channels
@@ -51,15 +57,9 @@ func ResetAPU() {
 
 	apu4017ResetTimer = 0
 	//apuMixerInputBuffer = [apuMaxSamplesPerFrame]uint16{}
-
 }
 
-func InitAPU() {
-	InitAudioOutput()
-
-}
-
-func Emulate_APU() {
+func APU_Cycle() {
 
 	if apuDMAGetCycle { //DMA Get Cycle
 		AudioOutput()

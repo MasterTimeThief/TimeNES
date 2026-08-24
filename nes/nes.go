@@ -46,6 +46,64 @@ type Game struct {
 
 var Emulator *Game
 
+func InitGame(newUI *ebitenui.UI) {
+	arguments := flag.Args()
+	if len(arguments) > 0 && arguments[0] != "" {
+		common.Filepath = arguments[0]
+	}
+	if common.Filepath != "" {
+		common.ROMExists = true
+	}
+
+	ebiten.SetWindowSize(common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale)
+	ebiten.SetWindowTitle("TimeNES")
+	ebiten.SetFullscreen(FullscreenMode)
+	common.SetWindowIcon()
+	//ebiten.SetTPS(ebiten.SyncWithFPS)
+
+	Emulator = &Game{
+		gameScreen: image.NewRGBA(image.Rect(0, 0, common.ScreenWidth, common.ScreenHeight)),
+		UI:         newUI,
+		cpu:        cpu.NewCPU(),
+		ppu:        ppu.NewPPU(),
+		apu:        apu.NewAPU(),
+	}
+
+	if Emulator.audioContext == nil {
+		Emulator.audioContext = apu.NewAudioContext()
+	}
+	if Emulator.player == nil {
+		Emulator.player = apu.NewAudioPlayer(Emulator.audioContext)
+	}
+
+	if err := ebiten.RunGame(Emulator); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func Reset() {
+	//var HeaderedROM []byte := os.ReadFile()
+	Emulator.cpu.ResetCPU()
+	ppu.ResetPPU()
+	apu.ResetAPU()
+
+	//Reset ROM Data
+	cartridge.ResetCartridge()
+
+	cartridge.LoadCartridge()
+	debug.ResetPatternTables()
+
+	//copy(CHRData[:], HeaderedROM[0x8010:])
+
+	PCL := bus.Read(0xFFFC)
+	PCH := bus.Read(0xFFFD)
+	Emulator.cpu.PC = Emulator.cpu.BuildAddress(PCL, PCH)
+	//fmt.Printf("%#x", ProgramCounter)
+
+	bus.OutsideCodeRead = 0
+	bus.OutsideCodeWrite = 0
+}
+
 func (g *Game) Update() error {
 	g.CheckCommonFunctions()
 	if common.Filepath != "" && !common.ROMLoaded {
@@ -106,63 +164,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return common.ScreenWidth * common.ScreenScale, common.ScreenHeight * common.ScreenScale
-}
-
-func InitGame(newUI *ebitenui.UI) {
-	arguments := flag.Args()
-	if len(arguments) > 0 && arguments[0] != "" {
-		common.Filepath = arguments[0]
-	}
-	if common.Filepath != "" {
-		common.ROMExists = true
-	}
-	apu.InitAPU()
-
-	ebiten.SetWindowSize(common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale)
-	ebiten.SetWindowTitle("TimeNES")
-	ebiten.SetFullscreen(FullscreenMode)
-	common.SetWindowIcon()
-	//ebiten.SetTPS(ebiten.SyncWithFPS)
-
-	Emulator = &Game{
-		gameScreen: image.NewRGBA(image.Rect(0, 0, common.ScreenWidth, common.ScreenHeight)),
-		UI:         newUI,
-		cpu:        cpu.New(),
-	}
-
-	if Emulator.audioContext == nil {
-		Emulator.audioContext = apu.NewAudioContext()
-	}
-	if Emulator.player == nil {
-		Emulator.player = apu.NewAudioPlayer(Emulator.audioContext)
-	}
-
-	if err := ebiten.RunGame(Emulator); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func Reset() {
-	//var HeaderedROM []byte := os.ReadFile()
-	Emulator.cpu.ResetCPU()
-	ppu.ResetPPU()
-	apu.ResetAPU()
-
-	//Reset ROM Data
-	cartridge.ResetCartridge()
-
-	cartridge.LoadCartridge()
-	debug.ResetPatternTables()
-
-	//copy(CHRData[:], HeaderedROM[0x8010:])
-
-	PCL := bus.Read(0xFFFC)
-	PCH := bus.Read(0xFFFD)
-	Emulator.cpu.PC = Emulator.cpu.BuildAddress(PCL, PCH)
-	//fmt.Printf("%#x", ProgramCounter)
-
-	bus.OutsideCodeRead = 0
-	bus.OutsideCodeWrite = 0
 }
 
 func MasterClockTick(location string) {

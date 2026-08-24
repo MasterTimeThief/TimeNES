@@ -131,11 +131,11 @@ func (cpu *CPU) RunInstruction() {
 	}
 
 	//Temporary
-	ppu.Emulate_PPU()
-	ppu.Emulate_PPU()
-	ppu.Emulate_PPU()
+	ppu.PPU_Cycle()
+	ppu.PPU_Cycle()
+	ppu.PPU_Cycle()
 
-	apu.Emulate_APU()
+	apu.APU_Cycle()
 }
 
 func (cpu *CPU) Opcode0X() {

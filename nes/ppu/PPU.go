@@ -72,6 +72,11 @@ var ppu_SpriteYposition [8]byte
 var PPUAddressBus uint16
 var PPUBus byte
 
+func NewPPU() *PPU {
+	ppu := PPU{}
+	return &ppu
+}
+
 func ResetPPU() {
 	WriteLatch = false
 	TransferAddress, VRAMAddress, PPUReadBuffer = 0, 0, 0
@@ -127,7 +132,7 @@ func ResetPPU() {
 	ppu_SpriteYposition = [8]byte{}
 }
 
-func Emulate_PPU() {
+func PPU_Cycle() {
 
 	if PPUDot == 1 && PPUScanline == 241 {
 		PPUSTATUS_VBlank = true

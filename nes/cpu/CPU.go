@@ -41,7 +41,7 @@ var AddressBus uint16
 var Pointer uint16
 var Target uint16
 
-func New() *CPU {
+func NewCPU() *CPU {
 	cpu := CPU{}
 	return &cpu
 }
@@ -1670,11 +1670,11 @@ func (cpu *CPU) CPU_Cycle() {
 	common.CPU_TotalCycles += CPU_Cycles
 	for CPU_Cycles > 0 {
 		CPU_Cycles--
-		ppu.Emulate_PPU()
-		ppu.Emulate_PPU()
-		ppu.Emulate_PPU()
+		ppu.PPU_Cycle()
+		ppu.PPU_Cycle()
+		ppu.PPU_Cycle()
 
-		apu.Emulate_APU()
+		apu.APU_Cycle()
 	}
 
 	//Force Stop, just in case
