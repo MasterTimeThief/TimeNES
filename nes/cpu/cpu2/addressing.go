@@ -24,7 +24,7 @@ package cpu2
 
 var FixHighByte bool
 
-// Checks for a page boundary crossing, and skips the next cycle if none occured
+// Returns true if page boundary was crossed
 func PageCrossingCheck(Address uint16, index byte) bool {
 	return ((Address + uint16(index)) & 0xFF00) != (Address & 0xFF00)
 }
@@ -119,7 +119,6 @@ func (cpu *CPU) GetAddress_AbsoluteX(pbCheck bool) {
 				cpu.subCycle++
 				FixHighByte = false
 			}
-
 			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.X)) & 0xFF)
 		case 3:
 			cpu.DL = cpu.ReadFromAB()
@@ -218,11 +217,11 @@ func (cpu *CPU) GetAddress_IndirectX() {
 		cpu.AddressBus = uint16(cpu.ReadFromPC())
 	case 2: // Add X
 		cpu.ReadFromAB() // Dummy Read
-		cpu.AddressBus += uint16(cpu.X)
+		cpu.AddressBus = (cpu.AddressBus + uint16(cpu.X)) & 0xFF
 	case 3: // Fetch address low
 		cpu.DL = cpu.ReadFromAB()
 	case 4: // fetch address high
-		cpu.AddressBus += (cpu.AddressBus + 1) & 0xFF
+		cpu.AddressBus = (cpu.AddressBus + 1) & 0xFF
 		cpu.AddressBus = (uint16(cpu.ReadFromAB())<<8 | uint16(cpu.DL))
 	}
 }
@@ -245,7 +244,7 @@ func (cpu *CPU) GetAddress_IndirectY(pbCheck bool) {
 		case 2: // fetch address low
 			cpu.DL = cpu.ReadFromAB()
 		case 3: // fetch address high, add Y to low byte
-			cpu.AddressBus++
+			cpu.AddressBus = (cpu.AddressBus + 1) & 0xFF
 			cpu.AddressBus = (uint16(cpu.ReadFromAB())<<8 | uint16(cpu.DL))
 			cpu.TempAddress = cpu.AddressBus
 			cpu.H = byte(cpu.AddressBus >> 8)
@@ -266,7 +265,7 @@ func (cpu *CPU) GetAddress_IndirectY(pbCheck bool) {
 		case 2: // fetch address low
 			cpu.DL = cpu.ReadFromAB()
 		case 3: // fetch address high, add Y to low byte
-			cpu.AddressBus++
+			cpu.AddressBus = (cpu.AddressBus + 1) & 0xFF
 			cpu.TempAddress = (uint16(cpu.ReadFromAB())<<8 | uint16(cpu.DL))
 			cpu.AddressBus = (cpu.TempAddress & 0xFF00) | ((cpu.TempAddress + uint16(cpu.Y)) & 0xFF)
 		case 4: // increment high byte
@@ -298,7 +297,7 @@ func (cpu *CPU) GetAddress_ZeroPageX() {
 		cpu.AddressBus = uint16(cpu.ReadFromPC())
 	case 2: // Dummy read, and add X
 		cpu.DL = cpu.ReadFromAB()
-		cpu.AddressBus += uint16(cpu.X)
+		cpu.AddressBus = (cpu.AddressBus + uint16(cpu.X)) & 0xFF
 	}
 }
 
@@ -311,6 +310,6 @@ func (cpu *CPU) GetAddress_ZeroPageY() {
 		cpu.AddressBus = uint16(cpu.ReadFromPC())
 	case 2: // Dummy read, and add Y
 		cpu.DL = cpu.ReadFromAB()
-		cpu.AddressBus += uint16(cpu.Y)
+		cpu.AddressBus = (cpu.AddressBus + uint16(cpu.Y)) & 0xFF
 	}
 }
