@@ -241,3 +241,7 @@ func (cpu *CPU) Kill() {
 	common.ROMLoaded = false
 	common.SetUIMessage("Game Crashed!")
 }
+
+func (cpu *CPU) DelayCPU(delay int) {
+	cpu.DelayCounter = delay
+}

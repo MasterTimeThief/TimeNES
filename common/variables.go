@@ -24,3 +24,9 @@ var (
 	UIMessage      string
 	UIMessageTimer int
 )
+
+func Reset() {
+	CPU_TotalCycles = 0
+	UIMessage = ""
+	UIMessageTimer = 0
+}

@@ -117,11 +117,12 @@ func ResetPPU() {
 
 	PPUScrollFineX = 0
 	DrawNewFrame = false
+	FrameColorBufferPos = 0
 
 	OAM = [0x100]byte{}
 	SecondaryOAM = [0x20]byte{}
 	ppuSpriteEvalTemp = 0
-	ppuOAMAddress, ppuSecondaryOAMAddress, ppuSecondaryOAMSize = 0, 0, 0
+	ppuOAMAddress, OAMBusAddress, ppuSecondaryOAMAddress, ppuSecondaryOAMSize = 0, 0, 0, 0
 	ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed = false, false, false
 	ppuSpriteEvalTick = 0
 
@@ -131,16 +132,19 @@ func ResetPPU() {
 	ppu_SpritePattern = [8]byte{}
 	ppu_SpriteXposition = [8]byte{}
 	ppu_SpriteYposition = [8]byte{}
+
+	PPUAddressBus, PPUBus = 0, 0
 }
 
-// var CPUCyclesLastFrame int
+var CPUCyclesLastFrame int
+
 func PPU_Cycle() {
 
 	if PPUDot == 1 && PPUScanline == 241 {
 		PPUSTATUS_VBlank = true
 		DrawNewFrame = true
 		//fmt.Println("Frame Cycles: " + fmt.Sprintf("%d", (common.CPU_TotalCycles-CPUCyclesLastFrame)))
-		//CPUCyclesLastFrame = common.CPU_TotalCycles
+		CPUCyclesLastFrame = common.CPU_TotalCycles
 	} else if PPUDot == 1 && PPUScanline == 261 {
 		PPUSTATUS_VBlank = false
 		PPUSTATUS_Overflow = false

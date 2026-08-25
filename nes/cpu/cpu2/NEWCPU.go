@@ -1,7 +1,6 @@
 package cpu2
 
 import (
-	"fmt"
 	"mtt/timenes/common"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/ppu"
@@ -46,6 +45,8 @@ type CPU struct {
 	TempAddress uint16
 	Pointer     uint16
 	Target      uint16
+
+	DelayCounter int
 }
 
 var CPU_Halted bool
@@ -86,23 +87,30 @@ func (cpu *CPU) ResetCPU() {
 	cpu.flag_Negative = false
 	cpu.flag_B = false
 
+	cpu.DelayCounter = 0
+
 	CPU_Halted = false
 }
 
 func (cpu *CPU) CPU_Cycle() {
-	if cpu.subCycle == 0 {
-		if cpu.BreakSource != Break_None {
-			cpu.SetOpcode(0x00)
-		} else {
-			cpu.SetOpcode(cpu.ReadFromPC())
-			if cpu.opcode == 0x00 {
-				cpu.BreakSource = Break_Software
+	if cpu.DelayCounter == 0 {
+
+		if cpu.subCycle == 0 {
+			if cpu.BreakSource != Break_None {
+				cpu.SetOpcode(0x00)
+			} else {
+				cpu.SetOpcode(cpu.ReadFromPC())
+				if cpu.opcode == 0x00 {
+					cpu.BreakSource = Break_Software
+				}
 			}
+			cpu.subCycle++
+		} else {
+			cpu.RunInstruction()
+			cpu.subCycle++
 		}
-		cpu.subCycle++
 	} else {
-		cpu.RunInstruction()
-		cpu.subCycle++
+		cpu.DelayCounter--
 	}
 
 	//Temporary
@@ -680,7 +688,8 @@ func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
 }
 
 func (cpu *CPU) UnknownOpcode() {
-	fmt.Println("Unknown Opcode: " + fmt.Sprintf("%02X", cpu.opcode))
+	//fmt.Println("Unknown Opcode: " + fmt.Sprintf("%02X", cpu.opcode))
+	cpu.CompleteInstruction()
 }
 
 func (cpu *CPU) PollNMI() bool {

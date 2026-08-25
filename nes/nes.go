@@ -70,6 +70,7 @@ func InitGame(newUI *ebitenui.UI) {
 		bus:        bus.NewBUS(),
 	}
 	Emulator.cpu.SetBUS(Emulator.bus)
+	Emulator.bus.SetCPU(Emulator.cpu)
 
 	if Emulator.audioContext == nil {
 		Emulator.audioContext = apu.NewAudioContext()
@@ -88,6 +89,9 @@ func Reset() {
 	Emulator.cpu.ResetCPU()
 	ppu.ResetPPU()
 	apu.ResetAPU()
+
+	//Reset common variables
+	common.Reset()
 
 	//Reset ROM Data
 	cartridge.ResetCartridge()

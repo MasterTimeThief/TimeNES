@@ -11,6 +11,11 @@ import (
 )
 
 type BUS struct {
+	cpu CPU
+}
+
+type CPU interface {
+	DelayCPU(int)
 }
 
 var CPUBus byte
@@ -19,6 +24,10 @@ var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0
 func NewBUS() *BUS {
 	bus := BUS{}
 	return &bus
+}
+
+func (b *BUS) SetCPU(c CPU) {
+	b.cpu = c
 }
 
 // Read from Address, and return that byte
@@ -316,6 +325,11 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			for i := 0; i < 256; i++ {
 				ppu.OAM[oamAddr] = b.Read((uint16(Value) << 8) + uint16(i))
 				oamAddr++
+			}
+			if common.CPU_TotalCycles%2 == 1 {
+				b.cpu.DelayCPU(514)
+			} else {
+				b.cpu.DelayCPU(513)
 			}
 		case 0x4015: //APU Status
 			//apuDMC.BytesRemaining = int((Value & 0x10) >> 4)

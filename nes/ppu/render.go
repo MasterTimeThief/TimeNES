@@ -55,7 +55,7 @@ func RenderNextPixel( /*g *Game*/ ) {
 			}
 		}
 
-		if PPUScanline >= 238 && PPUDot == 255 {
+		if PPUScanline == 238 && PPUDot == 255 {
 			common.Print("")
 		}
 		var SpritePalHi byte = 0        //Which color palette to use
