@@ -1,4 +1,4 @@
-package cpu2
+package cpu
 
 import (
 	"mtt/timenes/common"
@@ -77,6 +77,7 @@ func (cpu *CPU) ResetCPU() {
 	cpu.operands = nil
 	cpu.subCycle = 0
 	cpu.MagicConstant = 0xFF
+	cpu.BreakSource = Break_Reset
 	cpu.NMILevelDetector, cpu.RunningInterrupt = false, false
 
 	cpu.flag_Carry = false
@@ -94,7 +95,6 @@ func (cpu *CPU) ResetCPU() {
 
 func (cpu *CPU) CPU_Cycle() {
 	if cpu.DelayCounter == 0 {
-
 		if cpu.subCycle == 0 {
 			if cpu.BreakSource != Break_None {
 				cpu.SetOpcode(0x00)
@@ -113,12 +113,6 @@ func (cpu *CPU) CPU_Cycle() {
 		cpu.DelayCounter--
 	}
 
-	//Temporary
-	ppu.PPU_Cycle()
-	ppu.PPU_Cycle()
-	ppu.PPU_Cycle()
-
-	apu.APU_Cycle()
 	common.CPU_TotalCycles++
 }
 

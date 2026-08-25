@@ -1,13 +1,13 @@
-package cpu2
+package cpu1
 
 import (
 	"mtt/timenes/common"
 )
 
 func (cpu *CPU) BuildAddress(low, high byte) uint16 {
-	//cpu.AddressBus = (uint16(Value_High)<<8 | uint16(Value_Low))
-	cpu.AddressBus = common.Combine2Bytes(low, high)
-	return cpu.AddressBus
+	//AddressBus = (uint16(Value_High)<<8 | uint16(Value_Low))
+	AddressBus = common.Combine2Bytes(low, high)
+	return AddressBus
 }
 
 // Read from the Program Counter, and return the result
@@ -19,7 +19,7 @@ func (cpu *CPU) ReadFromPC() byte {
 
 // Read from the Address Bus, and return the result
 func (cpu *CPU) ReadFromAB() byte {
-	return cpu.bus.Read(cpu.AddressBus)
+	return cpu.bus.Read(AddressBus)
 }
 
 func (cpu *CPU) WriteToPC(Value byte) {
@@ -27,7 +27,7 @@ func (cpu *CPU) WriteToPC(Value byte) {
 }
 
 func (cpu *CPU) WriteToAB(Value byte) {
-	cpu.bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(AddressBus, Value)
 }
 
 func (cpu *CPU) SetZNFlags(Value byte) {
@@ -35,57 +35,39 @@ func (cpu *CPU) SetZNFlags(Value byte) {
 	cpu.flag_Negative = (Value >= 0x80)
 }
 
-// Branch to new address if condition is true
-//
-// 2-4 Steps
-func (cpu *CPU) Branch(condition bool) {
-	switch cpu.subCycle {
-	case 1:
-		cpu.PollInterrupts()
-		cpu.DL = cpu.ReadFromPC()
-		cpu.AddressBus = cpu.PC
-		if !condition {
-			cpu.CompleteInstruction()
-		}
-	case 2:
-		cpu.ReadFromAB() // Dummy read
-		signedVal := int(cpu.DL)
-		if signedVal >= 128 {
+func (cpu *CPU) Branch(Condition bool, Value byte) {
+	if Condition {
+		//fmt.Println("branch taken")
+		signedVal := int(Value)
+		if signedVal > 127 {
 			signedVal -= 256 //range from -128 to 127
 		}
-		cpu.TempAddress = uint16(cpu.PC + uint16(signedVal))
-		cpu.PC = (cpu.PC & 0xFF00) | ((cpu.PC + uint16(cpu.DL)) & 0xFF)
-		cpu.AddressBus = cpu.PC
-		if (cpu.TempAddress & 0xFF00) == (cpu.PC & 0xFF00) {
-			cpu.CompleteInstruction()
+		CPU_Cycles = 3
+		if byte((cpu.PC&0xFF00)>>4) != byte(((cpu.PC+uint16(signedVal))&0xFF00)>>4) {
+			CPU_Cycles++ //Extra cycle for crossing page boundary
+			//MasterClockTick("branch page cross")
 		}
-	case 3:
-		cpu.PollInterrupts_CantDisableIRQ() // If the first poll detected an IRQ, this second poll should not be allowed to un-set the IRQ.
-		cpu.ReadFromAB()                    // Dummy read
-		cpu.PC = (cpu.TempAddress & 0xFF00) | (cpu.PC & 0xFF)
-		cpu.CompleteInstruction()
+		cpu.PC = uint16(cpu.PC + uint16(signedVal))
+		//MasterClockTick("branch taken")
+	} else {
+		//fmt.Println("branch not taken")
+		CPU_Cycles = 2
 	}
 }
 
-// The RESET instruction has unique behavior where it reads from the stack, and decrements the stack pointer.
-func (cpu *CPU) ResetReadPush() {
-	cpu.bus.Read(uint16(cpu.SP) + 0x100)
-	cpu.SP--
-}
-
-// Store to the stack, and decrement the stack pointer
 func (cpu *CPU) Push(Value byte) {
+	//Store to the stack, and decrement the stack pointer
 	cpu.bus.Write(uint16(cpu.SP)+0x100, Value)
 	cpu.SP--
 }
 
-// Increment the stack pointer, and read from the stack
 func (cpu *CPU) Pull() byte {
+	//Increment the stack pointer, and read from the stack
 	cpu.SP++
-	return cpu.bus.Read(uint16(cpu.SP) + 0x100)
+	temp := cpu.bus.Read(uint16(cpu.SP) + 0x100)
+	return temp
 }
 
-// Push the Status Register to the Stack
 func (cpu *CPU) PushFlags() {
 	temp := byte(0)
 	temp += byte(common.Ternary(cpu.flag_Carry, 0x01, 0x00))
@@ -97,9 +79,9 @@ func (cpu *CPU) PushFlags() {
 	temp += byte(common.Ternary(cpu.flag_Overflow, 0x40, 0x00))
 	temp += byte(common.Ternary(cpu.flag_Negative, 0x80, 0x00))
 	cpu.Push(temp)
+
 }
 
-// Pull the Status Register from the Stack
 func (cpu *CPU) PullFlags() {
 	temp := cpu.Pull()
 	cpu.flag_Carry = (temp & 0x01) != 0
@@ -109,63 +91,67 @@ func (cpu *CPU) PullFlags() {
 	cpu.flag_B = (temp & 0x10) != 0
 	cpu.flag_Overflow = (temp & 0x40) != 0
 	cpu.flag_Negative = (temp & 0x80) != 0
+	//MasterClockTick("pull flags")
 }
 
 // Performs Arithmetic Shift Left onto value at Address
-func (cpu *CPU) Op_ASL() {
-	Value := cpu.bus.Read(cpu.AddressBus)
+func (cpu *CPU) Op_ASL(Address uint16) {
+	Value := cpu.bus.Read(Address)
 	cpu.flag_Carry = (Value >= 0x80)
 	Value <<= 1
-	cpu.bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
+
 }
 
 // Performs Arithmetic Shift Right onto value at Address
-func (cpu *CPU) Op_LSR() {
-	Value := cpu.bus.Read(cpu.AddressBus)
+func (cpu *CPU) Op_LSR(Address uint16) {
+	Value := cpu.bus.Read(Address)
 	cpu.flag_Carry = (Value & 1) != 0
 	Value >>= 1
-	cpu.bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Left onto value at Address
-func (cpu *CPU) Op_ROL() {
-	Value := cpu.bus.Read(cpu.AddressBus)
+func (cpu *CPU) Op_ROL(Address uint16) {
+	Value := cpu.bus.Read(Address)
 	futureCarry := (Value >= 0x80)
 	Value <<= 1
 	if cpu.flag_Carry {
 		Value |= 1
 	}
-	cpu.bus.Write(cpu.AddressBus, Value)
+	//MasterClockTick("rol")
+	cpu.bus.Write(Address, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }
 
 // Perform Rotate Right onto value at Address
-func (cpu *CPU) Op_ROR() {
-	Value := cpu.bus.Read(cpu.AddressBus)
+func (cpu *CPU) Op_ROR(Address uint16) {
+	Value := cpu.bus.Read(Address)
 	futureCarry := (Value & 1) != 0
 	Value >>= 1
 	if cpu.flag_Carry {
 		Value |= 0x80
 	}
-	cpu.bus.Write(cpu.AddressBus, Value)
+	//MasterClockTick("ror")
+	cpu.bus.Write(Address, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
 }
 
 // Increment Value, and save to Address
-func (cpu *CPU) Op_INC(Value byte) {
+func (cpu *CPU) Op_INC(Address uint16, Value byte) {
 	Value++
-	cpu.bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Decrement Value, and save to Address
-func (cpu *CPU) Op_DEC(Value byte) {
+func (cpu *CPU) Op_DEC(Address uint16, Value byte) {
 	Value--
-	cpu.bus.Write(cpu.AddressBus, Value)
+	cpu.bus.Write(Address, Value)
 	cpu.SetZNFlags(Value)
 }
 
@@ -226,8 +212,9 @@ func (cpu *CPU) Op_CPY(Value byte) {
 	cpu.flag_Negative = ((cpu.Y - Value) >= 0x80)
 }
 
-// Bit Test
+// Uhh
 func (cpu *CPU) Op_BIT(Value byte) {
+	//Bit Test
 	cpu.flag_Zero = ((cpu.A & Value) == 0)
 	cpu.flag_Negative = ((Value & 0x80) != 0)
 	cpu.flag_Overflow = ((Value & 0x40) != 0)

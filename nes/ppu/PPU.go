@@ -170,7 +170,7 @@ func PPU_Cycle() {
 	mappers.MMC3_ClockIRQ(PPUAddressBus)
 
 	PPUDot++
-	if PPUDot > 341 {
+	if PPUDot > 340 {
 		PPUDot = 0
 		PPUScanline++
 		if PPUScanline > 261 {

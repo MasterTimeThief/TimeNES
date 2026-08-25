@@ -1,4 +1,4 @@
-package cpu2
+package cpu
 
 //----------------------------------------
 //	Access

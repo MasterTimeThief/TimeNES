@@ -101,10 +101,9 @@ func Reset() {
 
 	//copy(CHRData[:], HeaderedROM[0x8010:])
 
-	PCL := Emulator.bus.Read(0xFFFC)
-	PCH := Emulator.bus.Read(0xFFFD)
-	Emulator.cpu.PC = Emulator.cpu.BuildAddress(PCL, PCH)
-	//fmt.Printf("%#x", ProgramCounter)
+	//PCL := Emulator.bus.Read(0xFFFC)
+	//PCH := Emulator.bus.Read(0xFFFD)
+	//Emulator.cpu.PC = Emulator.cpu.BuildAddress(PCL, PCH)
 
 	bus.OutsideCodeRead = 0
 	bus.OutsideCodeWrite = 0
@@ -124,7 +123,8 @@ func (g *Game) Update() error {
 	}
 
 	for common.ROMLoaded && !PauseEmulation && !cpu.CPU_Halted {
-		Emulator.cpu.CPU_Cycle()
+		//Emulator.cpu.CPU_Cycle()
+		MasterClockTick()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
 			break
@@ -134,7 +134,7 @@ func (g *Game) Update() error {
 	ppu.RenderFrame(Emulator.gameScreen)
 	apu.TransferBuffer()
 
-	if /*CPU_Halted ||*/ g.Exit {
+	if g.Exit {
 		return ebiten.Termination
 	}
 	// Update the UI
@@ -172,7 +172,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return common.ScreenWidth * common.ScreenScale, common.ScreenHeight * common.ScreenScale
 }
 
-func MasterClockTick(location string) {
+func MasterClockTick() {
 	//Run this everytime a CPU cycle is added, and run the PPU and APU accordingly
 	//For when CPU instruction cycles are more accurately emulated
 
@@ -185,34 +185,31 @@ func MasterClockTick(location string) {
 
 	MasterClock++
 	//cpu.CPU_Cycles_New++
-	/*switch MasterClock {
+	switch MasterClock {
 	case 1:
-		Emulate_CPU(g)
-		Emulate_PPU(g)
-		Emulate_APU(g)
-		DMA_Get()
+		Emulator.cpu.CPU_Cycle()
+		ppu.PPU_Cycle()
+		apu.APU_Cycle()
 	//case 2:
 	case 3:
-		Emulate_PPU(g)
+		ppu.PPU_Cycle()
 	//case 4:
 	case 5:
-		Emulate_PPU(g)
+		ppu.PPU_Cycle()
 	//case 6:
 	case 7:
-		Emulate_CPU(g)
-		Emulate_PPU(g)
-		DMA_Put()
+		Emulator.cpu.CPU_Cycle()
+		ppu.PPU_Cycle()
+		apu.APU_Cycle()
 	//case 8:
 	case 9:
-		Emulate_PPU(g)
+		ppu.PPU_Cycle()
 	//case 10:
 	case 11:
-		Emulate_PPU(g)
+		ppu.PPU_Cycle()
 	case 12:
 		MasterClock = 0
-
-	}*/
-	//cycleTest += fmt.Sprint("Cycle: " + location + "\n")
+	}
 }
 
 func (g *Game) CheckCommonFunctions() {

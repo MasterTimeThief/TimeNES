@@ -22,102 +22,294 @@ package cpu
 
 */
 
-func PageCrossingCheck(pbCheck bool, Address uint16, lo, hi byte) {
-	if pbCheck && byte((Address&0xFF00)>>8) != hi {
-		CPU_Cycles++ //Extra cycle for crossing page boundary
+var FixHighByte bool
+
+// Returns true if page boundary was crossed
+func PageCrossingCheck(Address uint16, index byte) bool {
+	return ((Address + uint16(index)) & 0xFF00) != (Address & 0xFF00)
+}
+
+func (cpu *CPU) SetAddressBusHigh(Value byte) {
+	cpu.AddressBus &= 0x00FF
+	cpu.AddressBus += uint16(Value) << 8
+}
+
+func (cpu *CPU) SetAddressBusLow(Value byte) {
+	cpu.AddressBus &= 0xFF00
+	cpu.AddressBus += uint16(Value)
+}
+
+func (cpu *CPU) SetPointerHigh(Value byte) {
+	cpu.Pointer &= 0x00FF
+	cpu.Pointer += uint16(Value) << 8
+}
+
+func (cpu *CPU) SetPointerLow(Value byte) {
+	cpu.Pointer &= 0xFF00
+	cpu.Pointer += uint16(Value)
+}
+
+func (cpu *CPU) SetTargetHigh(Value byte) {
+	cpu.Target &= 0x00FF
+	cpu.Target += uint16(Value) << 8
+}
+
+func (cpu *CPU) SetTargetLow(Value byte) {
+	cpu.Target &= 0xFF00
+	cpu.Target += uint16(Value)
+}
+
+// Addressing Modes
+
+// Fetch the value at the program counter, store it in the DataLatch, and increment the Program Counter.
+//
+// 1 Step
+func (cpu *CPU) GetAddress_Immediate() {
+	cpu.DL = cpu.ReadFromPC()
+	cpu.AddressBus = cpu.PC
+}
+
+// Fetch the value at the PC, and write to either the
+// High byte or Low byte of the 16 bit address bus.
+// Also increment the Program Counter.
+//
+// 2 Steps
+func (cpu *CPU) GetAddress_Absolute() {
+	switch cpu.subCycle {
+	case 1:
+		cpu.DL = cpu.ReadFromPC()
+	case 2:
+		cpu.AddressBus = (uint16(cpu.ReadFromPC())<<8 | uint16(cpu.DL))
 	}
 }
 
-func SetAddressBusHigh(Value byte) {
-	AddressBus &= 0x00FF
-	AddressBus += uint16(Value) << 8
+func (cpu *CPU) GetAddress_Indirect() {
+	//AddressBus = uint16(ReadFromPC())
+	//AddressBus = (uint16(ReadFromPC())<<8 | AddressBus)
+	////Now read from HERE
+	//low := bus.Read(AddressBus)
+	//var high byte
+	//if AddressBus&0x00FF == 0xFF {
+	//	//Original NMOS Bug
+	//	high = bus.Read(AddressBus & 0xFF00)
+	//} else {
+	//	high = bus.Read(AddressBus + 1)
+	//}
+	//AddressBus = BuildAddress(low, high)
 }
 
-func SetAddressBusLow(Value byte) {
-	AddressBus &= 0xFF00
-	AddressBus += uint16(Value)
-}
+// Fetch the High and Low byte values from the byte at the PC, then add X.
+//
+// 3-4 Steps
+func (cpu *CPU) GetAddress_AbsoluteX(pbCheck bool) {
+	// Some instructions will always take 4 cycles to determine the address,
+	// and others will normally take 3, but take the extra cycle if a page boundary was crossed.
+	if pbCheck {
+		switch cpu.subCycle {
+		case 1:
+			cpu.DL = cpu.ReadFromPC()
+		case 2:
+			cpu.AddressBus = (uint16(cpu.ReadFromPC())<<8 | uint16(cpu.DL))
+			cpu.TempAddress = cpu.AddressBus
+			cpu.H = byte(cpu.AddressBus >> 8)
 
-func SetPointerHigh(Value byte) {
-	Pointer &= 0x00FF
-	Pointer += uint16(Value) << 8
-}
-
-func SetPointerLow(Value byte) {
-	Pointer &= 0xFF00
-	Pointer += uint16(Value)
-}
-
-func SetTargetHigh(Value byte) {
-	Target &= 0x00FF
-	Target += uint16(Value) << 8
-}
-
-func SetTargetLow(Value byte) {
-	Target &= 0xFF00
-	Target += uint16(Value)
-}
-
-func (cpu *CPU) ReadOperands_AbsoluteAddressed(isJMP bool) {
-	AddressBus = uint16(cpu.ReadFromPC())
-	AddressBus = (uint16(cpu.ReadFromPC())<<8 | AddressBus)
-	if !isJMP {
-		//MasterClockTick("abs add, not jmp")
-	}
-}
-
-func (cpu *CPU) ReadOperands_IndirectAddressed() {
-	AddressBus = uint16(cpu.ReadFromPC())
-	AddressBus = (uint16(cpu.ReadFromPC())<<8 | AddressBus)
-	//Now read from HERE
-	low := cpu.bus.Read(AddressBus)
-	var high byte
-	if AddressBus&0x00FF == 0xFF {
-		//Original NMOS Bug
-		high = cpu.bus.Read(AddressBus & 0xFF00)
+			if PageCrossingCheck(cpu.TempAddress, cpu.X) {
+				FixHighByte = true
+			} else {
+				cpu.subCycle++
+				FixHighByte = false
+			}
+			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.X)) & 0xFF)
+		case 3:
+			cpu.DL = cpu.ReadFromAB()
+			cpu.H = byte(cpu.AddressBus >> 8)
+			cpu.H++
+			if FixHighByte {
+				cpu.AddressBus += 0x100
+			}
+		case 4:
+			cpu.DL = cpu.ReadFromAB() // Dummy Read
+		}
 	} else {
-		high = cpu.bus.Read(AddressBus + 1)
+		switch cpu.subCycle {
+		case 1:
+			cpu.DL = cpu.ReadFromPC()
+		case 2:
+			cpu.AddressBus = (uint16(cpu.ReadFromPC())<<8 | uint16(cpu.DL))
+			cpu.TempAddress = cpu.AddressBus
+			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.X)) & 0xFF)
+		case 3:
+			cpu.DL = cpu.ReadFromAB()
+			cpu.H = byte(cpu.AddressBus >> 8)
+			cpu.H++
+			if PageCrossingCheck(cpu.TempAddress, cpu.X) {
+				cpu.AddressBus += 0x100
+			}
+		case 4:
+			cpu.DL = cpu.ReadFromAB() // Dummy Read
+		}
 	}
-	AddressBus = cpu.BuildAddress(low, high)
 }
 
-func (cpu *CPU) ReadOperands_AbsoluteAddressed_XIndexed(pbCheck bool) {
-	low := cpu.ReadFromPC()
-	high := cpu.ReadFromPC()
-	AddressBus = cpu.BuildAddress(low, high) + uint16(cpu.X)
-	PageCrossingCheck(pbCheck, AddressBus, low, high)
+// Fetch the High and Low byte values from the byte at the PC, then add Y.
+//
+// 3-4 Steps
+func (cpu *CPU) GetAddress_AbsoluteY(pbCheck bool) {
+	// Some instructions will always take 4 cycles to determine the address,
+	// and others will normally take 3, but take the extra cycle if a page boundary was crossed.
+	if pbCheck {
+		switch cpu.subCycle {
+		case 1:
+			cpu.DL = cpu.ReadFromPC()
+		case 2:
+			cpu.AddressBus = (uint16(cpu.ReadFromPC())<<8 | uint16(cpu.DL))
+			cpu.TempAddress = cpu.AddressBus
+			cpu.H = byte(cpu.AddressBus >> 8)
+
+			if PageCrossingCheck(cpu.TempAddress, cpu.Y) {
+				FixHighByte = true
+			} else {
+				cpu.subCycle++
+				FixHighByte = false
+			}
+
+			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.Y)) & 0xFF)
+		case 3:
+			cpu.DL = cpu.ReadFromAB()
+			cpu.H = byte(cpu.AddressBus >> 8)
+			cpu.H++
+			if FixHighByte {
+				cpu.AddressBus += 0x100
+			}
+		case 4:
+			cpu.DL = cpu.ReadFromAB() // Dummy Read
+		}
+	} else {
+		switch cpu.subCycle {
+		case 1:
+			cpu.DL = cpu.ReadFromPC()
+		case 2:
+			cpu.AddressBus = (uint16(cpu.ReadFromPC())<<8 | uint16(cpu.DL))
+			cpu.TempAddress = cpu.AddressBus
+			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.Y)) & 0xFF)
+		case 3:
+			cpu.DL = cpu.ReadFromAB() // Dummy read
+			cpu.H = byte(cpu.AddressBus >> 8)
+			cpu.H++
+			if PageCrossingCheck(cpu.TempAddress, cpu.Y) {
+				cpu.AddressBus += 0x100
+			}
+		case 4:
+			cpu.DL = cpu.ReadFromAB() // Dummy Read
+		}
+	}
 }
 
-func (cpu *CPU) ReadOperands_AbsoluteAddressed_YIndexed(pbCheck bool) {
-	low := cpu.ReadFromPC()
-	high := cpu.ReadFromPC()
-	AddressBus = cpu.BuildAddress(low, high) + uint16(cpu.Y)
-	PageCrossingCheck(pbCheck, AddressBus, low, high)
+// Fetch the value from the PC, then using
+// that value as an 8-bit address on the zero page,
+// add the X register, then set the High byte and
+// Low byte of the Address Bus from there.
+//
+// 4 Steps
+func (cpu *CPU) GetAddress_IndirectX() {
+	switch cpu.subCycle {
+	case 1: // Fetch pointer address
+		cpu.AddressBus = uint16(cpu.ReadFromPC())
+	case 2: // Add X
+		cpu.ReadFromAB() // Dummy Read
+		cpu.AddressBus = (cpu.AddressBus + uint16(cpu.X)) & 0xFF
+	case 3: // Fetch address low
+		cpu.DL = cpu.ReadFromAB()
+	case 4: // fetch address high
+		cpu.AddressBus = (cpu.AddressBus + 1) & 0xFF
+		cpu.AddressBus = (uint16(cpu.ReadFromAB())<<8 | uint16(cpu.DL))
+	}
 }
 
-func (cpu *CPU) ReadOperands_IndirectAddressed_XIndexed() {
-	TempAddress := cpu.ReadFromPC() + cpu.X
-	low := cpu.bus.Read(uint16(TempAddress))
-	high := cpu.bus.Read(uint16(TempAddress + 1))
-	AddressBus = cpu.BuildAddress(low, high)
+// Fetch the value from the PC.
+// use that 8 bit location on the
+// zero page to fetch the High and
+// Low byte of the new Address Bus location,
+// then add Y to that.
+//
+// 3-4 Steps
+func (cpu *CPU) GetAddress_IndirectY(pbCheck bool) {
+
+	// Some instructions will always take 4 cycles to determine the address,
+	// and others will normally take 3, but take the extra cycle if a page boundary was crossed.
+	if pbCheck {
+		switch cpu.subCycle {
+		case 1: // Fetch pointer address
+			cpu.AddressBus = uint16(cpu.ReadFromPC())
+		case 2: // fetch address low
+			cpu.DL = cpu.ReadFromAB()
+		case 3: // fetch address high, add Y to low byte
+			cpu.AddressBus = (cpu.AddressBus + 1) & 0xFF
+			cpu.AddressBus = (uint16(cpu.ReadFromAB())<<8 | uint16(cpu.DL))
+			cpu.TempAddress = cpu.AddressBus
+			cpu.H = byte(cpu.AddressBus >> 8)
+			if !PageCrossingCheck(cpu.TempAddress, cpu.Y) {
+				cpu.subCycle++
+			}
+			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.Y)) & 0xFF)
+		case 4: // increment high byte
+			cpu.DL = cpu.ReadFromAB() // Dummy read
+			cpu.H = byte(cpu.AddressBus >> 8)
+			cpu.H++
+			cpu.AddressBus += 0x100
+		}
+	} else {
+		switch cpu.subCycle {
+		case 1: // Fetch pointer address
+			cpu.AddressBus = uint16(cpu.ReadFromPC())
+		case 2: // fetch address low
+			cpu.DL = cpu.ReadFromAB()
+		case 3: // fetch address high, add Y to low byte
+			cpu.AddressBus = (cpu.AddressBus + 1) & 0xFF
+			cpu.TempAddress = (uint16(cpu.ReadFromAB())<<8 | uint16(cpu.DL))
+			cpu.AddressBus = (cpu.TempAddress & 0xFF00) | ((cpu.TempAddress + uint16(cpu.Y)) & 0xFF)
+		case 4: // increment high byte
+			cpu.DL = cpu.ReadFromAB() // Dummy read
+			cpu.H = byte(cpu.AddressBus >> 8)
+			cpu.H++
+			if PageCrossingCheck(cpu.TempAddress, cpu.Y) {
+				cpu.AddressBus += 0x100
+			}
+		}
+	}
+
 }
 
-func (cpu *CPU) ReadOperands_IndirectAddressed_YIndexed(pbCheck bool) {
-	TempAddress := cpu.ReadFromPC()
-	low := cpu.bus.Read(uint16(TempAddress))
-	high := cpu.bus.Read(uint16(TempAddress + 1))
-	AddressBus = cpu.BuildAddress(low, high) + uint16(cpu.Y)
-	PageCrossingCheck(pbCheck, AddressBus, low, high)
+// Fetch the value at the PC, and this 8 bit value
+// replaces the contents of the 16 bit address bus.
+//
+// 1 Step
+func (cpu *CPU) GetAddress_ZeroPage() {
+	cpu.AddressBus = uint16(cpu.ReadFromPC())
 }
 
-func (cpu *CPU) ReadOperands_ZeroPageAddressed() {
-	AddressBus = cpu.BuildAddress(cpu.ReadFromPC(), 0x00)
+// Fetch the value from the PC, then add X to that.
+//
+// 2 Steps
+func (cpu *CPU) GetAddress_ZeroPageX() {
+	switch cpu.subCycle {
+	case 1: // Fetch address
+		cpu.AddressBus = uint16(cpu.ReadFromPC())
+	case 2: // Dummy read, and add X
+		cpu.DL = cpu.ReadFromAB()
+		cpu.AddressBus = (cpu.AddressBus + uint16(cpu.X)) & 0xFF
+	}
 }
 
-func (cpu *CPU) ReadOperands_ZeroPageAddressed_XIndexed() {
-	AddressBus = cpu.BuildAddress(cpu.ReadFromPC()+cpu.X, 0x00)
-}
-
-func (cpu *CPU) ReadOperands_ZeroPageAddressed_YIndexed() {
-	AddressBus = cpu.BuildAddress(cpu.ReadFromPC()+cpu.Y, 0x00)
+// Fetch the value from the PC, then add Y to that.
+//
+// 2 Steps
+func (cpu *CPU) GetAddress_ZeroPageY() {
+	switch cpu.subCycle {
+	case 1: // Fetch address
+		cpu.AddressBus = uint16(cpu.ReadFromPC())
+	case 2: // Dummy read, and add Y
+		cpu.DL = cpu.ReadFromAB()
+		cpu.AddressBus = (cpu.AddressBus + uint16(cpu.Y)) & 0xFF
+	}
 }
