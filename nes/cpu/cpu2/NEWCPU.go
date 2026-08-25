@@ -2,6 +2,7 @@ package cpu2
 
 import (
 	"fmt"
+	"mtt/timenes/common"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/ppu"
 )
@@ -103,6 +104,14 @@ func (cpu *CPU) CPU_Cycle() {
 		cpu.RunInstruction()
 		cpu.subCycle++
 	}
+
+	//Temporary
+	ppu.PPU_Cycle()
+	ppu.PPU_Cycle()
+	ppu.PPU_Cycle()
+
+	apu.APU_Cycle()
+	common.CPU_TotalCycles++
 }
 
 func (cpu *CPU) RunInstruction() {
@@ -140,13 +149,6 @@ func (cpu *CPU) RunInstruction() {
 	case 0xF0:
 		cpu.OpcodeFX()
 	}
-
-	//Temporary
-	ppu.PPU_Cycle()
-	ppu.PPU_Cycle()
-	ppu.PPU_Cycle()
-
-	apu.APU_Cycle()
 }
 
 func (cpu *CPU) Opcode0X() {

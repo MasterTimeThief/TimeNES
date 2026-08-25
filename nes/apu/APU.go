@@ -5,6 +5,7 @@ import "mtt/timenes/common"
 type APU struct {
 }
 
+//TODO: Fix variable names for channels
 var Pulse1 PulseChannel
 var Pulse2 PulseChannel
 var Triangle TriangleChannel
