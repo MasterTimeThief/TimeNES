@@ -133,11 +133,14 @@ func ResetPPU() {
 	ppu_SpriteYposition = [8]byte{}
 }
 
+// var CPUCyclesLastFrame int
 func PPU_Cycle() {
 
 	if PPUDot == 1 && PPUScanline == 241 {
 		PPUSTATUS_VBlank = true
 		DrawNewFrame = true
+		//fmt.Println("Frame Cycles: " + fmt.Sprintf("%d", (common.CPU_TotalCycles-CPUCyclesLastFrame)))
+		//CPUCyclesLastFrame = common.CPU_TotalCycles
 	} else if PPUDot == 1 && PPUScanline == 261 {
 		PPUSTATUS_VBlank = false
 		PPUSTATUS_Overflow = false

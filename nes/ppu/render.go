@@ -98,10 +98,13 @@ func RenderNextPixel( /*g *Game*/ ) {
 			}
 		}
 
-		color := Palette[cartridge.PaletteRAM[(PalHi*4)+PalLow]&0x3F]
+		color := cartridge.PaletteRAM[(PalHi*4)+PalLow] & 0x3F
+		if PPUMASK_Greyscale {
+			color &= 0x30
+		}
 
 		//RenderPixel(color)
-		FrameColorBuffer[FrameColorBufferPos] = color
+		FrameColorBuffer[FrameColorBufferPos] = Palette[color]
 		FrameColorBufferPos++
 		//RenderNTSCPixel(PPUDot, pixel uint16, ppuCycleCounter int)
 
