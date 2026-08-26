@@ -79,16 +79,16 @@ func (abs *AudioBufferStruct) sendSample() {
 	//a.ringBuffer.Write(newSample)
 }
 
-func AudioOutput() {
+func (a *APU) AudioOutput() {
 	//Pulse channels
-	pulse1 := Pulse1.UpdatePulseOutput()
-	pulse2 := Pulse2.UpdatePulseOutput()
+	pulse1 := a.Pulse1.UpdatePulseOutput()
+	pulse2 := a.Pulse2.UpdatePulseOutput()
 	pulse_out := squareTable[pulse1+pulse2]
 
-	triangle := Triangle.UpdateTriangleOutput()
-	noise := Noise.UpdateNoiseOutput()
+	triangle := a.Triangle.UpdateTriangleOutput()
+	noise := a.Noise.UpdateNoiseOutput()
 	//dmc := byte(common.Ternary(DMC.Enabled, uint16(DMC.Output), 0))
-	dmc := DMC.Output
+	dmc := a.DMC.Output
 
 	tnd_out := tndTable[(3*triangle)+(2*noise)+dmc]
 

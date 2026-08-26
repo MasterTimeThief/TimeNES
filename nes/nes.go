@@ -71,6 +71,9 @@ func InitGame(newUI *ebitenui.UI) {
 	}
 	Emulator.cpu.SetBUS(Emulator.bus)
 	Emulator.bus.SetCPU(Emulator.cpu)
+	Emulator.bus.SetAPU(Emulator.apu)
+
+	debug.InitDEBUG(Emulator.apu)
 
 	if Emulator.audioContext == nil {
 		Emulator.audioContext = apu.NewAudioContext()
@@ -88,7 +91,7 @@ func Reset() {
 	//var HeaderedROM []byte := os.ReadFile()
 	Emulator.cpu.ResetCPU()
 	ppu.ResetPPU()
-	apu.ResetAPU()
+	Emulator.apu.ResetAPU()
 
 	//Reset common variables
 	common.Reset()
@@ -189,7 +192,7 @@ func MasterClockTick() {
 	case 1:
 		Emulator.cpu.CPU_Cycle()
 		ppu.PPU_Cycle()
-		apu.APU_Cycle()
+		Emulator.apu.APU_Cycle()
 	//case 2:
 	case 3:
 		ppu.PPU_Cycle()
@@ -200,7 +203,7 @@ func MasterClockTick() {
 	case 7:
 		Emulator.cpu.CPU_Cycle()
 		ppu.PPU_Cycle()
-		apu.APU_Cycle()
+		Emulator.apu.APU_Cycle()
 	//case 8:
 	case 9:
 		ppu.PPU_Cycle()

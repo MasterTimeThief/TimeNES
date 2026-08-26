@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"mtt/timenes/common"
-	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
 
@@ -47,6 +46,20 @@ var MapperName = map[byte]string{
 	7: "AxROM",
 }
 
+type DEBUG struct {
+	apu APU
+}
+
+var D DEBUG
+
+type APU interface {
+	GetPulse1Mute() *bool
+	GetPulse2Mute() *bool
+	GetTriangleMute() *bool
+	GetNoiseMute() *bool
+	GetDMCMute() *bool
+}
+
 var LoggingCPU = false
 var LoggingPPU = false
 var LogCount = 1000
@@ -59,6 +72,10 @@ var ShowDebugWindow, ShowPatternTableWindow bool = false, false
 var PatternTables = ebiten.NewImage(256, 128)
 
 var PTValues [256][128]byte
+
+func InitDEBUG(a APU) {
+	D.apu = a
+}
 
 /*
 func TraceLoggerPPU() {
@@ -216,11 +233,11 @@ func DebugWindow(ctx *debugui.Context) {
 				ctx.SetGridLayout([]int{-1, -1}, nil)
 				ctx.GridCell(func(bounds image.Rectangle) {
 					ctx.TreeNode("Toggle Channels", func() {
-						ctx.Checkbox(&apu.Pulse1.ForceMute, "Square 1")
-						ctx.Checkbox(&apu.Pulse2.ForceMute, "Square 2")
-						ctx.Checkbox(&apu.Triangle.ForceMute, "Triangle")
-						ctx.Checkbox(&apu.Noise.ForceMute, "Noise")
-						ctx.Checkbox(&apu.DMC.ForceMute, "DMC")
+						ctx.Checkbox(D.apu.GetPulse1Mute(), "Square 1")
+						ctx.Checkbox(D.apu.GetPulse2Mute(), "Square 2")
+						ctx.Checkbox(D.apu.GetTriangleMute(), "Triangle")
+						ctx.Checkbox(D.apu.GetNoiseMute(), "Noise")
+						ctx.Checkbox(D.apu.GetDMCMute(), "DMC")
 					})
 				})
 				ctx.GridCell(func(bounds image.Rectangle) {
