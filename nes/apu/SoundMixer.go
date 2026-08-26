@@ -12,7 +12,7 @@ import (
 const (
 	//apuCycleLength        int = 10000
 	//apuBitsPerCycle       int = 16
-	apuInputSamples       int = 14935
+	apuInputSamples       int = (14890 * 2)
 	apuRingBufferSize     int = apuInputSamples * 8
 	apuSampleRate         int = 48000
 	apuMaxSamplesPerFrame int = apuSampleRate / 60
@@ -33,7 +33,6 @@ var tndTable [203]float32
 var EmulatorVolume float64 = 0.1
 
 func (abs *AudioBufferStruct) Read(p []byte) (int, error) {
-
 	n := abs.ringBuffer.Read(p)
 	if n == 0 {
 		clear(p)
@@ -72,11 +71,11 @@ func NewAudioPlayer(context *audio.Context) *audio.Player {
 	return player
 }
 
-func (a *AudioBufferStruct) sendSample() {
-	result := a.sample /*/ float32(a.SampleRate)*/
-	a.sample = 0
+func (abs *AudioBufferStruct) sendSample() {
+	result := abs.sample /*/ float32(a.SampleRate)*/
+	abs.sample = 0
 	newSample := BytesFromFloat32(result)
-	a.frameBuffer = append(a.frameBuffer, newSample)
+	abs.frameBuffer = append(abs.frameBuffer, newSample)
 	//a.ringBuffer.Write(newSample)
 }
 
@@ -105,7 +104,7 @@ func TransferBuffer() {
 	NearestNeighborRatio := float32(inputBufferSize) / float32(apuMaxSamplesPerFrame)
 	NearestNeighborIndex := float32(0)
 
-	//7466-7468
+	//14890-14890-14891
 	//fmt.Printf("Buffer size: %d\n", inputBufferSize)
 
 	for i := 0; i < apuMaxSamplesPerFrame; i++ {
