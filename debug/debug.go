@@ -38,16 +38,20 @@ var SizeText = map[uint32]string{
 	0x80000: "512 K",
 }
 
+var MapperName = map[byte]string{
+	0: "NROM",
+	1: "MMC1",
+	2: "UxROM",
+	3: "CNROM",
+	4: "MMC3",
+	7: "AxROM",
+}
+
 var LoggingCPU = false
 var LoggingPPU = false
 var LogCount = 1000
 var InstructionCount int = 0
 var frame int
-
-//var tracePC, traceVRAM uint16
-//var traceA, traceX, tracyY, traceSP byte
-//var traceFlagC, traceFlagZ, traceFlagI, traceFlagD, traceFlagV, traceFlagN bool
-//var traceCycles int
 
 var cycleTest string
 var ShowFPS bool = false
@@ -55,28 +59,6 @@ var ShowDebugWindow, ShowPatternTableWindow bool = false, false
 var PatternTables = ebiten.NewImage(256, 128)
 
 var PTValues [256][128]byte
-
-// Sets everything outside of operands for the tracelogger to run later
-func PrepTraceLogger() {
-	//tracePC = cpu.PC
-	//traceVRAM = ppu.VRAMAddress
-
-	//traceA = cpu.A
-	//traceX = cpu.X
-	//tracyY = cpu.Y
-	//traceSP = cpu.SP
-
-	/*traceFlagC = nes.flag_Carry
-	traceFlagZ = nes.flag_Zero
-	traceFlagI = nes.flag_InterruptDisable
-	traceFlagD = nes.flag_Decimal
-	traceFlagV = nes.flag_Overflow
-	traceFlagN = nes.flag_Negative*/
-
-	//traceCycles = common.CPU_TotalCycles
-}
-
-/**/
 
 /*
 func TraceLoggerPPU() {
@@ -195,7 +177,7 @@ func DebugWindow(ctx *debugui.Context) {
 				ctx.Text("CHR-RAM Size:")
 				ctx.Text(SizeText[cartridge.CHRROM_Size])
 				ctx.Text("Mapper Chip:")
-				ctx.Text(fmt.Sprintf("%d", cartridge.MapperChipID))
+				ctx.Text(fmt.Sprintf("%d (%s)", cartridge.MapperChipID, MapperName[cartridge.MapperChipID]))
 				ctx.Text("Submapper:")
 				ctx.Text(fmt.Sprintf("%d", cartridge.SubmapperID))
 				ctx.Text("Nametable Arrangement:")

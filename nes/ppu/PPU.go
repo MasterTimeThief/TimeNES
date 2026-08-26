@@ -453,6 +453,8 @@ func ReadPPU( /*Address uint16*/ ) byte {
 		case 4: //MMC3
 			//return ReadFromNametable(PPUAddressBus, mappers.MMC3_IsHorizontalNametable)
 			return cartridge.CartVRAM[int(PPUAddressBus&0xFFF)]
+		case 7: // AxROM
+			return cartridge.VRAM[mappers.AxROM_FetchNametable(PPUAddressBus)]
 		default:
 			return ReadFromNametable(PPUAddressBus, cartridge.IsNametableHorizontal)
 		}
@@ -508,6 +510,8 @@ func WritePPU(Value byte) {
 		case 4: //MMC3
 			//WriteToNametable(Value, mappers.MMC3_IsHorizontalNametable)
 			cartridge.CartVRAM[int(VRAMAddress&0xFFF)] = Value
+		case 7:
+			cartridge.VRAM[mappers.AxROM_FetchNametable(PPUAddressBus)] = Value
 		default:
 			WriteToNametable(Value, cartridge.IsNametableHorizontal)
 		}
