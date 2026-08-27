@@ -18,11 +18,11 @@ var (
 	PendingFullscreen bool
 
 	PendingPatternUpdate bool
-)
 
-var (
 	UIMessage      string
 	UIMessageTimer int
+
+	EmulatorVolume float64 = 25.0 // out of 100
 )
 
 func Reset() {

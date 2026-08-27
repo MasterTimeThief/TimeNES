@@ -16,7 +16,6 @@ import (
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/input"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/audio"
 	"golang.org/x/image/draw"
 )
 
@@ -36,12 +35,10 @@ type Game struct {
 	apu *apu.APU
 	bus *bus.BUS
 
-	gameScreen   *image.RGBA
-	UI           *ebitenui.UI
-	Exit         bool
-	debugui      debugui.DebugUI
-	audioContext *audio.Context
-	player       *audio.Player
+	gameScreen *image.RGBA
+	UI         *ebitenui.UI
+	Exit       bool
+	debugui    debugui.DebugUI
 }
 
 var Emulator *Game
@@ -75,13 +72,6 @@ func InitGame(newUI *ebitenui.UI) {
 	Emulator.apu.SetCPU(Emulator.cpu)
 
 	debug.InitDEBUG(Emulator.apu)
-
-	if Emulator.audioContext == nil {
-		Emulator.audioContext = apu.NewAudioContext()
-	}
-	if Emulator.player == nil {
-		Emulator.player = apu.NewAudioPlayer(Emulator.audioContext)
-	}
 
 	if err := ebiten.RunGame(Emulator); err != nil {
 		log.Fatal(err)

@@ -30,7 +30,6 @@ type AudioBufferStruct struct {
 var audBuf *AudioBufferStruct
 var squareTable [31]float32
 var tndTable [203]float32
-var EmulatorVolume float64 = 0.1
 
 func (abs *AudioBufferStruct) Read(p []byte) (int, error) {
 	n := abs.ringBuffer.Read(p)
@@ -41,7 +40,7 @@ func (abs *AudioBufferStruct) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-func InitAudioOutput() {
+func (a *APU) InitAudioOutput() {
 	for i := range squareTable {
 		squareTable[i] = float32(95.52 / (8128.0/float64(i) + 100))
 	}
@@ -51,6 +50,13 @@ func InitAudioOutput() {
 	audBuf = &AudioBufferStruct{
 		ringBuffer:  newRingBuffer(apuRingBufferSize),
 		frameBuffer: make([][]byte, apuInputSamples),
+	}
+
+	if a.audioContext == nil {
+		a.audioContext = NewAudioContext()
+	}
+	if a.player == nil {
+		a.player = NewAudioPlayer(a.audioContext)
 	}
 	InitFilters()
 }
@@ -64,7 +70,7 @@ func NewAudioPlayer(context *audio.Context) *audio.Player {
 	common.Check(err)
 
 	player.SetBufferSize(time.Second / 60)
-	player.SetVolume(EmulatorVolume)
+	player.SetVolume(common.EmulatorVolume / 100)
 	go func() {
 		player.Play()
 	}()

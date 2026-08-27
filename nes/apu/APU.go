@@ -2,6 +2,8 @@ package apu
 
 import (
 	"mtt/timenes/common"
+
+	"github.com/hajimehoshi/ebiten/v2/audio"
 )
 
 type APU struct {
@@ -13,6 +15,9 @@ type APU struct {
 	Triangle TriangleChannel
 	Noise    NoiseChannel
 	DMC      DeltaModChannel
+
+	audioContext *audio.Context
+	player       *audio.Player
 }
 
 type CPU interface {
@@ -34,8 +39,8 @@ var MuteEmulator bool = false
 //var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
 
 func NewAPU() *APU {
-	InitAudioOutput()
 	apu := APU{}
+	apu.InitAudioOutput()
 	return &apu
 }
 
@@ -512,4 +517,8 @@ func (a *APU) GetNoiseMute() *bool {
 }
 func (a *APU) GetDMCMute() *bool {
 	return &a.DMC.ForceMute
+}
+
+func (a *APU) SetEmulatorvolume(vol float64) {
+	a.player.SetVolume(vol)
 }

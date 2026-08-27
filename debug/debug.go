@@ -58,6 +58,7 @@ type APU interface {
 	GetTriangleMute() *bool
 	GetNoiseMute() *bool
 	GetDMCMute() *bool
+	SetEmulatorvolume(float64)
 }
 
 var LoggingCPU = false
@@ -164,7 +165,7 @@ func Update(ui *debugui.DebugUI) {
 
 func DebugWindow(ctx *debugui.Context) {
 	if ShowDebugWindow {
-		ctx.Window("Debugging info", image.Rect(10, 100, 260, 300), func(layout debugui.ContainerLayout) {
+		ctx.Window("Debugging info", image.Rect(10, 100, 260, 400), func(layout debugui.ContainerLayout) {
 
 			screenScaleOptions := []string{"1x", "2x", "3x", "4x"}
 			ctx.Header("Functions", true, func() {
@@ -230,7 +231,19 @@ func DebugWindow(ctx *debugui.Context) {
 
 			//APU Info
 			ctx.Header("APU Info", false, func() {
-				ctx.SetGridLayout([]int{-1, -1}, nil)
+				ctx.SetGridLayout([]int{60, -1}, nil)
+				ctx.Text("Volume: ")
+				ctx.GridCell(func(bounds image.Rectangle) {
+					ctx.SliderF(&common.EmulatorVolume, 0, 100, 1, 0).On(func() {
+						D.apu.SetEmulatorvolume(common.EmulatorVolume / 100)
+						//g.writeLog(fmt.Sprintf("Selected option: %s", g.dropdownOptions1[g.selectedOption1]))
+					})
+				})
+				ctx.GridCell(func(bounds image.Rectangle) {
+					ctx.Button("Mute").On(func() {
+						common.PendingMute = true
+					})
+				})
 				ctx.GridCell(func(bounds image.Rectangle) {
 					ctx.TreeNode("Toggle Channels", func() {
 						ctx.Checkbox(D.apu.GetPulse1Mute(), "Square 1")
@@ -238,11 +251,6 @@ func DebugWindow(ctx *debugui.Context) {
 						ctx.Checkbox(D.apu.GetTriangleMute(), "Triangle")
 						ctx.Checkbox(D.apu.GetNoiseMute(), "Noise")
 						ctx.Checkbox(D.apu.GetDMCMute(), "DMC")
-					})
-				})
-				ctx.GridCell(func(bounds image.Rectangle) {
-					ctx.Button("Toggle Audio").On(func() {
-						common.PendingMute = true
 					})
 				})
 			})
