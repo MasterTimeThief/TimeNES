@@ -305,9 +305,7 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 		a.Pulse1.Enabled = (Value & 0x01) != 0
 
 		if a.DMC.Enabled {
-			if a.DMC.BytesRemaining > 0 {
-				a.DMC.DMCRestartSample()
-			}
+			a.DMC.DMCMemoryReader()
 		} else {
 			a.DMC.BytesRemaining = 0
 		}
