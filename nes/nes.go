@@ -72,6 +72,7 @@ func InitGame(newUI *ebitenui.UI) {
 	Emulator.cpu.SetBUS(Emulator.bus)
 	Emulator.bus.SetCPU(Emulator.cpu)
 	Emulator.bus.SetAPU(Emulator.apu)
+	Emulator.apu.SetCPU(Emulator.cpu)
 
 	debug.InitDEBUG(Emulator.apu)
 

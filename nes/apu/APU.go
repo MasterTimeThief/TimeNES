@@ -5,12 +5,19 @@ import (
 )
 
 type APU struct {
+	cpu CPU
+
 	//TODO: Fix variable names for channels
 	Pulse1   PulseChannel
 	Pulse2   PulseChannel
 	Triangle TriangleChannel
 	Noise    NoiseChannel
 	DMC      DeltaModChannel
+}
+
+type CPU interface {
+	Read(uint16) byte
+	DelayCPU(int)
 }
 
 // var apuEnablePulse1, apuEnablePulse2, apuEnableTriangle, apuEnableNoise, apuEnableDMC bool
@@ -30,6 +37,11 @@ func NewAPU() *APU {
 	InitAudioOutput()
 	apu := APU{}
 	return &apu
+}
+
+func (a *APU) SetCPU(c CPU) {
+	a.cpu = c
+	a.DMC.SetCPU(c)
 }
 
 func (a *APU) ResetAPU() {
@@ -169,7 +181,6 @@ func (a *APU) ReadAPU(Address uint16) byte {
 }
 
 func (a *APU) WriteAPU(Address uint16, Value byte) {
-
 	switch Address {
 	// Pulse 1
 	case 0x4000:

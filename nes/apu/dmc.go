@@ -25,8 +25,14 @@ type DeltaModChannel struct {
 	// so I don't have to go back and read it
 	// each time I need a new sample.
 	// Also because Go is being a baby about it.
-	SampleBuffer    []byte
-	SampleBufferPos byte
+	//SampleBuffer    []byte
+	//SampleBufferPos byte
+
+	cpu CPU
+}
+
+func (d *DeltaModChannel) SetCPU(c CPU) {
+	d.cpu = c
 }
 
 var APUDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
@@ -105,32 +111,31 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 	//Check for Mappers
 	switch cartridge.MapperChipID {
 	default:
-		//TODO: Stall for 1-4 CPU cycles (?)
-		//d.Buffer = bus.Read(d.SampleAddress)
+		if d.BytesRemaining > 0 {
+			d.cpu.DelayCPU(4)
+			d.Buffer = d.cpu.Read(d.CurrentAddress)
+			//d.Buffer = d.SampleBuffer[d.SampleBufferPos]
+			//d.SampleBufferPos++
 
-		//if len(d.SampleBuffer) > 0 {
-		//	d.Buffer = d.SampleBuffer[d.SampleBufferPos]
-		//	d.SampleBufferPos++
-		//
-		//	//Advance the address, even if technically we don't need to
-		//	d.CurrentAddress++
-		//	if d.CurrentAddress < 0x8000 { //We hit 0xFFFF and wrapped around
-		//		d.CurrentAddress += 0x8000
-		//	}
-		//	d.BytesRemaining--
-		//	if d.BytesRemaining == 0 && d.Loop {
-		//		d.DMCRestartSample()
-		//	} else if d.BytesRemaining == 0 && d.IRQEnable {
-		//		APUDMCInterrupt = true
-		//	}
-		//} else {
-		d.Buffer = 0
-		//}
+			//Advance the address
+			d.CurrentAddress++
+			if d.CurrentAddress == 0 { //We hit 0xFFFF and wrapped around
+				d.CurrentAddress = 0x8000
+			}
+			d.BytesRemaining--
+			if d.BytesRemaining == 0 && d.Loop {
+				d.DMCRestartSample()
+			} else if d.BytesRemaining == 0 && d.IRQEnable {
+				APUDMCInterrupt = true
+			}
+		} else {
+			d.Buffer = 0
+		}
 	}
 }
 
 func (d *DeltaModChannel) DMCRestartSample() {
-	d.SampleBufferPos = 0
+	//d.SampleBufferPos = 0
 	d.CurrentAddress = d.SampleAddress
 	d.BytesRemaining = d.SampleLength
 }
