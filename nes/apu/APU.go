@@ -173,16 +173,16 @@ func (a *APU) DMA_Put() {
 }
 
 func (a *APU) ReadAPU(Address uint16) byte {
-	apuStatus := byte(0)
-	apuStatus |= byte(common.Ternary(APUDMCInterrupt, 0x80, 0x00))                                                                      //DMC Interrupt
-	apuStatus |= byte(common.Ternary(APUFrameInterrupt, 0x40, 0x00))                                                                    //Frame Interrupt
-	apuStatus |= byte(common.Ternary(a.DMC.BytesRemaining > 0, 0x10, 0x00))                                                             //DMC Active
-	apuStatus |= byte(common.Ternary(!(a.Noise.LengthCounter.Counter == 0 /*|| apua.Noise.LengthCounter.HaltFlag*/), 0x08, 0x00))       //Noise Active
-	apuStatus |= byte(common.Ternary(!(a.Triangle.LengthCounter.Counter == 0 /*|| apua.Triangle.LengthCounter.HaltFlag*/), 0x04, 0x00)) //Triangle Active
-	apuStatus |= byte(common.Ternary(!(a.Pulse2.LengthCounter.Counter == 0 /*|| apua.Pulse2.LengthCounter.HaltFlag*/), 0x02, 0x00))     //Pulse 2 Active
-	apuStatus |= byte(common.Ternary(!(a.Pulse1.LengthCounter.Counter == 0 /*|| apua.Pulse1.LengthCounter.HaltFlag*/), 0x01, 0x00))     //Pulse 1 Active
+	status := byte(0)
+	status |= byte(common.Ternary(APUDMCInterrupt, 0x80, 0x00))                                                                      //DMC Interrupt
+	status |= byte(common.Ternary(APUFrameInterrupt, 0x40, 0x00))                                                                    //Frame Interrupt
+	status |= byte(common.Ternary(a.DMC.BytesRemaining > 0, 0x10, 0x00))                                                             //DMC Active
+	status |= byte(common.Ternary(!(a.Noise.LengthCounter.Counter == 0 /*|| apua.Noise.LengthCounter.HaltFlag*/), 0x08, 0x00))       //Noise Active
+	status |= byte(common.Ternary(!(a.Triangle.LengthCounter.Counter == 0 /*|| apua.Triangle.LengthCounter.HaltFlag*/), 0x04, 0x00)) //Triangle Active
+	status |= byte(common.Ternary(!(a.Pulse2.LengthCounter.Counter == 0 /*|| apua.Pulse2.LengthCounter.HaltFlag*/), 0x02, 0x00))     //Pulse 2 Active
+	status |= byte(common.Ternary(!(a.Pulse1.LengthCounter.Counter == 0 /*|| apua.Pulse1.LengthCounter.HaltFlag*/), 0x01, 0x00))     //Pulse 1 Active
 	APUFrameInterrupt = false
-	return apuStatus
+	return status
 }
 
 func (a *APU) WriteAPU(Address uint16, Value byte) {
@@ -286,11 +286,9 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 	case 0x4012:
 		a.DMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
 		a.DMC.CurrentAddress = a.DMC.SampleAddress
-		//b.PrebufferDMCSamples()
 	case 0x4013:
 		a.DMC.SampleLength = ((uint16(Value) << 4) | 1)
 		a.DMC.BytesRemaining = a.DMC.SampleLength
-		//b.PrebufferDMCSamples()
 
 	case 0x4015: //APU Status
 		//apua.DMC.BytesRemaining = int((Value & 0x10) >> 4)

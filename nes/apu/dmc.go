@@ -114,8 +114,6 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 		if d.BytesRemaining > 0 {
 			d.cpu.DelayCPU(4)
 			d.Buffer = d.cpu.Read(d.CurrentAddress)
-			//d.Buffer = d.SampleBuffer[d.SampleBufferPos]
-			//d.SampleBufferPos++
 
 			//Advance the address
 			d.CurrentAddress++

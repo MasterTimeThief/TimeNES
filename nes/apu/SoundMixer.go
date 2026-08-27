@@ -93,7 +93,7 @@ func (a *APU) AudioOutput() {
 
 	triangle := a.Triangle.UpdateTriangleOutput()
 	noise := a.Noise.UpdateNoiseOutput()
-	//dmc := byte(common.Ternary(DMC.Enabled, uint16(DMC.Output), 0))
+	//dmc := byte(common.Ternary(a.DMC.Enabled, uint16(a.DMC.Output), 0))
 	dmc := a.DMC.Output
 
 	tnd_out := tndTable[(3*triangle)+(2*noise)+dmc]

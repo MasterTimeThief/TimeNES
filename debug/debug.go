@@ -165,10 +165,10 @@ func Update(ui *debugui.DebugUI) {
 
 func DebugWindow(ctx *debugui.Context) {
 	if ShowDebugWindow {
-		ctx.Window("Debugging info", image.Rect(10, 100, 260, 400), func(layout debugui.ContainerLayout) {
+		ctx.Window("Debugging info", image.Rect(10, 100, 240, 270), func(layout debugui.ContainerLayout) {
 
 			screenScaleOptions := []string{"1x", "2x", "3x", "4x"}
-			ctx.Header("Functions", true, func() {
+			ctx.GridCell(func(bounds image.Rectangle) {
 				ctx.SetGridLayout([]int{-1, -1}, nil)
 				ctx.Button("Pause").On(func() {
 					common.PendingPause = true
@@ -180,7 +180,6 @@ func DebugWindow(ctx *debugui.Context) {
 				screenScale := common.ScreenScale - 1
 				ctx.Dropdown(&screenScale, screenScaleOptions).On(func() {
 					common.NewScreenScale = screenScale + 1
-					//g.writeLog(fmt.Sprintf("Selected option: %s", g.dropdownOptions1[g.selectedOption1]))
 				})
 			})
 			//Header Info
@@ -236,7 +235,6 @@ func DebugWindow(ctx *debugui.Context) {
 				ctx.GridCell(func(bounds image.Rectangle) {
 					ctx.SliderF(&common.EmulatorVolume, 0, 100, 1, 0).On(func() {
 						D.apu.SetEmulatorvolume(common.EmulatorVolume / 100)
-						//g.writeLog(fmt.Sprintf("Selected option: %s", g.dropdownOptions1[g.selectedOption1]))
 					})
 				})
 				ctx.GridCell(func(bounds image.Rectangle) {
@@ -254,21 +252,6 @@ func DebugWindow(ctx *debugui.Context) {
 					})
 				})
 			})
-
-			ctx.SetGridLayout([]int{100, -1}, nil)
-			//ctx.Text("Instruction Count:")
-			//ctx.Text(fmt.Sprintf("$%d", InstructionCount))
-			//ctx.Text("VRAM Address:")
-			//ctx.Text(fmt.Sprintf("$%04X", VRAMAddress))
-			//ctx.Text("T Register:")
-			//ctx.Text(fmt.Sprintf("$%04X", TransferAddress))
-			//ctx.Text("Fine X Scroll:")
-			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-			//ctx.Text("Fine Y Scroll:")
-			//ctx.Text(fmt.Sprintf("$%02X", ppuScrollFineX))
-			//ctx.Text("Nametable:")
-			//ctx.Text(fmt.Sprintf("$%02X", PPUCTRL_NametableSelect))
-
 		})
 	}
 }

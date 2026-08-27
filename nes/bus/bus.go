@@ -268,27 +268,4 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
 		}
 	}
-	//MasterClockTick("WRITE")
 }
-
-//func (b *BUS) PrebufferDMCSamples() {
-//
-//	if apu.DMC.SampleLength > 0 && apu.DMC.SampleAddress > 0x7FFF {
-//		apu.DMC.SampleBuffer = nil
-//
-//		//Get the entire sample upfront, because God is dead
-//		for i := uint16(0); i < apu.DMC.SampleLength; i++ {
-//			sampleAddr := apu.DMC.SampleAddress + i
-//			if sampleAddr < 0x8000 { //We hit 0xFFFF and wrapped around
-//				sampleAddr += 0x8000
-//			}
-//
-//			apu.DMC.SampleBuffer = append(apu.DMC.SampleBuffer, b.Read(sampleAddr))
-//		}
-//		apu.DMC.SampleBufferPos = 0
-//	}
-//
-//	//apu.DMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
-//
-//	//apu.DMC.SampleLength = ((uint16(Value) << 4) | 1)
-//}
