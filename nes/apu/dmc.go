@@ -35,7 +35,7 @@ func (d *DeltaModChannel) SetCPU(c CPU) {
 	d.cpu = c
 }
 
-var APUDMCSampleRateLUT = [16]uint16{428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54}
+var APUDMCSampleRateLUT = [16]uint16{214, 190, 170, 160, 143, 127, 113, 107, 95, 80, 71, 64, 53, 42, 36, 27}
 
 func (d *DeltaModChannel) ResetDMC() {
 	d.Enabled = false
@@ -94,10 +94,6 @@ func (d *DeltaModChannel) DMCOutputCycle() {
 			apuDoDMCDMA = true
 			apuDMCDMAHalt = true
 		}
-		//if APU_SetImplicitAbortDMC4015 {
-		//	APU_ImplicitAbortDMC4015 = true // check for weird DMA abort behavior
-		//	APU_SetImplicitAbortDMC4015 = false
-		//}
 		d.Shifter = d.Buffer // and set up the shifter with the new values.
 		d.Buffer = 0
 		d.DMCMemoryReader()

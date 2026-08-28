@@ -285,10 +285,10 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 		a.DMC.Output = (Value & 0x7F)
 	case 0x4012:
 		a.DMC.SampleAddress = (0xC000 | (uint16(Value) << 6))
-		a.DMC.CurrentAddress = a.DMC.SampleAddress
+		//a.DMC.CurrentAddress = a.DMC.SampleAddress
 	case 0x4013:
 		a.DMC.SampleLength = ((uint16(Value) << 4) | 1)
-		a.DMC.BytesRemaining = a.DMC.SampleLength
+		//a.DMC.BytesRemaining = a.DMC.SampleLength
 
 	case 0x4015: //APU Status
 		//apua.DMC.BytesRemaining = int((Value & 0x10) >> 4)
@@ -305,7 +305,9 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 		a.Pulse1.Enabled = (Value & 0x01) != 0
 
 		if a.DMC.Enabled {
-			a.DMC.DMCMemoryReader()
+			if a.DMC.BytesRemaining == 0 {
+				a.DMC.DMCRestartSample()
+			}
 		} else {
 			a.DMC.BytesRemaining = 0
 		}
