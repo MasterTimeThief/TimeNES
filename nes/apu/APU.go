@@ -160,16 +160,16 @@ func (a *APU) DMA_Put() {
 		IRQ_LevelDetector = false
 	}*/
 	// DMC load from 4015
-	if apuDMCDMADelay > 0 {
-		apuDMCDMADelay--                         // there's a small delay beetween the write occurring and the DMA beginning
-		if apuDMCDMADelay == 0 && !apuDoDMCDMA { // if the DMA is already happening because of the timer
-
-			apuDoDMCDMA = true
-			apuDMCDMAHalt = true
-			a.DMC.Shifter = a.DMC.Buffer
-			a.DMC.Enabled = true
-		}
-	}
+	//if apuDMCDMADelay > 0 {
+	//	apuDMCDMADelay--                         // there's a small delay beetween the write occurring and the DMA beginning
+	//	if apuDMCDMADelay == 0 && !apuDoDMCDMA { // if the DMA is already happening because of the timer
+	//
+	//		apuDoDMCDMA = true
+	//		apuDMCDMAHalt = true
+	//		a.DMC.Shifter = a.DMC.Buffer
+	//		a.DMC.Enabled = true
+	//	}
+	//}
 }
 
 func (a *APU) ReadAPU(Address uint16) byte {
@@ -345,12 +345,6 @@ func LengthCounterLoad(Value byte) byte {
 	//Short n' Easy
 	//LengthLookupTable := [32]int{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
 	//return byte(LengthLookupTable[Value])
-
-	//Flip it around?
-	/*newValue := byte(0)
-
-	newValue |= ((Value & 1) << 4)
-	newValue |= (Value >> 1)*/
 
 	length := byte(0)
 	if (Value & 1) == 1 { //Odd values are linear lengths

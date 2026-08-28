@@ -88,12 +88,12 @@ func (d *DeltaModChannel) ClockDMCOutputUnit() {
 func (d *DeltaModChannel) DMCOutputCycle() {
 	d.ShifterBitsRemaining = 8 // it's time for a DMC DMA!
 
-	if d.Buffer != 0 /*|| APU_SetImplicitAbortDMC4015*/ {
-		if !apuDoDMCDMA && apuCannotDMCDMARightNow != 2 {
-			// if playing a sample:
-			apuDoDMCDMA = true
-			apuDMCDMAHalt = true
-		}
+	if d.BytesRemaining > 0 /*|| APU_SetImplicitAbortDMC4015*/ {
+		//if !apuDoDMCDMA && apuCannotDMCDMARightNow != 2 {
+		//	// if playing a sample:
+		//	apuDoDMCDMA = true
+		//	apuDMCDMAHalt = true
+		//}
 		d.Shifter = d.Buffer // and set up the shifter with the new values.
 		d.Buffer = 0
 		d.DMCMemoryReader()
@@ -116,11 +116,19 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 			if d.CurrentAddress == 0 { //We hit 0xFFFF and wrapped around
 				d.CurrentAddress = 0x8000
 			}
-			d.BytesRemaining--
-			if d.BytesRemaining == 0 && d.Loop {
-				d.DMCRestartSample()
-			} else if d.BytesRemaining == 0 && d.IRQEnable {
-				APUDMCInterrupt = true
+			if d.BytesRemaining > 0 {
+				d.BytesRemaining--
+			}
+
+			if d.BytesRemaining == 0 {
+				if d.Loop {
+					d.DMCRestartSample()
+				} else {
+					d.Enabled = false
+					if d.IRQEnable {
+						APUDMCInterrupt = true
+					}
+				}
 			}
 		} else {
 			d.Buffer = 0
