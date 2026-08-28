@@ -129,6 +129,7 @@ func (g *Game) Update() error {
 	apu.TransferBuffer()
 
 	if g.Exit {
+		debug.ExportLog()
 		return ebiten.Termination
 	}
 	// Update the UI

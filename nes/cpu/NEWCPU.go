@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"mtt/timenes/common"
+	"mtt/timenes/debug"
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/ppu"
 )
@@ -105,6 +106,9 @@ func (cpu *CPU) CPU_Cycle() {
 				}
 			}
 			cpu.subCycle++
+			if debug.LoggingCPU {
+				cpu.SendToTracelogger()
+			}
 		} else {
 			cpu.RunInstruction()
 			cpu.subCycle++
@@ -704,4 +708,18 @@ func (cpu *CPU) CompleteInstruction() {
 	cpu.PollInterrupts()
 	cpu.subCycle = -1
 	cpu.AddressBus = cpu.PC
+}
+
+func (cpu *CPU) SendToTracelogger() {
+	status := byte(0)
+	status += byte(common.Ternary(cpu.flag_Carry, 0x01, 0x00))
+	status += byte(common.Ternary(cpu.flag_Zero, 0x02, 0x00))
+	status += byte(common.Ternary(cpu.flag_InterruptDisable, 0x04, 0x00))
+	status += byte(common.Ternary(cpu.flag_Decimal, 0x08, 0x00))
+	status += byte(common.Ternary(cpu.flag_B, 0x10, 0x00)) //B Flag
+	status += 0x20
+	status += byte(common.Ternary(cpu.flag_Overflow, 0x40, 0x00))
+	status += byte(common.Ternary(cpu.flag_Negative, 0x80, 0x00))
+
+	debug.TraceLogger(cpu.opcode, cpu.A, cpu.X, cpu.Y, cpu.SP, status, cpu.PC)
 }

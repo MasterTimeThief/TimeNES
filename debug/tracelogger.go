@@ -19,6 +19,8 @@ type opcodeDetail struct {
 
 type AddressMode int
 
+var LogEntries []string
+
 const (
 	Address_None AddressMode = iota
 	Address_Immediate
@@ -396,7 +398,8 @@ func TraceLogger(opcode, A, X, Y, SP, status byte, pc uint16) {
 	//Traceline += "\tInstructionCount: " + fmt.Sprintf("%d", InstructionCount)
 
 	//fmt.Println(Traceline)
-	log.Println(Traceline)
+	//log.Println(Traceline)
+	LogEntries = append(LogEntries, Traceline)
 
 	/*LogCount--
 	if LogCount < 0 {
@@ -424,5 +427,11 @@ func SetupTraceLogger() {
 	} else {
 		log.SetOutput(os.Stderr) // Always have a fallback
 		log.Printf("Failed to open log file, using stderr: %v", err)
+	}
+}
+
+func ExportLog() {
+	for _, entry := range LogEntries {
+		log.Println(entry)
 	}
 }
