@@ -400,6 +400,9 @@ func TraceLogger(opcode, A, X, Y, SP, status byte, pc uint16) {
 	//fmt.Println(Traceline)
 	//log.Println(Traceline)
 	LogEntries = append(LogEntries, Traceline)
+	//if len(LogEntries) > 500000 {
+	//	LogEntries = LogEntries[1:]
+	//}
 
 	/*LogCount--
 	if LogCount < 0 {

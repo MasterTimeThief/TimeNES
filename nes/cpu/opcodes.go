@@ -869,7 +869,6 @@ func (cpu *CPU) X56_LSR_ZeroPage_X() {
 	}
 }
 func (cpu *CPU) X5E_LSR_Absolute_X() {
-	cpu.GetAddress_AbsoluteX(false)
 	// CPU_Cycles = 7
 	switch cpu.subCycle {
 	case 1, 2, 3, 4:
