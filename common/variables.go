@@ -23,6 +23,10 @@ var (
 	UIMessageTimer int
 
 	EmulatorVolume float64 = 25.0 // out of 100
+
+	Toggle90High  bool
+	Toggle440High bool
+	Toggle14KLow  bool
 )
 
 func Reset() {

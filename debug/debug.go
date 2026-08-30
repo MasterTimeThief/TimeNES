@@ -251,6 +251,12 @@ func DebugWindow(ctx *debugui.Context) {
 						ctx.Checkbox(D.apu.GetDMCMute(), "DMC")
 					})
 				})
+				ctx.Text("Filters: ")
+				ctx.GridCell(func(bounds image.Rectangle) {
+					ctx.Checkbox(&common.Toggle90High, "High 90")
+					ctx.Checkbox(&common.Toggle440High, "High 440")
+					ctx.Checkbox(&common.Toggle14KLow, "Low 14K")
+				})
 			})
 		})
 	}

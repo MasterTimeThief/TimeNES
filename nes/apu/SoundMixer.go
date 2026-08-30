@@ -123,8 +123,17 @@ func TransferBuffer() {
 			FilteredSample := audBuf.frameBuffer[newIndex]
 
 			if len(audBuf.frameBuffer[newIndex]) >= 4 {
-				//InputSampleFloat := Float32FromBytes(audBuf.frameBuffer[newIndex])
-				//FilteredSample = BytesFromFloat32(LowFilter14k.FilterUpdate(HighFilter440.FilterUpdate(HighFilter90.FilterUpdate(InputSampleFloat))))
+				InputSampleFloat := Float32FromBytes(audBuf.frameBuffer[newIndex])
+				if common.Toggle90High {
+					InputSampleFloat = HighFilter90.FilterUpdate(InputSampleFloat)
+				}
+				if common.Toggle440High {
+					InputSampleFloat = HighFilter440.FilterUpdate(InputSampleFloat)
+				}
+				if common.Toggle14KLow {
+					InputSampleFloat = LowFilter14k.FilterUpdate(InputSampleFloat)
+				}
+				FilteredSample = BytesFromFloat32(InputSampleFloat)
 			}
 
 			audBuf.ringBuffer.Write(FilteredSample)
