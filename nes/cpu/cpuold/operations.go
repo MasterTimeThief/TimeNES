@@ -45,10 +45,8 @@ func (cpu *CPU) Branch(Condition bool, Value byte) {
 		CPU_Cycles = 3
 		if byte((cpu.PC&0xFF00)>>4) != byte(((cpu.PC+uint16(signedVal))&0xFF00)>>4) {
 			CPU_Cycles++ //Extra cycle for crossing page boundary
-			//MasterClockTick("branch page cross")
 		}
 		cpu.PC = uint16(cpu.PC + uint16(signedVal))
-		//MasterClockTick("branch taken")
 	} else {
 		//fmt.Println("branch not taken")
 		CPU_Cycles = 2
@@ -91,7 +89,6 @@ func (cpu *CPU) PullFlags() {
 	cpu.flag_B = (temp & 0x10) != 0
 	cpu.flag_Overflow = (temp & 0x40) != 0
 	cpu.flag_Negative = (temp & 0x80) != 0
-	//MasterClockTick("pull flags")
 }
 
 // Performs Arithmetic Shift Left onto value at Address
@@ -121,7 +118,6 @@ func (cpu *CPU) Op_ROL(Address uint16) {
 	if cpu.flag_Carry {
 		Value |= 1
 	}
-	//MasterClockTick("rol")
 	cpu.bus.Write(Address, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)
@@ -135,7 +131,6 @@ func (cpu *CPU) Op_ROR(Address uint16) {
 	if cpu.flag_Carry {
 		Value |= 0x80
 	}
-	//MasterClockTick("ror")
 	cpu.bus.Write(Address, Value)
 	cpu.flag_Carry = futureCarry
 	cpu.SetZNFlags(Value)

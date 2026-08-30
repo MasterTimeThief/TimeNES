@@ -82,8 +82,6 @@ func (b *BUS) Read(Address uint16) byte {
 				//Palette data
 				data := ppu.ReadPPU()
 				ppu.PPUBus = (ppu.PPUBus & 0xC0) | (data & byte(common.Ternary(ppu.PPUMASK_Greyscale, 0x30, 0x3F)))
-				//ppu.PPUReadBuffer = ReadPPU((ppu.VRAMAddress & 0x2F00) | (ppu.VRAMAddress & 0xFF))
-				//ppu.PPUReadBuffer = ppu.PPUBus
 				ppu.UpdatePPUBus2007Palette(ppu.PPUBus)
 			} else {
 				ppu.PPUBus = ppu.PPUReadBuffer
@@ -117,9 +115,6 @@ func (b *BUS) Read(Address uint16) byte {
 			CPUBus = mappers.MMC1_PRGRAM[Address&0x1FFF]
 		case 4: //MMC3
 			CPUBus = mappers.MMC3_PRGRAM[Address&0x1FFF]
-		default:
-			//outsideCodeRead = Address
-
 		}
 	} else if Address >= 0x8000 {
 		//Read from ROM
@@ -135,10 +130,8 @@ func (b *BUS) Read(Address uint16) byte {
 			CPUBus = cartridge.PRGROM[mappers.AxROM_FetchCPUAddress(Address, cartridge.PRGROM_Size)]
 		default:
 			CPUBus = cartridge.PRGROM[(Address-0x8000)&uint16(cartridge.PRGROM_Size-1)]
-			//outsideCodeRead = Address
 		}
 	}
-	//MasterClockTick("READ")
 	return CPUBus
 }
 
@@ -197,9 +190,8 @@ func (b *BUS) Write(Address uint16, Value byte) {
 		case 0x2006: //PPUADDR
 			if !ppu.WriteLatch {
 				//First write sets the high byte
-				//Tempppu.VRAMAddress = (uint16(Value&0x7F) << 8)
-				ppu.TransferAddress = uint16((ppu.TransferAddress & 0xFF) | uint16(Value&0x3F)<<8)
 				//The actual ppu.VRAMAddress isn't changed until the 2nd write
+				ppu.TransferAddress = uint16((ppu.TransferAddress & 0xFF) | uint16(Value&0x3F)<<8)
 			} else {
 				//Second write sets the low byte
 				ppu.TransferAddress = ((ppu.TransferAddress & 0xFF00) | uint16(Value))
@@ -233,8 +225,6 @@ func (b *BUS) Write(Address uint16, Value byte) {
 		//$4000 - $4017 is APU and I/O registers
 		//$4018 - $401F is APU and I/O functions that are normally disabled
 
-		//} else if Address < 0x8000 {
-		//	CartRAM[Address&0x1FFF] = Value
 	} else if Address >= 0x6000 && Address < 0x8000 {
 		//Check for PRG-RAM
 		switch cartridge.MapperChipID {
@@ -246,8 +236,8 @@ func (b *BUS) Write(Address uint16, Value byte) {
 		case 4: //MMC3
 			mappers.MMC3_WriteToPRGRAM(Value, Address)
 		default:
-			//OutsideCodeWrite = Address
-			fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
+			OutsideCodeWrite = Address
+			//fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
 		}
 	} else if Address >= 0x8000 { //Account for Mapper chips
 		//Check what mapper chip we're using

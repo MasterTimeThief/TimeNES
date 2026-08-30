@@ -77,9 +77,7 @@ func (cpu *CPU) ResetCPU() {
 }
 
 func (cpu *CPU) CPU_Cycle() {
-
 	if cpu.DelayCounter == 0 {
-
 		//Non Maskable Interrupt check
 		prevNMILevelDetector := NMILevelDetector
 		NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
@@ -89,15 +87,10 @@ func (cpu *CPU) CPU_Cycle() {
 		CPU_Cycles_New = 0
 
 		//Get the opcode
-		//var opcode byte
 		if !DoNMI {
 			//If we're not running an NMI
 			opcode = cpu.bus.Read(cpu.PC)
-			//if debug.LoggingCPU {
-			//	debug.prepTraceLogger()
-			//}
 			cpu.PC++
-			//MasterClockTick("OPCODE")
 		} else {
 			//If we're running an NMI, force opcode $00
 			opcode = 0x00
@@ -457,7 +450,6 @@ func (cpu *CPU) CPU_Cycle() {
 		case 0xE8: //INX
 			cpu.X++
 			CPU_Cycles = 2
-			//MasterClockTick("inx")
 			cpu.SetZNFlags(cpu.X)
 
 		//	DEX: Decrement Index X by One
@@ -468,7 +460,6 @@ func (cpu *CPU) CPU_Cycle() {
 		case 0xCA: //DEX
 			cpu.X--
 			CPU_Cycles = 2
-			//MasterClockTick("dex")
 			cpu.SetZNFlags(cpu.X)
 
 		//	INY: Increment Index Y by One
@@ -479,7 +470,6 @@ func (cpu *CPU) CPU_Cycle() {
 		case 0xC8: //INY
 			cpu.Y++
 			CPU_Cycles = 2
-			//MasterClockTick("iny")
 			cpu.SetZNFlags(cpu.Y)
 
 		//	DEY: Decrement Index Y by One
@@ -490,7 +480,6 @@ func (cpu *CPU) CPU_Cycle() {
 		case 0x88: //DEY
 			cpu.Y--
 			CPU_Cycles = 2
-			//MasterClockTick("dey")
 			cpu.SetZNFlags(cpu.Y)
 
 		//Shift
@@ -923,7 +912,6 @@ func (cpu *CPU) CPU_Cycle() {
 			cpu.Push(byte(cpu.PC))
 			temp_high := cpu.ReadFromPC()
 			cpu.PC = cpu.BuildAddress(temp_low, temp_high)
-			//MasterClockTick("jsr")
 			CPU_Cycles = 6
 
 		//	RTS: Return from Subroutine
@@ -934,11 +922,8 @@ func (cpu *CPU) CPU_Cycle() {
 		case 0x60: //RTS
 			temp_low := cpu.Pull()
 			temp_high := cpu.Pull()
-			//MasterClockTick("rts Pull1")
-			//MasterClockTick("rts Pull2")
 			cpu.PC = cpu.BuildAddress(temp_low, temp_high)
 			cpu.PC++
-			//MasterClockTick("rts pc++")
 			CPU_Cycles = 6
 
 		//	BRK: Force Break
@@ -989,8 +974,6 @@ func (cpu *CPU) CPU_Cycle() {
 			cpu.flag_Decimal = (temp & 8) != 0
 			cpu.flag_Overflow = (temp & 64) != 0
 			cpu.flag_Negative = (temp & 128) != 0
-			//MasterClockTick("rti Pull1")
-			//MasterClockTick("rti Pull2")
 			temp_low := cpu.Pull()
 			temp_high := cpu.Pull()
 			cpu.PC = cpu.BuildAddress(temp_low, temp_high)
@@ -1014,7 +997,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0x68: //PLA
 			cpu.A = cpu.Pull()
-			//MasterClockTick("pla")
 			cpu.SetZNFlags(cpu.A)
 			CPU_Cycles = 4
 
@@ -1068,7 +1050,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0x18: //CLC
 			cpu.flag_Carry = false
-			//MasterClockTick("clc")
 			CPU_Cycles = 2
 
 		//	SEC: Set Carry Flag
@@ -1078,7 +1059,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0x38: //SEC
 			cpu.flag_Carry = true
-			//MasterClockTick("sec")
 			CPU_Cycles = 2
 
 		//	CLI: Clear Interrupt Disable Bit
@@ -1088,7 +1068,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0x58: //CLI
 			cpu.flag_InterruptDisable = false
-			//MasterClockTick("cli")
 			CPU_Cycles = 2
 
 		//	SEI: Set Interrupt Disable Status
@@ -1098,7 +1077,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0x78: //SEI
 			cpu.flag_InterruptDisable = true
-			//MasterClockTick("sei")
 			CPU_Cycles = 2
 
 		//	CLD: Clear Decimal Mode
@@ -1108,7 +1086,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0xD8: //CLD
 			cpu.flag_Decimal = false
-			//MasterClockTick("cld")
 			CPU_Cycles = 2
 
 		//	SED: Set Decimal Flag
@@ -1118,7 +1095,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0xF8: //SED
 			cpu.flag_Decimal = true
-			//MasterClockTick("sed")
 			CPU_Cycles = 2
 
 		//	CLV: Clear Overflow Flag
@@ -1128,7 +1104,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		case 0xB8: //CLV
 			cpu.flag_Overflow = false
-			//MasterClockTick("clv")
 			CPU_Cycles = 2
 
 		//Other
@@ -1646,21 +1621,6 @@ func (cpu *CPU) CPU_Cycle() {
 			fmt.Println("Unknown Opcode: " + fmt.Sprintf("%02X", opcode))
 		}
 
-		// Every CPU instruction takes at least 2 cycles, guaranteed
-		// The first is from fetching the opcode
-		// This will be the second
-		//MasterClockTick(g)
-
-		//if LoggingCPU {
-		//	TraceLogger()
-		//}
-
-		if CPU_Cycles != CPU_Cycles_New {
-			//fmt.Print(cycleTest)
-			//fmt.Printf("Cycle Mismatch! [%02X] %d/%d \n", opcode, CPU_Cycles, CPU_Cycles_New)
-		}
-		//cycleTest = ""
-
 		//Check for, and perform Interrupt Request (IRQ)
 		if (apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_DoIRQ) && !DoNMI && !cpu.flag_InterruptDisable {
 			cpu.flag_B = false
@@ -1682,8 +1642,6 @@ func (cpu *CPU) CPU_Cycle() {
 	} else {
 		cpu.DelayCounter--
 	}
-	//CartRAMLogger()
-	//operands = nil
 
 	common.CPU_TotalCycles += CPU_Cycles
 	for CPU_Cycles > 0 {
@@ -1694,14 +1652,6 @@ func (cpu *CPU) CPU_Cycle() {
 
 		apu.APU_Cycle()
 	}
-
-	//Force Stop, just in case
-	//if TotalCycles > 900000 {
-
-	//if InstructionCount > 50000 {
-	//fmt.Println("Too many cycles, end")
-	//CPU_Halted = true
-	//}
 
 	//InstructionCount++
 }

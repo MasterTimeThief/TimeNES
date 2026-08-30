@@ -94,12 +94,6 @@ func Reset() {
 	cartridge.LoadCartridge()
 	debug.ResetPatternTables()
 
-	//copy(CHRData[:], HeaderedROM[0x8010:])
-
-	//PCL := Emulator.bus.Read(0xFFFC)
-	//PCH := Emulator.bus.Read(0xFFFD)
-	//Emulator.cpu.PC = Emulator.cpu.BuildAddress(PCL, PCH)
-
 	bus.OutsideCodeRead = 0
 	bus.OutsideCodeWrite = 0
 }
@@ -140,9 +134,6 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-
-	// This graphics context is used for managing the rendering state.
-
 	if common.ROMLoaded && !cpu.CPU_Halted {
 		screenRect := image.Rect(0, 0, common.ScreenWidth*common.ScreenScale, common.ScreenHeight*common.ScreenScale)
 		screenScaled := image.NewRGBA(screenRect)
@@ -169,18 +160,13 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func MasterClockTick() {
-	//Run this everytime a CPU cycle is added, and run the PPU and APU accordingly
-	//For when CPU instruction cycles are more accurately emulated
-
-	//Clock the 2A03 and run CPU / APU
-	//CPU runs every 6 ticks
-	//PPU runs every 2 ticks
-	//APU runs every 12
-	//DMA runs every 6
-	//
+	// Clock the 2A03 and run CPU / PPU / APU
+	// CPU runs every 6 ticks
+	// PPU runs every 2 ticks
+	// APU runs every 6
+	// - Alternates between DMA Get and Put
 
 	MasterClock++
-	//cpu.CPU_Cycles_New++
 	switch MasterClock {
 	case 1:
 		Emulator.cpu.CPU_Cycle()
@@ -265,12 +251,9 @@ func (g *Game) CheckForWindowResize() {
 func ShowMessages(screen *ebiten.Image) {
 	if !common.ROMExists && common.UIMessageTimer == 0 {
 		common.PrintUIMessage(screen, "No ROM file loaded")
-	} /* else if cpu.CPU_Halted {
-		common.PrintUIMessage(screen, "Game Crashed!")
-	}*/
+	}
 
 	if common.UIMessageTimer > 0 {
-		//ebitenutil.DebugPrintAt(screen, common.UIMessage, 5, (240*common.ScreenScale)-20)
 		common.PrintUIMessage(screen, common.UIMessage)
 		common.UIMessageTimer--
 		if common.UIMessageTimer == 0 {

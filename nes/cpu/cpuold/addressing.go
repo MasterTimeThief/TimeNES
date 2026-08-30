@@ -61,9 +61,6 @@ func SetTargetLow(Value byte) {
 func (cpu *CPU) ReadOperands_AbsoluteAddressed(isJMP bool) {
 	AddressBus = uint16(cpu.ReadFromPC())
 	AddressBus = (uint16(cpu.ReadFromPC())<<8 | AddressBus)
-	if !isJMP {
-		//MasterClockTick("abs add, not jmp")
-	}
 }
 
 func (cpu *CPU) ReadOperands_IndirectAddressed() {
