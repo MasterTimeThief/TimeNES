@@ -4,6 +4,7 @@ import (
 	"mtt/timenes/common"
 	"mtt/timenes/debug"
 	"mtt/timenes/nes/apu"
+	"mtt/timenes/nes/cartridge/mappers"
 	"mtt/timenes/nes/ppu"
 )
 
@@ -99,6 +100,11 @@ func (cpu *CPU) CPU_Cycle() {
 		if cpu.subCycle == 0 {
 			if cpu.BreakSource != Break_None {
 				cpu.SetOpcode(0x00)
+				if cpu.BreakSource == Break_IRQ {
+					apu.APUDMCInterrupt = false
+					apu.APUFrameInterrupt = false
+					mappers.MMC3_DoIRQ = false
+				}
 			} else {
 				cpu.SetOpcode(cpu.ReadFromPC())
 				if cpu.opcode == 0x00 {
@@ -697,7 +703,7 @@ func (cpu *CPU) PollNMI() bool {
 }
 
 func (cpu *CPU) PollIRQ() bool {
-	return (apu.APUDMCInterrupt || apu.APUFrameInterrupt) && !cpu.flag_InterruptDisable
+	return (apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_DoIRQ) && !cpu.flag_InterruptDisable
 }
 
 func (cpu *CPU) SetOpcode(code byte) {

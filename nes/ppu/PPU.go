@@ -166,9 +166,6 @@ func PPU_Cycle() {
 	//Drawing the next pixel
 	RenderNextPixel()
 
-	//MMC3 IRQ check
-	mappers.MMC3_ClockIRQ(PPUAddressBus)
-
 	PPUDot++
 	if PPUDot > 340 {
 		PPUDot = 0

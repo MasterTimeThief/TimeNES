@@ -247,7 +247,7 @@ func MMC3_GetCHROffset(offset byte) uint32 {
 
 func MMC3_ClockIRQ(Addr uint16) {
 	MMC3_CheckA12Pin(Addr)
-	if !MMC3_PPUA12Prev && MMC3_PPUA12 {
+	if !MMC3_PPUA12Prev && MMC3_PPUA12 && MMC3_PPUA12PrevCount == 0 {
 		//Check for IRQ
 		if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
 			MMC3_DoIRQ = true
@@ -262,7 +262,18 @@ func MMC3_ClockIRQ(Addr uint16) {
 	}
 }
 
+var (
+	MMC3_PPUA12PrevCount int
+)
+
 func MMC3_CheckA12Pin(Addr uint16) {
 	MMC3_PPUA12Prev = MMC3_PPUA12
 	MMC3_PPUA12 = (Addr & 0b0001000000000000) != 0
+	if MMC3_PPUA12 {
+		if MMC3_PPUA12PrevCount > 0 {
+			MMC3_PPUA12PrevCount--
+		}
+	} else {
+		MMC3_PPUA12PrevCount = 3
+	}
 }

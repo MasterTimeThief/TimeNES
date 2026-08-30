@@ -9,6 +9,7 @@ import (
 	"mtt/timenes/nes/apu"
 	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
+	"mtt/timenes/nes/cartridge/mappers"
 	"mtt/timenes/nes/cpu"
 	"mtt/timenes/nes/ppu"
 
@@ -188,7 +189,10 @@ func MasterClockTick() {
 	//case 2:
 	case 3:
 		ppu.PPU_Cycle()
-	//case 4:
+	case 4:
+		if cartridge.MapperChipID == 4 {
+			mappers.MMC3_ClockIRQ(ppu.PPUAddressBus)
+		}
 	case 5:
 		ppu.PPU_Cycle()
 	//case 6:
@@ -199,7 +203,10 @@ func MasterClockTick() {
 	//case 8:
 	case 9:
 		ppu.PPU_Cycle()
-	//case 10:
+	case 10:
+		if cartridge.MapperChipID == 4 {
+			mappers.MMC3_ClockIRQ(ppu.PPUAddressBus)
+		}
 	case 11:
 		ppu.PPU_Cycle()
 	case 12:
