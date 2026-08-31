@@ -22,9 +22,10 @@ import (
 
 // Header Variables
 
-// var cpuClock int = 0 // 2A03
-// var ppuClock int = 0 // 2C02
-var MasterClock int = 0
+var cpuClock int = 0 // 2A03
+var ppuClock int = 0 // 2C02
+var apuClock int = 0 // 2A03
+//var MasterClock int = 0
 
 var FullscreenMode bool = false
 var PauseEmulation bool = false
@@ -166,7 +167,7 @@ func MasterClockTick() {
 	// APU runs every 6
 	// - Alternates between DMA Get and Put
 
-	MasterClock++
+	/*MasterClock++
 	switch MasterClock {
 	case 1:
 		Emulator.cpu.CPU_Cycle()
@@ -197,6 +198,43 @@ func MasterClockTick() {
 		ppu.PPU_Cycle()
 	case 12:
 		MasterClock = 0
+	}*/
+
+	// 2A03
+	// CPU runs every 6 ticks
+	cpuClock++
+	switch cpuClock {
+	case 1:
+		Emulator.cpu.CPU_Cycle()
+	case 2:
+		if Emulator.cpu.PollNMI() {
+			Emulator.cpu.PendingNMI = true
+		}
+	case 4:
+		if cartridge.MapperChipID == 4 {
+			mappers.MMC3_ClockM2(ppu.PPUAddressBus)
+		}
+	case 6:
+		cpuClock = 0
+	}
+
+	// PPU runs every 2 ticks
+	ppuClock++
+	switch ppuClock {
+	case 1:
+		ppu.PPU_Cycle()
+	case 2:
+		ppuClock = 0
+	}
+
+	// APU runs every 6
+	// - Alternates between DMA Get and Put
+	apuClock++
+	switch apuClock {
+	case 1:
+		Emulator.apu.APU_Cycle()
+	case 6:
+		apuClock = 0
 	}
 }
 

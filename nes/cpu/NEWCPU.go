@@ -49,6 +49,7 @@ type CPU struct {
 	Target      uint16
 
 	DelayCounter int
+	PendingNMI   bool
 }
 
 var CPU_Halted bool
@@ -93,11 +94,15 @@ func (cpu *CPU) ResetCPU() {
 	cpu.DelayCounter = 0
 
 	CPU_Halted = false
+	cpu.PendingNMI = false
 }
 
 func (cpu *CPU) CPU_Cycle() {
 	if cpu.DelayCounter == 0 {
 		if cpu.subCycle == 0 {
+			if cpu.BreakSource == Break_NMI {
+				print("")
+			}
 			// Suppress NMI if the read was on the same cycle as VBlank being set
 			if ppu.SuppressNMI && cpu.BreakSource == Break_NMI {
 				cpu.BreakSource = Break_None
@@ -678,7 +683,8 @@ func (cpu *CPU) PollInterrupts() {
 		return
 	}
 
-	if cpu.PollNMI() {
+	if cpu.PendingNMI {
+		cpu.PendingNMI = false
 		cpu.BreakSource = Break_NMI
 	} else if cpu.PollIRQ() {
 		cpu.BreakSource = Break_IRQ
@@ -690,7 +696,8 @@ func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
 		return
 	}
 
-	if cpu.PollNMI() {
+	if cpu.PendingNMI {
+		cpu.PendingNMI = false
 		cpu.BreakSource = Break_NMI
 	} else if cpu.BreakSource != Break_IRQ && cpu.PollIRQ() {
 		cpu.BreakSource = Break_IRQ
