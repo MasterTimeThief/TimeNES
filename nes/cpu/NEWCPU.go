@@ -98,6 +98,12 @@ func (cpu *CPU) ResetCPU() {
 func (cpu *CPU) CPU_Cycle() {
 	if cpu.DelayCounter == 0 {
 		if cpu.subCycle == 0 {
+			// Suppress NMI if the read was on the same cycle as VBlank being set
+			if ppu.SuppressNMI && cpu.BreakSource == Break_NMI {
+				cpu.BreakSource = Break_None
+				cpu.PollInterrupts() // Check for an IRQ just in case?
+			}
+
 			if cpu.BreakSource != Break_None {
 				cpu.SetOpcode(0x00)
 				if cpu.BreakSource == Break_IRQ {
@@ -699,11 +705,17 @@ func (cpu *CPU) UnknownOpcode() {
 func (cpu *CPU) PollNMI() bool {
 	prevNMILevelDetector := cpu.NMILevelDetector
 	cpu.NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
-	return !prevNMILevelDetector && cpu.NMILevelDetector
+	return !prevNMILevelDetector && cpu.NMILevelDetector && !ppu.SuppressNMI
 }
 
 func (cpu *CPU) PollIRQ() bool {
 	return (apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_DoIRQ) && !cpu.flag_InterruptDisable
+}
+
+func (cpu *CPU) DisableNMI() {
+	if cpu.BreakSource == Break_NMI {
+		cpu.BreakSource = Break_None
+	}
 }
 
 func (cpu *CPU) SetOpcode(code byte) {

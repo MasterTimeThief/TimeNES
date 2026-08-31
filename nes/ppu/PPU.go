@@ -73,6 +73,10 @@ var ppu_SpriteYposition [8]byte
 var PPUAddressBus uint16
 var PPUBus byte
 
+var PPUOddFrame bool
+var SuppressVBlank bool
+var SuppressNMI bool
+
 func NewPPU() *PPU {
 	ppu := PPU{}
 	return &ppu
@@ -134,6 +138,8 @@ func ResetPPU() {
 	ppu_SpriteYposition = [8]byte{}
 
 	PPUAddressBus, PPUBus = 0, 0
+
+	PPUOddFrame = true
 }
 
 var CPUCyclesLastFrame int
@@ -141,14 +147,19 @@ var CPUCyclesLastFrame int
 func PPU_Cycle() {
 
 	if PPUDot == 1 && PPUScanline == 241 {
-		PPUSTATUS_VBlank = true
+		if !SuppressVBlank {
+			PPUSTATUS_VBlank = true
+		}
 		DrawNewFrame = true
 		//fmt.Println("Frame Cycles: " + fmt.Sprintf("%d", (common.CPU_TotalCycles-CPUCyclesLastFrame)))
 		CPUCyclesLastFrame = common.CPU_TotalCycles
+		PPUOddFrame = !PPUOddFrame
 	} else if PPUDot == 1 && PPUScanline == 261 {
 		PPUSTATUS_VBlank = false
 		PPUSTATUS_Overflow = false
 		PPUSTATUS_SpriteZeroHit = false
+		SuppressVBlank = false
+		SuppressNMI = false
 	}
 
 	SpriteEvaluation()
@@ -177,6 +188,12 @@ func PPU_Cycle() {
 		if PPUScanline > 261 {
 			PPUScanline = 0
 		}
+	}
+
+	// If rendering is enabled, skip the first dot of every odd frame
+	if PPUDot == 340 && PPUScanline == 261 && PPUOddFrame && (PPUMASK_RenderBG || PPUMASK_RenderSprites) {
+		PPUDot = 0
+		PPUScanline = 0
 	}
 
 	if PPUBus != 0 {

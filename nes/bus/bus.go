@@ -16,6 +16,7 @@ type BUS struct {
 
 type CPU interface {
 	DelayCPU(int)
+	DisableNMI()
 }
 
 type APU interface {
@@ -59,6 +60,15 @@ func (b *BUS) Read(Address uint16) byte {
 			ppu.PPUSTATUS_VBlank = false
 			ppu.WriteLatch = false
 			ppu.UpdatePPUBus2002(ppu.PPUBus)
+			//Check for special cases
+			if ppu.PPUDot == 1 && ppu.PPUScanline == 241 {
+				// This read was 1 PPU cycle before VBlank would be set
+				ppu.SuppressVBlank = true
+				ppu.SuppressNMI = true
+			} else if (ppu.PPUDot == 2 || ppu.PPUDot == 3) && ppu.PPUScanline == 241 {
+				// This read was on the PPU cycle VBlank would be set, or one after
+				ppu.SuppressNMI = true
+			}
 		case 0x2003: //OAM ADDR
 		case 0x2004: //OAMDATA
 			if ppu.PPUScanline < 240 && (ppu.PPUMASK_RenderBG || ppu.PPUMASK_RenderSprites) {
@@ -151,6 +161,9 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			ppu.PPUCTRL_BGPatternTable = (Value & 0x10) != 0
 			ppu.PPUCTRL_Use8x16Sprites = (Value & 0x20) != 0
 			ppu.PPUCTRL_EnableNMI = (Value & 0x80) != 0
+			if !ppu.PPUCTRL_EnableNMI && ppu.PPUDot >= 1 && ppu.PPUDot <= 3 {
+				b.cpu.DisableNMI()
+			}
 
 			ppu.TransferAddress = (uint16(ppu.PPUCTRL_NametableSelect) << 10) | (uint16(ppu.TransferAddress) & 0x73FF)
 		case 0x2001: //PPUMASK
