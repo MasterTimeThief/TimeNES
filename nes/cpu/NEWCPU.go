@@ -711,7 +711,7 @@ func (cpu *CPU) SetOpcode(code byte) {
 }
 
 func (cpu *CPU) CompleteInstruction() {
-	cpu.PollInterrupts()
+	//cpu.PollInterrupts()
 	cpu.subCycle = -1
 	cpu.AddressBus = cpu.PC
 }
