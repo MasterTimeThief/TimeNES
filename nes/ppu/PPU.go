@@ -157,6 +157,10 @@ func PPU_Cycle() {
 		PPUAddressBus = VRAMAddress // the address bus is always v when rendering is disabled.
 	}
 
+	if cartridge.MapperChipID == 4 {
+		mappers.MMC3_ClockIRQ(PPUAddressBus)
+	}
+
 	//Get tile data for buffering
 	RenderTileData()
 

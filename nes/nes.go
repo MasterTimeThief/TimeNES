@@ -177,7 +177,7 @@ func MasterClockTick() {
 		ppu.PPU_Cycle()
 	case 4:
 		if cartridge.MapperChipID == 4 {
-			mappers.MMC3_ClockIRQ(ppu.PPUAddressBus)
+			mappers.MMC3_ClockM2(ppu.PPUAddressBus)
 		}
 	case 5:
 		ppu.PPU_Cycle()
@@ -191,7 +191,7 @@ func MasterClockTick() {
 		ppu.PPU_Cycle()
 	case 10:
 		if cartridge.MapperChipID == 4 {
-			mappers.MMC3_ClockIRQ(ppu.PPUAddressBus)
+			mappers.MMC3_ClockM2(ppu.PPUAddressBus)
 		}
 	case 11:
 		ppu.PPU_Cycle()
