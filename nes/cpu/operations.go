@@ -277,6 +277,12 @@ func (cpu *CPU) Op_RRA() {
 	cpu.Op_ADC(cpu.ReadFromAB())
 }
 
+// ISC: INC + SBC
+func (cpu *CPU) Op_ISC() {
+	cpu.Op_INC(cpu.ReadFromAB())
+	cpu.Op_SBC(cpu.ReadFromAB())
+}
+
 // CPU Kill function
 func (cpu *CPU) Kill() {
 	CPU_Halted = true

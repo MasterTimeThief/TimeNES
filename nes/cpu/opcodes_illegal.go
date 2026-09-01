@@ -1038,44 +1038,114 @@ func (cpu *CPU) X73_RRA_Indirect_Y() {
 	}
 }
 
-/*
-	// ISC: INC + SBC
+// ISC: INC + SBC
 
-	func (cpu *CPU) XE7_ISC_ZeroPage(){
+func (cpu *CPU) XE7_ISC_ZeroPage() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 5
-	func (cpu *CPU) XF7_ISC_ZeroPage_X(){
+	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
+		cpu.PollInterrupts()
+		cpu.Op_ISC()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XF7_ISC_ZeroPage_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) XEF_ISC_Absolute(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_ISC()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XEF_ISC_Absolute() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) XFF_ISC_Absolute_X(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_ISC()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XFF_ISC_Absolute_X() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) XFB_ISC_Absolute_Y(){
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_ISC()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XFB_ISC_Absolute_Y() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) XE3_ISC_Indirect_X(){
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_ISC()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XE3_ISC_Indirect_X() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 8
-	func (cpu *CPU) XF3_ISC_Indirect_Y(){
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_ISC()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XF3_ISC_Indirect_Y() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.Op_SBC(cpu.ReadFromAB())
-		// CPU_Cycles = 8
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_ISC()
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	// Immediates (unofficial)
 
