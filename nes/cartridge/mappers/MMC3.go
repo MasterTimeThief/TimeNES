@@ -178,18 +178,18 @@ func MMC3_ClockIRQ(Addr uint16) {
 		if MMC3_IRQReloadFlag {
 			MMC3_IRQCounter = MMC3_IRQReloadValue
 			MMC3_IRQReloadFlag = false
-			if MMC3_IRQCounter == 0 {
-				//MMC3_DoIRQ = true
+			if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
+				MMC3_DoIRQ = true
 			}
 		} else {
 			MMC3_IRQCounter--
 			if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
-				//MMC3_DoIRQ = true
+				MMC3_DoIRQ = true
 			} else if MMC3_IRQCounter == 0xFF {
 				MMC3_IRQCounter = MMC3_IRQReloadValue
 				MMC3_IRQReloadFlag = false
-				if MMC3_IRQCounter == 0 {
-					//MMC3_DoIRQ = true
+				if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
+					MMC3_DoIRQ = true
 				}
 			}
 		}
