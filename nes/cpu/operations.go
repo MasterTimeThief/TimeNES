@@ -259,6 +259,12 @@ func (cpu *CPU) Op_DCP() {
 	cpu.Op_CMP(cpu.ReadFromAB())
 }
 
+// RLA: ROL + AND
+func (cpu *CPU) Op_RLA() {
+	cpu.Op_ROL()
+	cpu.Op_AND(cpu.ReadFromAB())
+}
+
 // CPU Kill function
 func (cpu *CPU) Kill() {
 	CPU_Halted = true
