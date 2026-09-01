@@ -265,6 +265,12 @@ func (cpu *CPU) Op_RLA() {
 	cpu.Op_AND(cpu.ReadFromAB())
 }
 
+// SRE: LSR + EOR
+func (cpu *CPU) Op_SRE() {
+	cpu.Op_LSR()
+	cpu.Op_EOR(cpu.ReadFromAB())
+}
+
 // CPU Kill function
 func (cpu *CPU) Kill() {
 	CPU_Halted = true

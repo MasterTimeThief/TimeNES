@@ -821,44 +821,114 @@ func (cpu *CPU) X33_RLA_Indirect_Y() {
 	}
 }
 
-/*
-	// SRE: LSR + EOR
+// SRE: LSR + EOR
 
-	func (cpu *CPU) X47_SRE_ZeroPage(){
+func (cpu *CPU) X47_SRE_ZeroPage() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_LSR(AddressBus)
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 5
-	func (cpu *CPU) X57_SRE_ZeroPage_X(){
+	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
+		cpu.PollInterrupts()
+		cpu.Op_SRE()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X57_SRE_ZeroPage_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_LSR(AddressBus)
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X4F_SRE_Absolute(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_SRE()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X4F_SRE_Absolute() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_LSR(AddressBus)
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X5F_SRE_Absolute_X(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_SRE()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X5F_SRE_Absolute_X() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
-		Op_LSR(AddressBus)
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) X5B_SRE_Absolute_Y(){
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_SRE()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X5B_SRE_Absolute_Y() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
-		Op_LSR(AddressBus)
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) X43_SRE_Indirect_X(){
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_SRE()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X43_SRE_Indirect_X() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_LSR(AddressBus)
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 8
-	func (cpu *CPU) X53_SRE_Indirect_Y(){
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_SRE()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X53_SRE_Indirect_Y() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
-		Op_LSR(AddressBus)
-		Op_EOR(cpu.ReadFromAB())
-		// CPU_Cycles = 8
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_SRE()
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	// RRA: ROR + ADC
 
