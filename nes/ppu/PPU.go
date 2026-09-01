@@ -326,7 +326,9 @@ func SpriteEvaluation() {
 								ppuScanlineContainsSpriteZero = true
 							}
 						} else {
-							PPUSTATUS_Overflow = true
+							if (PPUMASK_RenderBG || PPUMASK_RenderSprites) && ppuSpriteEvalTick%4 == 0 && (ppuSpriteEvalTemp < 240) {
+								PPUSTATUS_Overflow = true
+							}
 						}
 						ppuSpriteEvalTick++
 					} else {
