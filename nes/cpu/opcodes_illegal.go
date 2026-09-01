@@ -929,44 +929,115 @@ func (cpu *CPU) X53_SRE_Indirect_Y() {
 	}
 }
 
-/*
-	// RRA: ROR + ADC
+// RRA: ROR + ADC
 
-	func (cpu *CPU) X67_RRA_ZeroPage(){
+func (cpu *CPU) X67_RRA_ZeroPage() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_ROR(AddressBus)
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 5
-	func (cpu *CPU) X77_RRA_ZeroPage_X(){
+	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
+		cpu.PollInterrupts()
+		cpu.Op_RRA()
+		cpu.CompleteInstruction()
+	}
+}
+
+func (cpu *CPU) X77_RRA_ZeroPage_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_ROR(AddressBus)
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X6F_RRA_Absolute(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_RRA()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X6F_RRA_Absolute() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_ROR(AddressBus)
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X7F_RRA_Absolute_X(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_RRA()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X7F_RRA_Absolute_X() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
-		Op_ROR(AddressBus)
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) X7B_RRA_Absolute_Y(){
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_RRA()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X7B_RRA_Absolute_Y() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
-		Op_ROR(AddressBus)
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) X63_RRA_Indirect_X(){
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_RRA()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X63_RRA_Indirect_X() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_ROR(AddressBus)
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 8
-	func (cpu *CPU) X73_RRA_Indirect_Y(){
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_RRA()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X73_RRA_Indirect_Y() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
-		Op_ROR(AddressBus)
-		Op_ADC(cpu.ReadFromAB())
-		// CPU_Cycles = 8
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_RRA()
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	// ISC: INC + SBC
 

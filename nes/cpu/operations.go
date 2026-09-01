@@ -271,6 +271,12 @@ func (cpu *CPU) Op_SRE() {
 	cpu.Op_EOR(cpu.ReadFromAB())
 }
 
+// RRA: ROR + ADC
+func (cpu *CPU) Op_RRA() {
+	cpu.Op_ROR()
+	cpu.Op_ADC(cpu.ReadFromAB())
+}
+
 // CPU Kill function
 func (cpu *CPU) Kill() {
 	CPU_Halted = true
