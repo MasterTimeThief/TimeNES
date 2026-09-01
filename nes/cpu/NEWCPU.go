@@ -180,9 +180,11 @@ func (cpu *CPU) Opcode0X() {
 		cpu.X00_BRK()
 	case 0x1:
 		cpu.X01_ORA_Indirect_X()
-	//case 0x2:
+	case 0x2:
+		cpu.Kill()
 	//case 0x3:
-	//case 0x4:
+	case 0x4:
+		cpu.X04_NOP_ZeroPage()
 	case 0x5:
 		cpu.X05_ORA_ZeroPage()
 	case 0x6:
@@ -195,7 +197,8 @@ func (cpu *CPU) Opcode0X() {
 	case 0xA:
 		cpu.X0A_ASL()
 	//case 0xB:
-	//case 0xC:
+	case 0xC:
+		cpu.X0C_NOP_Absolute()
 	case 0xD:
 		cpu.X0D_ORA_Absolute()
 	case 0xE:
@@ -211,9 +214,11 @@ func (cpu *CPU) Opcode1X() {
 		cpu.X10_BPL()
 	case 0x1:
 		cpu.X11_ORA_Indirect_Y()
-	//case 0x2:
+	case 0x2:
+		cpu.Kill()
 	//case 0x3:
-	//case 0x4:
+	case 0x4:
+		cpu.X14_NOP_ZeroPage_X()
 	case 0x5:
 		cpu.X15_ORA_ZeroPage_X()
 	case 0x6:
@@ -223,9 +228,11 @@ func (cpu *CPU) Opcode1X() {
 		cpu.X18_CLC()
 	case 0x9:
 		cpu.X19_ORA_Absolute_Y()
-	//case 0xA:
+	case 0xA:
+		cpu.X1A_NOP_Implied()
 	//case 0xB:
-	//case 0xC:
+	case 0xC:
+		cpu.X1C_NOP_Absolute_X()
 	case 0xD:
 		cpu.X1D_ORA_Absolute_X()
 	case 0xE:
@@ -241,7 +248,8 @@ func (cpu *CPU) Opcode2X() {
 		cpu.X20_JSR()
 	case 0x1:
 		cpu.X21_AND_Indirect_X()
-	//case 0x2:
+	case 0x2:
+		cpu.Kill()
 	//case 0x3:
 	case 0x4:
 		cpu.X24_BIT_ZeroPage()
@@ -274,9 +282,11 @@ func (cpu *CPU) Opcode3X() {
 		cpu.X30_BMI()
 	case 0x1:
 		cpu.X31_AND_Indirect_Y()
-	//case 0x2:
+	case 0x2:
+		cpu.Kill()
 	//case 0x3:
-	//case 0x4:
+	case 0x4:
+		cpu.X34_NOP_ZeroPage_X()
 	case 0x5:
 		cpu.X35_AND_ZeroPage_X()
 	case 0x6:
@@ -286,9 +296,11 @@ func (cpu *CPU) Opcode3X() {
 		cpu.X38_SEC()
 	case 0x9:
 		cpu.X39_AND_Absolute_Y()
-	//case 0xA:
+	case 0xA:
+		cpu.X3A_NOP_Implied()
 	//case 0xB:
-	//case 0xC:
+	case 0xC:
+		cpu.X3C_NOP_Absolute_X()
 	case 0xD:
 		cpu.X3D_AND_Absolute_X()
 	case 0xE:
@@ -304,9 +316,11 @@ func (cpu *CPU) Opcode4X() {
 		cpu.X40_RTI()
 	case 0x1:
 		cpu.X41_EOR_Indirect_X()
-	//case 0x2:
+	case 0x2:
+		cpu.Kill()
 	//case 0x3:
-	//case 0x4:
+	case 0x4:
+		cpu.X44_NOP_ZeroPage()
 	case 0x5:
 		cpu.X45_EOR_ZeroPage()
 	case 0x6:
@@ -336,26 +350,30 @@ func (cpu *CPU) Opcode5X() {
 		cpu.X50_BVC()
 	case 0x1:
 		cpu.X51_EOR_Indirect_Y()
-	//case 0x2:
-	//case 0x3:
-	//case 0x4:
+	case 0x2:
+		cpu.Kill()
+	//case 0x3:cpu.X
+	case 0x4:
+		cpu.X54_NOP_ZeroPage_X()
 	case 0x5:
 		cpu.X55_EOR_ZeroPage_X()
 	case 0x6:
 		cpu.X56_LSR_ZeroPage_X()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.X58_CLI()
 	case 0x9:
 		cpu.X59_EOR_Absolute_Y()
-	//case 0xA:
-	//case 0xB:
-	//case 0xC:
+	case 0xA:
+		cpu.X5A_NOP_Implied()
+	//case 0xB:cpu.X
+	case 0xC:
+		cpu.X5C_NOP_Absolute_X()
 	case 0xD:
 		cpu.X5D_EOR_Absolute_X()
 	case 0xE:
 		cpu.X5E_LSR_Absolute_X()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -366,28 +384,30 @@ func (cpu *CPU) Opcode6X() {
 		cpu.X60_RTS()
 	case 0x1:
 		cpu.X61_ADC_Indirect_X()
-	//case 0x2:
-	//case 0x3:
-	//case 0x4:
+	case 0x2:
+		cpu.Kill()
+	//case 0x3:cpu.X
+	case 0x4:
+		cpu.X64_NOP_ZeroPage()
 	case 0x5:
 		cpu.X65_ADC_ZeroPage()
 	case 0x6:
 		cpu.X66_ROR_ZeroPage()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.X68_PLA()
 	case 0x9:
 		cpu.X69_ADC_Immediate()
 	case 0xA:
 		cpu.X6A_ROR()
-	//case 0xB:
+	//case 0xB:cpu.X
 	case 0xC:
 		cpu.X6C_JMP_Indirect()
 	case 0xD:
 		cpu.X6D_ADC_Absolute()
 	case 0xE:
 		cpu.X6E_ROR_Absolute()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -398,9 +418,11 @@ func (cpu *CPU) Opcode7X() {
 		cpu.X70_BVS()
 	case 0x1:
 		cpu.X71_ADC_Indirect_Y()
-	//case 0x2:
-	//case 0x3:
-	//case 0x4:
+	case 0x2:
+		cpu.Kill()
+	//case 0x3:cpu.X
+	case 0x4:
+		cpu.X74_NOP_ZeroPage_X()
 	case 0x5:
 		cpu.X75_ADC_ZeroPage_X()
 	case 0x6:
@@ -410,45 +432,50 @@ func (cpu *CPU) Opcode7X() {
 		cpu.X78_SEI()
 	case 0x9:
 		cpu.X79_ADC_Absolute_Y()
-	//case 0xA:
-	//case 0xB:
-	//case 0xC:
+	case 0xA:
+		cpu.X7A_NOP_Implied()
+	//case 0xB:cpu.X
+	case 0xC:
+		cpu.X7C_NOP_Absolute_X()
 	case 0xD:
 		cpu.X7D_ADC_Absolute_X()
 	case 0xE:
 		cpu.X7E_ROR_Absolute_X()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
 }
 func (cpu *CPU) Opcode8X() {
 	switch cpu.opcode & 0xF {
-	//case 0x0:
+	case 0x0:
+		cpu.X80_NOP_Immediate()
 	case 0x1:
 		cpu.X81_STA_Indirect_X()
-	//case 0x2:
-	//case 0x3:
+	case 0x2:
+		cpu.X82_NOP_Immediate()
+	//case 0x3:cpu.X
 	case 0x4:
 		cpu.X84_STY_ZeroPage()
 	case 0x5:
 		cpu.X85_STA_ZeroPage()
 	case 0x6:
 		cpu.X86_STX_ZeroPage()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.X88_DEY()
-	//case 0x9:
+	case 0x9:
+		cpu.X89_NOP_Immediate()
 	case 0xA:
 		cpu.X8A_TXA()
-	//case 0xB:
+	//case 0xB:cpu.X
 	case 0xC:
 		cpu.X8C_STY_Absolute()
 	case 0xD:
 		cpu.X8D_STA_Absolute()
 	case 0xE:
 		cpu.X8E_STX_Absolute()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -459,27 +486,28 @@ func (cpu *CPU) Opcode9X() {
 		cpu.X90_BCC()
 	case 0x1:
 		cpu.X91_STA_Indirect_Y()
-	//case 0x2:
-	//case 0x3:
+	case 0x2:
+		cpu.Kill()
+	//case 0x3:cpu.X
 	case 0x4:
 		cpu.X94_STY_ZeroPage_X()
 	case 0x5:
 		cpu.X95_STA_ZeroPage_X()
 	case 0x6:
 		cpu.X96_STX_ZeroPage_Y()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.X98_TYA()
 	case 0x9:
 		cpu.X99_STA_Absolute_Y()
 	case 0xA:
 		cpu.X9A_TXS()
-	//case 0xB:
-	//case 0xC:
+	//case 0xB:cpu.X
+	//case 0xC:cpu.X
 	case 0xD:
 		cpu.X9D_STA_Absolute_X()
-	//case 0xE:
-	//case 0xF:
+	//case 0xE:cpu.X
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -492,14 +520,14 @@ func (cpu *CPU) OpcodeAX() {
 		cpu.XA1_LDA_Indirect_X()
 	case 0x2:
 		cpu.XA2_LDX_Immediate()
-	//case 0x3:
+	//case 0x3:cpu.X
 	case 0x4:
 		cpu.XA4_LDY_ZeroPage()
 	case 0x5:
 		cpu.XA5_LDA_ZeroPage()
 	case 0x6:
 		cpu.XA6_LDX_ZeroPage()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.XA8_TAY()
 	case 0x9:
@@ -513,7 +541,7 @@ func (cpu *CPU) OpcodeAX() {
 		cpu.XAD_LDA_Absolute()
 	case 0xE:
 		cpu.XAE_LDX_Absolute()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -524,15 +552,16 @@ func (cpu *CPU) OpcodeBX() {
 		cpu.XB0_BCS()
 	case 0x1:
 		cpu.XB1_LDA_Indirect_Y()
-	//case 0x2:
-	//case 0x3:
+	case 0x2:
+		cpu.Kill()
+	//case 0x3:cpu.X
 	case 0x4:
 		cpu.XB4_LDY_ZeroPage_X()
 	case 0x5:
 		cpu.XB5_LDA_ZeroPage_X()
 	case 0x6:
 		cpu.XB6_LDX_ZeroPage_Y()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.XB8_CLV()
 	case 0x9:
@@ -546,7 +575,7 @@ func (cpu *CPU) OpcodeBX() {
 		cpu.XBD_LDA_Absolute_X()
 	case 0xE:
 		cpu.XBE_LDX_Absolute_Y()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -557,29 +586,30 @@ func (cpu *CPU) OpcodeCX() {
 		cpu.XC0_CPY_Immediate()
 	case 0x1:
 		cpu.XC1_CMP_Indirect_X()
-	//case 0x2:
-	//case 0x3:
+	case 0x2:
+		cpu.XC2_NOP_Immediate()
+	//case 0x3:cpu.X
 	case 0x4:
 		cpu.XC4_CPY_ZeroPage()
 	case 0x5:
 		cpu.XC5_CMP_ZeroPage()
 	case 0x6:
 		cpu.XC6_DEC_ZeroPage()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.XC8_INY()
 	case 0x9:
 		cpu.XC9_CMP_Immediate()
 	case 0xA:
 		cpu.XCA_DEX()
-	//case 0xB:
+	//case 0xB:cpu.X
 	case 0xC:
 		cpu.XCC_CPY_Absolute()
 	case 0xD:
 		cpu.XCD_CMP_Absolute()
 	case 0xE:
 		cpu.XCE_DEC_Absolute()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -590,26 +620,30 @@ func (cpu *CPU) OpcodeDX() {
 		cpu.XD0_BNE()
 	case 0x1:
 		cpu.XD1_CMP_Indirect_Y()
-	//case 0x2:
-	//case 0x3:
-	//case 0x4:
+	case 0x2:
+		cpu.Kill()
+	//case 0x3:cpu.X
+	case 0x4:
+		cpu.XD4_NOP_ZeroPage_X()
 	case 0x5:
 		cpu.XD5_CMP_ZeroPage_X()
 	case 0x6:
 		cpu.XD6_DEC_ZeroPage_X()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.XD8_CLD()
 	case 0x9:
 		cpu.XD9_CMP_Absolute_Y()
-	//case 0xA:
-	//case 0xB:
-	//case 0xC:
+	case 0xA:
+		cpu.XDA_NOP_Implied()
+	//case 0xB:cpu.X
+	case 0xC:
+		cpu.XDC_NOP_Absolute_X()
 	case 0xD:
 		cpu.XDD_CMP_Absolute_X()
 	case 0xE:
 		cpu.XDE_DEC_Absolute_X()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -620,29 +654,30 @@ func (cpu *CPU) OpcodeEX() {
 		cpu.XE0_CPX_Immediate()
 	case 0x1:
 		cpu.XE1_SBC_Indirect_X()
-	//case 0x2:
-	//case 0x3:
+	case 0x2:
+		cpu.XE2_NOP_Immediate()
+	//case 0x3:cpu.X
 	case 0x4:
 		cpu.XE4_CPX_ZeroPage()
 	case 0x5:
 		cpu.XE5_SBC_ZeroPage()
 	case 0x6:
 		cpu.XE6_INC_ZeroPage()
-	//case 0x7:
+	//case 0x7:cpu.X
 	case 0x8:
 		cpu.XE8_INX()
 	case 0x9:
 		cpu.XE9_SBC_Immediate()
 	case 0xA:
 		cpu.XEA_NOP()
-	//case 0xB:
+	//case 0xB:cpu.X
 	case 0xC:
 		cpu.XEC_CPX_Absolute()
 	case 0xD:
 		cpu.XED_SBC_Absolute()
 	case 0xE:
 		cpu.XEE_INC_Absolute()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
@@ -653,9 +688,11 @@ func (cpu *CPU) OpcodeFX() {
 		cpu.XF0_BEQ()
 	case 0x1:
 		cpu.XF1_SBC_Indirect_Y()
-	//case 0x2:
-	//case 0x3:
-	//case 0x4:
+	case 0x2:
+		cpu.Kill()
+	//case 0x3:cpu.X
+	case 0x4:
+		cpu.XF4_NOP_ZeroPage_X()
 	case 0x5:
 		cpu.XF5_SBC_ZeroPage_X()
 	case 0x6:
@@ -665,14 +702,16 @@ func (cpu *CPU) OpcodeFX() {
 		cpu.XF8_SED()
 	case 0x9:
 		cpu.XF9_SBC_Absolute_Y()
-	//case 0xA:
-	//case 0xB:
-	//case 0xC:
+	case 0xA:
+		cpu.XFA_NOP_Implied()
+	//case 0xB:cpu.X
+	case 0xC:
+		cpu.XFC_NOP_Absolute_X()
 	case 0xD:
 		cpu.XFD_SBC_Absolute_X()
 	case 0xE:
 		cpu.XFE_INC_Absolute_X()
-	//case 0xF:
+	//case 0xF:cpu.X
 	default:
 		cpu.UnknownOpcode()
 	}
