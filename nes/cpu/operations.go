@@ -253,6 +253,12 @@ func (cpu *CPU) Op_SLO() {
 	cpu.Op_ORA(cpu.DL)
 }
 
+// DCP: DEC + CMP
+func (cpu *CPU) Op_DCP() {
+	cpu.Op_DEC(cpu.ReadFromAB())
+	cpu.Op_CMP(cpu.ReadFromAB())
+}
+
 // CPU Kill function
 func (cpu *CPU) Kill() {
 	CPU_Halted = true
