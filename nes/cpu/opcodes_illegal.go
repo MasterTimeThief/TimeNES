@@ -1146,63 +1146,72 @@ func (cpu *CPU) XF3_ISC_Indirect_Y() {
 	}
 }
 
-/*
-	// Immediates (unofficial)
+// Immediates (unofficial)
 
-	func (cpu *CPU) X0BANC_Immediate(){
-		//AND + Set Carry as ASL
-		cpu.Op_AND(cpu.ReadFromPC())
-		flag_Carry = flag_Negative
-		// CPU_Cycles = 2
-	func (cpu *CPU) X2BANC2_Immediate(){
-		//AND + Set Carry as ROL
-		//Same as $0B
-		cpu.Op_AND(cpu.ReadFromPC())
-		flag_Carry = flag_Negative
-		// CPU_Cycles = 2
-	func (cpu *CPU) X4BALR_Immediate(){
-		//AND + LSR
-		cpu.Op_AND(cpu.ReadFromPC())
-		flag_Carry = (A & 1) != 0
-		A >>= 1
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-	func (cpu *CPU) X6BARR_Immediate(){
-		//AND + ROR
-		cpu.Op_AND(cpu.ReadFromPC())
-		flag_Overflow = A == 0
+func (cpu *CPU) X0B_ANC_Immediate() { // AND + Set Carry as ASL
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.Op_AND(cpu.ReadFromPC())
+	cpu.flag_Carry = cpu.flag_Negative
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X2B_ANC_Immediate() { // AND + Set Carry as ROL (Same as $0B)
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.X0B_ANC_Immediate()
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X4B_ALR_Immediate() { // AND + LSR
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.Op_AND(cpu.ReadFromPC())
+	cpu.flag_Carry = (cpu.A & 1) != 0
+	cpu.A >>= 1
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X6B_ARR_Immediate() { // AND + ROR
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.Op_AND(cpu.ReadFromPC())
+	cpu.flag_Overflow = cpu.A == 0
 
-		A >>= 1
-		if flag_Carry {
-			A |= 0x80
-		}
-		flag_Carry = ((A & 0x40) >> 6) == 1
-		flag_Overflow = (((A & 0x20) >> 5) ^ ((A & 0x40) >> 6)) == 1
+	cpu.A >>= 1
+	if cpu.flag_Carry {
+		cpu.A |= 0x80
+	}
+	cpu.flag_Carry = ((cpu.A & 0x40) >> 6) == 1
+	cpu.flag_Overflow = (((cpu.A & 0x20) >> 5) ^ ((cpu.A & 0x40) >> 6)) == 1
 
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-	func (cpu *CPU) X8BANE_Immediate(){
-		//Highly unstable
-		A = X & cpu.ReadFromPC()
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-	func (cpu *CPU) XABLXA_Immediate(){
-		//Highly unstable
-		cpu.A = cpu.ReadFromPC()
-		cpu.X = cpu.A
-		cpu.SetZNFlags(cpu.A)
-		// CPU_Cycles = 2
-	func (cpu *CPU) XCBSBX_Immediate(){
-		//(A AND X) - oper -> X
-		X = (cpu.A & cpu.X) - cpu.ReadFromPC()
-		Op_CMP(cpu.X)
-		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 2
-	func (cpu *CPU) XEBSBC_Immediate(){
-		cpu.Op_SBC(cpu.ReadFromPC())
-		// CPU_Cycles = 2
-
-	default:
-		fmt.Println("Unknown Opcode: " + fmt.Sprintf("%02X", opcode))
-
-*/
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) X8B_ANE_Immediate() { // Highly unstable
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.A = cpu.X & cpu.ReadFromPC()
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XAB_LXA_Immediate() { // Highly unstable
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.A = cpu.ReadFromPC()
+	cpu.X = cpu.A
+	cpu.SetZNFlags(cpu.A)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XCB_SBX_Immediate() { // (A AND X) - oper -> X
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.X = (cpu.A & cpu.X) - cpu.ReadFromPC()
+	cpu.Op_CMP(cpu.X)
+	cpu.SetZNFlags(cpu.X)
+	cpu.CompleteInstruction()
+}
+func (cpu *CPU) XEB_SBC_Immediate() {
+	// CPU_Cycles = 2
+	cpu.PollInterrupts()
+	cpu.Op_SBC(cpu.ReadFromPC())
+	cpu.CompleteInstruction()
+}
