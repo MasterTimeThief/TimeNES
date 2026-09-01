@@ -243,6 +243,16 @@ func (cpu *CPU) Op_BIT(Value byte) {
 	cpu.flag_Overflow = ((Value & 0x40) != 0)
 }
 
+//
+// Illegal operations
+//
+
+// SLO: ASL + ORA
+func (cpu *CPU) Op_SLO() {
+	cpu.Op_ASL()
+	cpu.Op_ORA(cpu.DL)
+}
+
 // CPU Kill function
 func (cpu *CPU) Kill() {
 	CPU_Halted = true

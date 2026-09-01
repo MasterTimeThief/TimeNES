@@ -310,83 +310,195 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 	}
 }
 
-/*
-	//LAX: LDA + LDX
+//LAX: LDA + LDX
 
-	func (cpu *CPU) XA7_LAX_ZeroPage(){
+func (cpu *CPU) XA7_LAX_ZeroPage() {
+	// CPU_Cycles = 3
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
+	case 2:
+		cpu.PollInterrupts()
 		cpu.A = cpu.ReadFromAB()
 		cpu.X = cpu.A
 		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 3
-	func (cpu *CPU) XB7_LAX_ZeroPage_Y(){
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XB7_LAX_ZeroPage_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageY()
+	case 3:
+		cpu.PollInterrupts()
 		cpu.A = cpu.ReadFromAB()
 		cpu.X = cpu.A
 		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 4
-	func (cpu *CPU) XAF_LAX_Absolute(){
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XAF_LAX_Absolute() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
+	case 3:
+		cpu.PollInterrupts()
 		cpu.A = cpu.ReadFromAB()
 		cpu.X = cpu.A
 		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 4
-	func (cpu *CPU) XBF_LAX_Absolute_Y(){
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XBF_LAX_Absolute_Y() {
+	// CPU_Cycles = 4
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.PollInterrupts()
 		cpu.A = cpu.ReadFromAB()
 		cpu.X = cpu.A
 		cpu.SetZNFlags(cpu.X)
-	func (cpu *CPU) XA3_LAX_Indirect_X(){
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XA3_LAX_Indirect_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
+	case 5:
+		cpu.PollInterrupts()
 		cpu.A = cpu.ReadFromAB()
 		cpu.X = cpu.A
 		cpu.SetZNFlags(cpu.X)
-		// CPU_Cycles = 6
-	func (cpu *CPU) XB3_LAX_Indirect_Y(){
-		// CPU_Cycles = 5
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) XB3_LAX_Indirect_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
+	case 5:
+		cpu.PollInterrupts()
 		cpu.A = cpu.ReadFromAB()
 		cpu.X = cpu.A
 		cpu.SetZNFlags(cpu.X)
-/*
-	//SLO: ASL + ORA
+		cpu.CompleteInstruction()
+	}
+}
 
-	func (cpu *CPU) X07_SLO_ZeroPage(){
+//SLO: ASL + ORA
+
+func (cpu *CPU) X07_SLO_ZeroPage() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1:
 		cpu.GetAddress_ZeroPage()
-		Op_ASL(AddressBus)
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 5
-	func (cpu *CPU) X17_SLO_ZeroPage_X(){
+	case 2:
+		cpu.DL = cpu.ReadFromAB()
+	case 3:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 4:
+		cpu.PollInterrupts()
+		cpu.Op_SLO()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X17_SLO_ZeroPage_X() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
-		Op_ASL(AddressBus)
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X0F_SLO_Absolute(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_SLO()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X0F_SLO_Absolute() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2:
 		cpu.GetAddress_Absolute()
-		Op_ASL(AddressBus)
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 6
-	func (cpu *CPU) X1F_SLO_Absolute_X(){
+	case 3:
+		cpu.DL = cpu.ReadFromAB()
+	case 4:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 5:
+		cpu.PollInterrupts()
+		cpu.Op_SLO()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X1F_SLO_Absolute_X() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
-		Op_ASL(AddressBus)
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) X1B_SLO_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
-		Op_ASL(AddressBus)
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 7
-	func (cpu *CPU) X03_SLO_Indirect_X(){
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_SLO()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X1B_SLO_Absolute_Y() {
+	// CPU_Cycles = 7
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(false)
+	case 4:
+		cpu.DL = cpu.ReadFromAB()
+	case 5:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 6:
+		cpu.PollInterrupts()
+		cpu.Op_SLO()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X03_SLO_Indirect_X() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
-		Op_ASL(AddressBus)
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 8
-	func (cpu *CPU) X13_SLO_Indirect_Y(){
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_SLO()
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X13_SLO_Indirect_Y() {
+	// CPU_Cycles = 8
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
-		Op_ASL(AddressBus)
-		Op_ORA(cpu.ReadFromAB())
-		// CPU_Cycles = 8
+	case 5:
+		cpu.DL = cpu.ReadFromAB()
+	case 6:
+		cpu.WriteToAB(cpu.DL) // Dummy write
+	case 7:
+		cpu.PollInterrupts()
+		cpu.Op_SLO()
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
 	//DCP: DEC + CMP
 
@@ -411,7 +523,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 		Op_CMP(cpu.ReadFromAB())
 		// CPU_Cycles = 7
 	func (cpu *CPU) XDB_DCP_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		cpu.Op_DEC(AddressBus, cpu.ReadFromAB())
 		Op_CMP(cpu.ReadFromAB())
 		// CPU_Cycles = 7
@@ -429,7 +541,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 	//SHA: Stores A AND X AND (high-byte of addr. + 1) at addr.
 
 	func (cpu *CPU) X9F_SHA_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		HiByte := byte(AddressBus >> 8)
 		cpu.WriteToAB(A&X&(HiByte+1))
 		// CPU_Cycles = 5
@@ -441,7 +553,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 	//SHX: Stores X AND (high-byte of addr. + 1) at addr.
 
 	func (cpu *CPU) X9E_SHX_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		val := (X & byte(((AddressBus&0xFF00)>>8)+1))
 		cpu.WriteToAB(val)
 		// CPU_Cycles = 5
@@ -477,7 +589,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 		Op_AND(cpu.ReadFromAB())
 		// CPU_Cycles = 7
 	func (cpu *CPU) X3B_RLA_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		Op_ROL(AddressBus)
 		Op_AND(cpu.ReadFromAB())
 		// CPU_Cycles = 7
@@ -515,7 +627,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 		Op_EOR(cpu.ReadFromAB())
 		// CPU_Cycles = 7
 	func (cpu *CPU) X5B_SRE_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		Op_LSR(AddressBus)
 		Op_EOR(cpu.ReadFromAB())
 		// CPU_Cycles = 7
@@ -553,7 +665,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 		Op_ADC(cpu.ReadFromAB())
 		// CPU_Cycles = 7
 	func (cpu *CPU) X7B_RRA_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		Op_ROR(AddressBus)
 		Op_ADC(cpu.ReadFromAB())
 		// CPU_Cycles = 7
@@ -591,7 +703,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 7
 	func (cpu *CPU) XFB_ISC_Absolute_Y(){
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		cpu.Op_INC(cpu.ReadFromAB())
 		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 7
@@ -665,7 +777,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 		//A AND X -> SP, A AND X AND (H+1) -> M
 		temp := cpu.A & cpu.X
 		Push(temp)
-		cpu.GetAddress_AbsoluteIndY(false)
+		cpu.GetAddress_AbsoluteY(false)
 		cpu.WriteToAB((A&X)&(byte(AddressBus&0xFF00)+1))
 		// CPU_Cycles = 5
 
@@ -673,7 +785,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 		//LDA/TSX oper
 		//M AND SP -> A, X, SP
 		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteIndY(true)
+		cpu.GetAddress_AbsoluteY(true)
 		Value := (cpu.ReadFromAB() & SP)
 		A = Value
 		X = Value
