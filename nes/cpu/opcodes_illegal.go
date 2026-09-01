@@ -13,8 +13,6 @@ package cpu
 //	NOP Codes (unofficial)
 //----------------------------------------
 
-//NOP Codes (unofficial)
-
 func (cpu *CPU) X1A_NOP_Implied() {
 	// CPU_Cycles = 2
 	cpu.PollInterrupts()
@@ -263,7 +261,7 @@ func (cpu *CPU) XFC_NOP_Absolute_X() {
 	}
 }
 
-//SAX: A AND X -> M
+// SAX: A AND X -> M
 
 func (cpu *CPU) X87_SAX_ZeroPage() {
 	// CPU_Cycles = 3
@@ -310,7 +308,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 	}
 }
 
-//LAX: LDA + LDX
+// LAX: LDA + LDX
 
 func (cpu *CPU) XA7_LAX_ZeroPage() {
 	// CPU_Cycles = 3
@@ -391,7 +389,7 @@ func (cpu *CPU) XB3_LAX_Indirect_Y() {
 	}
 }
 
-//SLO: ASL + ORA
+// SLO: ASL + ORA
 
 func (cpu *CPU) X07_SLO_ZeroPage() {
 	// CPU_Cycles = 5
@@ -499,7 +497,7 @@ func (cpu *CPU) X13_SLO_Indirect_Y() {
 	}
 }
 
-//DCP: DEC + CMP
+// DCP: DEC + CMP
 
 func (cpu *CPU) XC7_DCP_ZeroPage() {
 	// CPU_Cycles = 5
@@ -607,36 +605,116 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 	}
 }
 
-/*
-	//SHA: Stores A AND X AND (high-byte of addr. + 1) at addr.
+// SHA: Stores A AND X AND (high-byte of addr. + 1) at addr.
 
-	func (cpu *CPU) X9F_SHA_Absolute_Y(){
+func (cpu *CPU) X9F_SHA_Absolute_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
-		HiByte := byte(AddressBus >> 8)
-		cpu.WriteToAB(A&X&(HiByte+1))
-		// CPU_Cycles = 5
-	func (cpu *CPU) X93_SHA_Indirect_Y(){
+	case 4:
+		cpu.PollInterrupts()
+		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
+			// If the page boundary was crossed, this code has gone "unstable"
+			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.X))<<8
+		}
+		cpu.WriteToAB(cpu.A & (cpu.X | cpu.Magic) & cpu.H)
+		cpu.CompleteInstruction()
+	}
+}
+func (cpu *CPU) X93_SHA_Indirect_Y() {
+	// CPU_Cycles = 6
+	switch cpu.subCycle {
+	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
-		cpu.WriteToAB(A&X&byte((AddressBus>>8)+1))
-		// CPU_Cycles = 6
-/*
-	//SHX: Stores X AND (high-byte of addr. + 1) at addr.
+	case 5:
+		cpu.PollInterrupts()
+		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
+			// If the page boundary was crossed, this code has gone "unstable"
+			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.X))<<8
+		}
+		cpu.WriteToAB(cpu.A & (cpu.X | cpu.Magic) & cpu.H)
+		cpu.CompleteInstruction()
+	}
+}
 
-	func (cpu *CPU) X9E_SHX_Absolute_Y(){
+// SHX: Stores X AND (high-byte of addr. + 1) at addr.
+
+func (cpu *CPU) X9E_SHX_Absolute_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
-		val := (X & byte(((AddressBus&0xFF00)>>8)+1))
-		cpu.WriteToAB(val)
-		// CPU_Cycles = 5
-/*
-	//SHY: Stores Y AND (high-byte of addr. + 1) at addr.
+	case 4:
+		cpu.PollInterrupts()
+		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
+			// If the page boundary was crossed, this code has gone "unstable"
+			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.X))<<8
+		}
+		cpu.WriteToAB(cpu.X & cpu.H)
+		cpu.CompleteInstruction()
+	}
+}
 
-	func (cpu *CPU) X9C_SHY_Absolute_X(){
+// SHY: Stores Y AND (high-byte of addr. + 1) at addr.
+
+func (cpu *CPU) X9C_SHY_Absolute_X() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
-		val := (Y & byte(((AddressBus&0xFF00)>>8)+1))
-		cpu.WriteToAB(val)
-		// CPU_Cycles = 5
+	case 4:
+		cpu.PollInterrupts()
+		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
+			// If the page boundary was crossed, this code has gone "unstable"
+			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.Y))<<8
+		}
+		cpu.WriteToAB(cpu.Y & cpu.H)
+		cpu.CompleteInstruction()
+	}
+}
+
+// TAS (XAS, SHS): Puts A AND X in SP and stores A AND X AND (high-byte of addr. + 1) at addr.
+// A AND X -> SP, A AND X AND (H+1) -> M
+
+func (cpu *CPU) X9B_TAS_Absolute_Y() {
+	// CPU_Cycles = 5
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(false)
+	case 4:
+		cpu.PollInterrupts()
+		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
+			// If the page boundary was crossed, this code has gone "unstable"
+			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.Y))<<8
+		}
+		cpu.Push(cpu.A & cpu.X)
+		cpu.WriteToAB(cpu.A & (cpu.X | cpu.Magic) & cpu.H)
+		cpu.CompleteInstruction()
+	}
+}
+
+// LAS (LAR, LAE): LDA/TSX oper
+// M AND SP -> A, X, SP
+
+func (cpu *CPU) XBB_LAS_Absolute_Y() {
+	// CPU_Cycles = 4+
+	switch cpu.subCycle {
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteY(true)
+	case 4:
+		cpu.PollInterrupts()
+		cpu.DL = (cpu.ReadFromAB() & cpu.SP)
+		cpu.A = cpu.DL
+		cpu.X = cpu.DL
+		cpu.SP = cpu.DL
+		cpu.SetZNFlags(cpu.A)
+		cpu.CompleteInstruction()
+	}
+}
+
 /*
-	//RLA: ROL + AND
+	// RLA: ROL + AND
 
 	func (cpu *CPU) X27_RLA_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
@@ -674,7 +752,7 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 		Op_AND(cpu.ReadFromAB())
 		// CPU_Cycles = 8
 /*
-	//SRE: LSR + EOR
+	// SRE: LSR + EOR
 
 	func (cpu *CPU) X47_SRE_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
@@ -712,7 +790,7 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 		Op_EOR(cpu.ReadFromAB())
 		// CPU_Cycles = 8
 /*
-	//RRA: ROR + ADC
+	// RRA: ROR + ADC
 
 	func (cpu *CPU) X67_RRA_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
@@ -750,7 +828,7 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 		Op_ADC(cpu.ReadFromAB())
 		// CPU_Cycles = 8
 /*
-	//ISC: INC + SBC
+	// ISC: INC + SBC
 
 	func (cpu *CPU) XE7_ISC_ZeroPage(){
 		cpu.GetAddress_ZeroPage()
@@ -788,7 +866,7 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 		cpu.Op_SBC(cpu.ReadFromAB())
 		// CPU_Cycles = 8
 /*
-	//Immediates (unofficial)
+	// Immediates (unofficial)
 
 	func (cpu *CPU) X0BANC_Immediate(){
 		//AND + Set Carry as ASL
@@ -842,25 +920,6 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 	func (cpu *CPU) XEBSBC_Immediate(){
 		cpu.Op_SBC(cpu.ReadFromPC())
 		// CPU_Cycles = 2
-
-	func (cpu *CPU) X9BTAS (SHS)_Absolute_Y(){
-		//A AND X -> SP, A AND X AND (H+1) -> M
-		temp := cpu.A & cpu.X
-		Push(temp)
-		cpu.GetAddress_AbsoluteY(false)
-		cpu.WriteToAB((A&X)&(byte(AddressBus&0xFF00)+1))
-		// CPU_Cycles = 5
-
-	func (cpu *CPU) XBBLAS (LAE)_Absolute_Y(){
-		//LDA/TSX oper
-		//M AND SP -> A, X, SP
-		// CPU_Cycles = 4
-		cpu.GetAddress_AbsoluteY(true)
-		Value := (cpu.ReadFromAB() & SP)
-		A = Value
-		X = Value
-		SP = Value
-		cpu.SetZNFlags(cpu.A)
 
 	default:
 		fmt.Println("Unknown Opcode: " + fmt.Sprintf("%02X", opcode))

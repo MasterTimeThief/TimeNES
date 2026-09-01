@@ -38,7 +38,7 @@ type CPU struct {
 	opcode           byte
 	operands         []byte
 	subCycle         int
-	MagicConstant    byte //Might be needed for some of the illegal opcodes
+	Magic            byte //Magic constant, for some of the more "unstable" illegal opcodes
 	BreakSource      BreakType
 	NMILevelDetector bool
 	RunningInterrupt bool
@@ -79,7 +79,7 @@ func (cpu *CPU) ResetCPU() {
 	cpu.opcode = 0
 	cpu.operands = nil
 	cpu.subCycle = 0
-	cpu.MagicConstant = 0xFF
+	cpu.Magic = 0xFD
 	cpu.BreakSource = Break_Reset
 	cpu.NMILevelDetector, cpu.RunningInterrupt = false, false
 
