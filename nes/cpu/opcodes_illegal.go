@@ -617,7 +617,7 @@ func (cpu *CPU) X9F_SHA_Absolute_Y() {
 		cpu.PollInterrupts()
 		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
 			// If the page boundary was crossed, this code has gone "unstable"
-			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.X))<<8
+			cpu.UnstableAddressBus(cpu.X)
 		}
 		cpu.WriteToAB(cpu.A & (cpu.X | cpu.Magic) & cpu.H)
 		cpu.CompleteInstruction()
@@ -632,7 +632,7 @@ func (cpu *CPU) X93_SHA_Indirect_Y() {
 		cpu.PollInterrupts()
 		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
 			// If the page boundary was crossed, this code has gone "unstable"
-			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.X))<<8
+			cpu.UnstableAddressBus(cpu.X)
 		}
 		cpu.WriteToAB(cpu.A & (cpu.X | cpu.Magic) & cpu.H)
 		cpu.CompleteInstruction()
@@ -652,7 +652,7 @@ func (cpu *CPU) X9E_SHX_Absolute_Y() {
 		cpu.PollInterrupts()
 		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
 			// If the page boundary was crossed, this code has gone "unstable"
-			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.X))<<8
+			cpu.UnstableAddressBus(cpu.X)
 		}
 		cpu.WriteToAB(cpu.X & cpu.H)
 		cpu.CompleteInstruction()
@@ -672,7 +672,7 @@ func (cpu *CPU) X9C_SHY_Absolute_X() {
 		cpu.PollInterrupts()
 		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
 			// If the page boundary was crossed, this code has gone "unstable"
-			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.Y))<<8
+			cpu.UnstableAddressBus(cpu.Y)
 		}
 		cpu.WriteToAB(cpu.Y & cpu.H)
 		cpu.CompleteInstruction()
@@ -694,9 +694,9 @@ func (cpu *CPU) X9B_TAS_Absolute_Y() {
 		cpu.PollInterrupts()
 		if (cpu.TempAddress & 0xFF00) != (cpu.AddressBus & 0xFF00) {
 			// If the page boundary was crossed, this code has gone "unstable"
-			cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(cpu.Y))<<8
+			cpu.UnstableAddressBus(cpu.Y)
 		}
-		cpu.Push(cpu.A & cpu.X)
+		cpu.SP = cpu.A & cpu.X
 		cpu.WriteToAB(cpu.A & (cpu.X | cpu.Magic) & cpu.H)
 		cpu.CompleteInstruction()
 	}

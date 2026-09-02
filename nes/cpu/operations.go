@@ -283,6 +283,11 @@ func (cpu *CPU) Op_ISC() {
 	cpu.Op_SBC(cpu.ReadFromAB())
 }
 
+// SH* Unstability
+func (cpu *CPU) UnstableAddressBus(Value byte) {
+	cpu.AddressBus = cpu.AddressBus | ((cpu.AddressBus>>8)&uint16(Value))<<8
+}
+
 // CPU Kill function
 func (cpu *CPU) Kill() {
 	CPU_Halted = true
