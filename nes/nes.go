@@ -94,9 +94,6 @@ func Reset() {
 
 	cartridge.LoadCartridge()
 	debug.ResetPatternTables()
-
-	bus.OutsideCodeRead = 0
-	bus.OutsideCodeWrite = 0
 }
 
 func (g *Game) Update() error {

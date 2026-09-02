@@ -1,14 +1,5 @@
 package cpu
 
-/*
-	switch cpu.subCycle{
-	case 1:
-	case 2:
-		cpu.PollInterrupts()
-		cpu.CompleteInstruction()
-	}}
-*/
-
 //----------------------------------------
 //	NOP Codes (unofficial)
 //----------------------------------------
@@ -185,9 +176,9 @@ func (cpu *CPU) XF4_NOP_ZeroPage_X() {
 func (cpu *CPU) X0C_NOP_Absolute() {
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1, 2:
-		cpu.GetAddress_Absolute()
-	case 3:
+	case 1, 2, 3:
+		cpu.GetAddress_AbsoluteX(true)
+	case 4:
 		cpu.PollInterrupts()
 		cpu.ReadFromAB() // Dummy Read
 		cpu.CompleteInstruction()
@@ -197,9 +188,9 @@ func (cpu *CPU) X0C_NOP_Absolute() {
 func (cpu *CPU) X1C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1, 2:
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
-	case 3:
+	case 4:
 		cpu.PollInterrupts()
 		cpu.ReadFromAB() // Dummy Read
 		cpu.CompleteInstruction()
@@ -208,9 +199,9 @@ func (cpu *CPU) X1C_NOP_Absolute_X() {
 func (cpu *CPU) X3C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1, 2:
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
-	case 3:
+	case 4:
 		cpu.PollInterrupts()
 		cpu.ReadFromAB() // Dummy Read
 		cpu.CompleteInstruction()
@@ -219,9 +210,9 @@ func (cpu *CPU) X3C_NOP_Absolute_X() {
 func (cpu *CPU) X5C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1, 2:
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
-	case 3:
+	case 4:
 		cpu.PollInterrupts()
 		cpu.ReadFromAB() // Dummy Read
 		cpu.CompleteInstruction()
@@ -230,9 +221,9 @@ func (cpu *CPU) X5C_NOP_Absolute_X() {
 func (cpu *CPU) X7C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1, 2:
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
-	case 3:
+	case 4:
 		cpu.PollInterrupts()
 		cpu.ReadFromAB() // Dummy Read
 		cpu.CompleteInstruction()
@@ -241,9 +232,9 @@ func (cpu *CPU) X7C_NOP_Absolute_X() {
 func (cpu *CPU) XDC_NOP_Absolute_X() {
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1, 2:
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
-	case 3:
+	case 4:
 		cpu.PollInterrupts()
 		cpu.ReadFromAB() // Dummy Read
 		cpu.CompleteInstruction()
@@ -252,16 +243,18 @@ func (cpu *CPU) XDC_NOP_Absolute_X() {
 func (cpu *CPU) XFC_NOP_Absolute_X() {
 	// CPU_Cycles = 4
 	switch cpu.subCycle {
-	case 1, 2:
+	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
-	case 3:
+	case 4:
 		cpu.PollInterrupts()
 		cpu.ReadFromAB() // Dummy Read
 		cpu.CompleteInstruction()
 	}
 }
 
+//----------------------------------------
 // SAX: A AND X -> M
+//----------------------------------------
 
 func (cpu *CPU) X87_SAX_ZeroPage() {
 	// CPU_Cycles = 3
@@ -308,7 +301,9 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 	}
 }
 
+//----------------------------------------
 // LAX: LDA + LDX
+//----------------------------------------
 
 func (cpu *CPU) XA7_LAX_ZeroPage() {
 	// CPU_Cycles = 3
@@ -389,7 +384,9 @@ func (cpu *CPU) XB3_LAX_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // SLO: ASL + ORA
+//----------------------------------------
 
 func (cpu *CPU) X07_SLO_ZeroPage() {
 	// CPU_Cycles = 5
@@ -497,7 +494,9 @@ func (cpu *CPU) X13_SLO_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // DCP: DEC + CMP
+//----------------------------------------
 
 func (cpu *CPU) XC7_DCP_ZeroPage() {
 	// CPU_Cycles = 5
@@ -605,7 +604,9 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // SHA: Stores A AND X AND (high-byte of addr. + 1) at addr.
+//----------------------------------------
 
 func (cpu *CPU) X9F_SHA_Absolute_Y() {
 	// CPU_Cycles = 5
@@ -638,7 +639,9 @@ func (cpu *CPU) X93_SHA_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // SHX: Stores X AND (high-byte of addr. + 1) at addr.
+//----------------------------------------
 
 func (cpu *CPU) X9E_SHX_Absolute_Y() {
 	// CPU_Cycles = 5
@@ -656,7 +659,9 @@ func (cpu *CPU) X9E_SHX_Absolute_Y() {
 	}
 }
 
+//----------------------------------------
 // SHY: Stores Y AND (high-byte of addr. + 1) at addr.
+//----------------------------------------
 
 func (cpu *CPU) X9C_SHY_Absolute_X() {
 	// CPU_Cycles = 5
@@ -674,8 +679,11 @@ func (cpu *CPU) X9C_SHY_Absolute_X() {
 	}
 }
 
-// TAS (XAS, SHS): Puts A AND X in SP and stores A AND X AND (high-byte of addr. + 1) at addr.
+//----------------------------------------
+// TAS (XAS, SHS): Puts A AND X in SP
+// and stores A AND X AND (high-byte of addr. + 1) at addr.
 // A AND X -> SP, A AND X AND (H+1) -> M
+//----------------------------------------
 
 func (cpu *CPU) X9B_TAS_Absolute_Y() {
 	// CPU_Cycles = 5
@@ -694,8 +702,10 @@ func (cpu *CPU) X9B_TAS_Absolute_Y() {
 	}
 }
 
+//----------------------------------------
 // LAS (LAR, LAE): LDA/TSX oper
 // M AND SP -> A, X, SP
+//----------------------------------------
 
 func (cpu *CPU) XBB_LAS_Absolute_Y() {
 	// CPU_Cycles = 4+
@@ -713,7 +723,9 @@ func (cpu *CPU) XBB_LAS_Absolute_Y() {
 	}
 }
 
+//----------------------------------------
 // RLA: ROL + AND
+//----------------------------------------
 
 func (cpu *CPU) X27_RLA_ZeroPage() {
 	// CPU_Cycles = 5
@@ -821,7 +833,9 @@ func (cpu *CPU) X33_RLA_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // SRE: LSR + EOR
+//----------------------------------------
 
 func (cpu *CPU) X47_SRE_ZeroPage() {
 	// CPU_Cycles = 5
@@ -929,7 +943,9 @@ func (cpu *CPU) X53_SRE_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // RRA: ROR + ADC
+//----------------------------------------
 
 func (cpu *CPU) X67_RRA_ZeroPage() {
 	// CPU_Cycles = 5
@@ -1038,7 +1054,9 @@ func (cpu *CPU) X73_RRA_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // ISC: INC + SBC
+//----------------------------------------
 
 func (cpu *CPU) XE7_ISC_ZeroPage() {
 	// CPU_Cycles = 5
@@ -1146,7 +1164,9 @@ func (cpu *CPU) XF3_ISC_Indirect_Y() {
 	}
 }
 
+//----------------------------------------
 // Immediates (unofficial)
+//----------------------------------------
 
 func (cpu *CPU) X0B_ANC_Immediate() { // AND + Set Carry as ASL
 	// CPU_Cycles = 2

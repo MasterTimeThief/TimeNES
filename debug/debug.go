@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"mtt/timenes/common"
-	"mtt/timenes/nes/bus"
 	"mtt/timenes/nes/cartridge"
 
 	"github.com/ebitengine/debugui"
@@ -131,12 +130,12 @@ func DisplayDebugging(screen *ebiten.Image) {
 		vector.FillRect(screen, float32(256*common.ScreenScale)-135, float32(240*common.ScreenScale)-17, 135, 17, color.Black, false)
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f\tFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS()), (256*common.ScreenScale)-132, (240*common.ScreenScale)-15)
 	}
-	if bus.OutsideCodeRead > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Read at $: %04X", bus.OutsideCodeRead), 5, (240*common.ScreenScale)-30)
-	}
-	if bus.OutsideCodeWrite > 0 {
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Attempting to Write at $: %04X", bus.OutsideCodeWrite), 5, (240*common.ScreenScale)-40)
-	}
+
+	//Maybe re-use this for tests that print to $6000?
+	//if bus.OutsideCodeRead > 0 {
+	//	message := "fmt.Sprintf("Attempting to Read at $: %04X", bus.OutsideCodeRead)"
+	//	ebitenutil.DebugPrintAt(screen, message, 5, (240*common.ScreenScale)-30)
+	//}
 }
 
 func Update(ui *debugui.DebugUI) {

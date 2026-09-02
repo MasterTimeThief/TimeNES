@@ -1,7 +1,6 @@
 package bus
 
 import (
-	"fmt"
 	"mtt/timenes/common"
 	"mtt/timenes/nes/cartridge"
 	"mtt/timenes/nes/cartridge/mappers"
@@ -25,7 +24,6 @@ type APU interface {
 }
 
 var CPUBus byte
-var OutsideCodeRead, OutsideCodeWrite uint16 = 0, 0
 
 func NewBUS() *BUS {
 	bus := BUS{}
@@ -248,9 +246,6 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			mappers.CNROM_WriteToPRGRAM(Value&prgValue, Address) // Can have bus conflicts
 		case 4: //MMC3
 			mappers.MMC3_WriteToPRGRAM(Value, Address)
-		default:
-			OutsideCodeWrite = Address
-			//fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
 		}
 	} else if Address >= 0x8000 { //Account for Mapper chips
 		//Check what mapper chip we're using
@@ -266,9 +261,6 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			mappers.MMC3_Write(Value, Address)
 		case 7: //AxROM
 			mappers.AxROM_Write(Value, Address)
-		default:
-			//OutsideCodeWrite = Address
-			fmt.Println("Write to unused memory addresss: $" + fmt.Sprintf("%04X", Address))
 		}
 	}
 }
