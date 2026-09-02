@@ -86,7 +86,7 @@ func (b *BUS) Read(Address uint16) byte {
 		case 0x2006: //PPUADDR
 		case 0x2007: //PPUDATA
 			ppu.PPUAddressBus = ppu.VRAMAddress
-			if (ppu.VRAMAddress & 0x3FFF) > 0x3F00 {
+			if (ppu.VRAMAddress & 0x3FFF) >= 0x3F00 {
 				//Palette data
 				data := ppu.ReadPPU()
 				ppu.PPUBus = (ppu.PPUBus & 0xC0) | (data & byte(common.Ternary(ppu.PPUMASK_Greyscale, 0x30, 0x3F)))

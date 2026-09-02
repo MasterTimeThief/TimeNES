@@ -574,7 +574,7 @@ func WriteToNametable(Value byte, isHoriz bool) {
 }
 
 var PPUBusDecay [8]int
-var PPUBusDecayConstant int = 1786830
+var PPUBusDecayConstant int = (29781 * 3 * 60)
 
 func UpdatePPUBus(Value byte) byte {
 	PPUBus = Value
@@ -587,7 +587,7 @@ func UpdatePPUBus(Value byte) byte {
 }
 
 func UpdatePPUBus2002(Value byte) {
-	PPUBus = Value
+	PPUBus = (Value & 0xE0) | (PPUBus & 0x1F)
 	//Only update the decay constant on the top 3 bits
 	for i := 5; i < 8; i++ {
 		PPUBusDecay[i] = PPUBusDecayConstant
@@ -595,7 +595,7 @@ func UpdatePPUBus2002(Value byte) {
 }
 
 func UpdatePPUBus2007Palette(Value byte) {
-	PPUBus = Value
+	PPUBus = (Value & 0x3F) | (PPUBus & 0xC0)
 	//Only update the decay constant on the bottom 6 bits
 	for i := 0; i < 6; i++ {
 		PPUBusDecay[i] = PPUBusDecayConstant
