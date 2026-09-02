@@ -1224,9 +1224,12 @@ func (cpu *CPU) XAB_LXA_Immediate() { // Highly unstable
 func (cpu *CPU) XCB_SBX_Immediate() { // (A AND X) - oper -> X
 	// CPU_Cycles = 2
 	cpu.PollInterrupts()
-	cpu.X = (cpu.A & cpu.X) - cpu.ReadFromPC()
-	cpu.Op_CMP(cpu.X)
-	cpu.SetZNFlags(cpu.X)
+	cpu.GetAddress_Immediate()
+	cpu.X = (cpu.A & cpu.X)
+	cpu.flag_Carry = cpu.X >= cpu.DL
+	cpu.X -= cpu.DL
+	cpu.flag_Zero = (cpu.X == 0)
+	cpu.flag_Negative = (cpu.X >= 0x80)
 	cpu.CompleteInstruction()
 }
 func (cpu *CPU) XEB_SBC_Immediate() {
