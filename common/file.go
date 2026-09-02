@@ -64,7 +64,7 @@ func SaveScreenshot(screen image.Image) {
 }
 
 func InitMenuFont() {
-	fnt, err := LoadFont("assets/fonts/PixelOperator-Bold.ttf", FontSize)
+	fnt, err := LoadFont("assets/fonts/PixelOperatorMono-Bold.ttf", FontSize)
 	Check(err)
 	FontMenu = fnt
 }

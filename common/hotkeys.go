@@ -20,10 +20,10 @@ func ParseHotkeys() {
 			PendingReset = true
 		case ebiten.KeyF4:
 		case ebiten.KeyF5:
-		case ebiten.KeyF6:
+		case ebiten.KeyF6: // Pattern Tables
 			PendingPT = true
-		case ebiten.KeyF7:
-		case ebiten.KeyF8:
+		case ebiten.KeyF7: // Save State
+		case ebiten.KeyF8: // Load State
 		case ebiten.KeyF9: // Toggle Audio
 			PendingMute = true
 		case ebiten.KeyF10: // Show FPS

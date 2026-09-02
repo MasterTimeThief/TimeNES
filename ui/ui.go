@@ -37,20 +37,25 @@ const (
 type toolbar struct {
 	container *widget.Container
 	// File
-	fileMenu   *widget.Button
-	openButton *widget.Button
-	quitButton *widget.Button
+	fileMenu     *widget.Button
+	openButton   *widget.Button
+	saveButton   *widget.Button
+	loadButton   *widget.Button
+	screenButton *widget.Button
+	quitButton   *widget.Button
 	// Game
-	gameMenu    *widget.Button
-	pauseButton *widget.Button
-	muteButton  *widget.Button
-	resetButton *widget.Button
+	gameMenu         *widget.Button
+	pauseButton      *widget.Button
+	resetButton      *widget.Button
+	muteButton       *widget.Button
+	FullscreenButton *widget.Button
 	// Debug
 	debugMenu         *widget.Button
+	DebugWindowButton *widget.Button
+	PatternButton     *widget.Button
+	FPSButton         *widget.Button
 	smbButton         *widget.Button
 	testButton        *widget.Button
-	FPSButton         *widget.Button
-	DebugWindowButton *widget.Button
 }
 
 type ListEntry struct {
@@ -109,14 +114,16 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 	//
 	file := newToolbarButton(res, "File")
 	var (
-		open = newToolbarMenuEntry(res, "Open ROM")
-		quit = newToolbarMenuEntry(res, "Quit")
+		open       = newToolbarMenuEntry(res, "Open ROM")
+		save       = newToolbarMenuEntry(res, "Save State           F7")
+		load       = newToolbarMenuEntry(res, "Load State           F8")
+		screenshot = newToolbarMenuEntry(res, "Take Screenshot     F12")
+		quit       = newToolbarMenuEntry(res, "Quit")
 	)
 
-	// Make the toolbar entry open a menu with our "save" and "load" entries  when the user clicks it.
 	file.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		nes.MenuBarSelected = true
-		openToolbarMenu(args.Button.GetWidget(), ui, open, quit)
+		openToolbarMenu(args.Button.GetWidget(), ui, open /*,save ,load */, screenshot, quit)
 	}))
 	root.AddChild(file)
 
@@ -125,13 +132,14 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 	//
 	game := newToolbarButton(res, "Game")
 	var (
-		mute  = newToolbarMenuEntry(res, "Toggle Audio")
-		pause = newToolbarMenuEntry(res, "Pause")
-		reset = newToolbarMenuEntry(res, "Reset")
+		pause      = newToolbarMenuEntry(res, "Pause            F1")
+		reset      = newToolbarMenuEntry(res, "Reset            F3")
+		mute       = newToolbarMenuEntry(res, "Toggle Audio     F9")
+		fullscreen = newToolbarMenuEntry(res, "Fullscreen      F11")
 	)
 	game.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		nes.MenuBarSelected = true
-		openToolbarMenu(args.Button.GetWidget(), ui, mute, pause, reset)
+		openToolbarMenu(args.Button.GetWidget(), ui, pause, reset, mute, fullscreen)
 	}))
 	root.AddChild(game)
 
@@ -140,34 +148,40 @@ func newToolbar(ui *ebitenui.UI, res *resources) *toolbar {
 	//
 	debug := newToolbarButton(res, "Debug")
 	var (
+		debugwindow = newToolbarMenuEntry(res, "Debug Window       F2")
+		pattern     = newToolbarMenuEntry(res, "Pattern Tables     F6")
+		fps         = newToolbarMenuEntry(res, "Toggle FPS        F10")
 		smb         = newToolbarMenuEntry(res, "Super Mario Bros.")
 		test        = newToolbarMenuEntry(res, "AccuracyCoin")
-		fps         = newToolbarMenuEntry(res, "Toggle FPS Display")
-		debugwindow = newToolbarMenuEntry(res, "Debug Window")
 	)
 	debug.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		nes.MenuBarSelected = true
-		openToolbarMenu(args.Button.GetWidget(), ui, smb, test, fps, debugwindow)
+		openToolbarMenu(args.Button.GetWidget(), ui, debugwindow, pattern, fps, smb, test)
 	}))
 	root.AddChild(debug)
 
 	return &toolbar{
 		container: root,
 		// File
-		fileMenu:   file,
-		openButton: open,
-		quitButton: quit,
+		fileMenu:     file,
+		openButton:   open,
+		saveButton:   save,
+		loadButton:   load,
+		screenButton: screenshot,
+		quitButton:   quit,
 		// Game
-		gameMenu:    game,
-		muteButton:  mute,
-		pauseButton: pause,
-		resetButton: reset,
+		gameMenu:         game,
+		pauseButton:      pause,
+		resetButton:      reset,
+		muteButton:       mute,
+		FullscreenButton: fullscreen,
 		// Debug
 		debugMenu:         debug,
+		DebugWindowButton: debugwindow,
+		PatternButton:     pattern,
+		FPSButton:         fps,
 		smbButton:         smb,
 		testButton:        test,
-		FPSButton:         fps,
-		DebugWindowButton: debugwindow,
 	}
 }
 
@@ -209,7 +223,7 @@ func newToolbarMenuEntry(res *resources, label string) *widget.Button {
 			Pressed:  common.HexToRGBA(ToolbarFontColorPressed),
 		}),
 		widget.ButtonOpts.TextPosition(widget.TextPositionStart, widget.TextPositionCenter),
-		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 20, Right: 10, Top: 3, Bottom: 2}),
+		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 10, Right: 10, Top: 3, Bottom: 3}),
 		widget.ButtonOpts.WidgetOpts(
 			widget.WidgetOpts.LayoutData(widget.RowLayoutData{
 				Stretch: true,
@@ -281,6 +295,21 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 		common.FileSelectDialog()
 	}))
 
+	// Save State
+	toolbar.saveButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		//put savestate code here
+	}))
+
+	// Load State
+	toolbar.loadButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		//put loadstate code here
+	}))
+
+	// Take Screenshot
+	toolbar.screenButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.PendingScreenshot = true
+	}))
+
 	// Quit Emulator
 	toolbar.quitButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		nes.Emulator.Exit = true
@@ -289,11 +318,6 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 	//
 	// Game
 	//
-
-	// Mute Emulator
-	toolbar.muteButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		common.PendingMute = true
-	}))
 
 	// Pause Emulator
 	toolbar.pauseButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
@@ -305,9 +329,32 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 		common.PendingReset = true
 	}))
 
+	// Mute Emulator
+	toolbar.muteButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.PendingMute = true
+	}))
+
+	// Fullscreen
+	toolbar.FullscreenButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.PendingFullscreen = true
+	}))
+
 	//
 	// Debug
 	//
+
+	toolbar.DebugWindowButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.PendingDebug = true
+	}))
+
+	toolbar.PatternButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		common.PendingPT = true
+	}))
+
+	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
+		//debug.ShowFPS = !debug.ShowFPS
+		common.PendingFPS = true
+	}))
 
 	// Load Super Mario Bros.
 	toolbar.smbButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
@@ -317,16 +364,6 @@ func SetupToolbarOptions(res *resources, toolbar *toolbar) {
 	// Load AccuracyCoin
 	toolbar.testButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		common.SelectROM("roms/tests/AccuracyCoin.nes")
-		//SelectROM("roms/tests/nestest.nes")
-	}))
-
-	toolbar.FPSButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		//debug.ShowFPS = !debug.ShowFPS
-		common.PendingFPS = true
-	}))
-
-	toolbar.DebugWindowButton.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
-		common.PendingDebug = true
 	}))
 
 }
