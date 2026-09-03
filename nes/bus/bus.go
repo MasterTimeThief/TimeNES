@@ -107,16 +107,19 @@ func (b *BUS) Read(Address uint16) byte {
 		}
 		CPUBus = ppu.PPUBus
 	} else if Address == 0x4015 { //APU Status
-
-		CPUBus = b.apu.ReadAPU(Address)
+		// We don't update the CPU Open bus
+		// But we do read bit 5 from it here
+		return (CPUBus & 0x20) | (b.apu.ReadAPU(Address) & 0xDF)
 	} else if Address == 0x4016 { //Controller 1
 		cBit := byte((input.Controller1ShiftRegister & 0x80) >> 7)
 		input.Controller1ShiftRegister <<= 1
-		CPUBus = cBit
+		// Read the top 3 bits of open bus
+		CPUBus = (CPUBus & 0xE0) | (cBit & 0x1F)
 	} else if Address == 0x4017 { //Controller 2
 		cBit := byte((input.Controller2ShiftRegister & 0x80) >> 7)
 		input.Controller2ShiftRegister <<= 1
-		CPUBus = cBit
+		// Read the top 3 bits of open bus
+		CPUBus = (CPUBus & 0xE0) | (cBit & 0x1F)
 	} else if Address >= 0x4018 && Address <= 0x401F {
 		//APU and I/O functionality that is normally disabled.
 	} else if Address < 0x7FFF {
@@ -148,6 +151,7 @@ func (b *BUS) Read(Address uint16) byte {
 
 // Write the Value into the Address given (PPU may have extra steps)
 func (b *BUS) Write(Address uint16, Value byte) {
+	CPUBus = Value
 	if Address < 0x2000 {
 		cartridge.RAM[Address&0x7FF] = Value
 	} else if Address < 0x4000 {

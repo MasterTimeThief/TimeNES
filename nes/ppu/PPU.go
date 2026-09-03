@@ -57,6 +57,8 @@ var OAM [0x100]byte
 var OAM2 [0x20]byte
 var ppuSpriteEvalTemp byte
 var OAMAddress byte
+
+// var OAMBusAddress byte
 var OAM2Address, OAM2Size uint16
 var ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
 var ppuSpriteEvalTick int
@@ -125,7 +127,7 @@ func ResetPPU() {
 	OAM = [0x100]byte{}
 	OAM2 = [0x20]byte{}
 	ppuSpriteEvalTemp = 0
-	OAMAddress, OAM2Address, OAM2Size = 0, 0, 0
+	OAMAddress /*,OAMBusAddress*/, OAM2Address, OAM2Size = 0, 0, 0
 	ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed = false, false, false
 	ppuSpriteEvalTick = 0
 
