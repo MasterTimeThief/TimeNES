@@ -6,10 +6,11 @@ This emulator began from the guide by [100th_Coin](https://www.patreon.com/100th
 Currently supports:
 - APU Support
 - Cycle-accurate CPU
+ - All instructions, including the illegal ones >:3
 - Pause / Reset / Mute game
 - 2 players
-- All 161 official instructions
 - Debugging features
+- Screenshots
 
 Currently supported mapper chips:
 + [x] 001: MMC1
@@ -21,7 +22,7 @@ Currently supported mapper chips:
 Things to add:
 
 - NTSC Video Rendering
-- AccuracyCoin tests (77 / 141)
+- AccuracyCoin tests (100 / 143)
 - Additional controller support (eg. Zapper)
 - Save stating
 - TAS Support
