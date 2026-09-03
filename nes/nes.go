@@ -205,7 +205,7 @@ func MasterClockTick() {
 		Emulator.cpu.CPU_Cycle()
 	case 2:
 		if Emulator.cpu.PollNMI() {
-			Emulator.cpu.PendingNMI = true
+			Emulator.cpu.NMIPending = true
 		}
 	case 4:
 		if cartridge.MapperChipID == 4 {

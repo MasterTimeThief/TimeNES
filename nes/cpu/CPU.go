@@ -48,7 +48,8 @@ type CPU struct {
 	Target      uint16
 
 	DelayCounter int
-	PendingNMI   bool
+	NMIPending   bool
+	IRQPending   bool
 }
 
 var CPU_Halted bool
@@ -92,7 +93,7 @@ func (cpu *CPU) ResetCPU() {
 	cpu.DelayCounter = 0
 
 	CPU_Halted = false
-	cpu.PendingNMI = false
+	cpu.NMIPending = false
 }
 
 func (cpu *CPU) CPU_Cycle() {
@@ -110,9 +111,7 @@ func (cpu *CPU) CPU_Cycle() {
 			if cpu.BreakSource != Break_None {
 				cpu.SetOpcode(0x00)
 				if cpu.BreakSource == Break_IRQ {
-					apu.APUDMCInterrupt = false
-					apu.APUFrameInterrupt = false
-					mappers.MMC3_DoIRQ = false
+					cpu.DisableIRQFlags()
 				}
 			} else {
 				cpu.SetOpcode(cpu.ReadFromPC())
@@ -785,10 +784,11 @@ func (cpu *CPU) PollInterrupts() {
 		return
 	}
 
-	if cpu.PendingNMI {
-		cpu.PendingNMI = false
+	if cpu.NMIPending {
+		cpu.NMIPending = false
 		cpu.BreakSource = Break_NMI
-	} else if cpu.PollIRQ() {
+	} else if cpu.PollIRQ() && cpu.BreakSource != Break_NMI {
+		cpu.IRQPending = true
 		cpu.BreakSource = Break_IRQ
 	}
 }
@@ -798,10 +798,11 @@ func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
 		return
 	}
 
-	if cpu.PendingNMI {
-		cpu.PendingNMI = false
+	if cpu.NMIPending {
+		cpu.NMIPending = false
 		cpu.BreakSource = Break_NMI
-	} else if cpu.BreakSource != Break_IRQ && cpu.PollIRQ() {
+	} else if cpu.PollIRQ() && cpu.BreakSource != Break_NMI && cpu.BreakSource != Break_IRQ {
+		cpu.IRQPending = true
 		cpu.BreakSource = Break_IRQ
 	}
 }
@@ -818,13 +819,22 @@ func (cpu *CPU) PollNMI() bool {
 }
 
 func (cpu *CPU) PollIRQ() bool {
-	return (apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_DoIRQ) && !cpu.flag_InterruptDisable
+	//if cpu.flag_InterruptDisable {
+	//	cpu.IRQPending = false
+	//}
+	return ( /*cpu.IRQPending ||*/ apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !cpu.flag_InterruptDisable
 }
 
 func (cpu *CPU) DisableNMI() {
 	if cpu.BreakSource == Break_NMI {
 		cpu.BreakSource = Break_None
 	}
+}
+
+func (cpu *CPU) DisableIRQFlags() {
+	apu.APUDMCInterrupt = false
+	apu.APUFrameInterrupt = false
+	mappers.MMC3_IRQPending = false
 }
 
 func (cpu *CPU) SetOpcode(code byte) {

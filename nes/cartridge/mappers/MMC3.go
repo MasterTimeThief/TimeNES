@@ -41,7 +41,7 @@ var (
 	MMC3_PPUA12         bool
 	MMC3_PPUA12Prev     bool
 	MMC3_M2Count        int
-	MMC3_DoIRQ          bool
+	MMC3_IRQPending     bool
 )
 
 //
@@ -108,6 +108,7 @@ func MMC3_Write(Value byte, Addr uint16) {
 	} else {
 		if (Addr & 1) == 0 { // IRQ disable ($E000-$FFFE, even)
 			MMC3_IRQEnabled = false
+			MMC3_IRQPending = false
 		} else { // IRQ enable ($E001-$FFFF, odd)
 			MMC3_IRQEnabled = true
 		}
@@ -179,17 +180,17 @@ func MMC3_ClockIRQ(Addr uint16) {
 			MMC3_IRQCounter = MMC3_IRQReloadValue
 			MMC3_IRQReloadFlag = false
 			if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
-				MMC3_DoIRQ = true
+				MMC3_IRQPending = true
 			}
 		} else {
 			MMC3_IRQCounter--
 			if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
-				MMC3_DoIRQ = true
+				MMC3_IRQPending = true
 			} else if MMC3_IRQCounter == 0xFF {
 				MMC3_IRQCounter = MMC3_IRQReloadValue
 				MMC3_IRQReloadFlag = false
 				if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
-					MMC3_DoIRQ = true
+					MMC3_IRQPending = true
 				}
 			}
 		}
