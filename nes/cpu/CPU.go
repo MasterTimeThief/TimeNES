@@ -36,7 +36,6 @@ type CPU struct {
 	flag_Negative         bool // Bit 7: Negative Flag
 
 	opcode           byte
-	operands         []byte
 	subCycle         int
 	Magic            byte //Magic constant, for some of the more "unstable" illegal opcodes
 	BreakSource      BreakType
@@ -77,7 +76,6 @@ func (cpu *CPU) ResetCPU() {
 	cpu.SP = 0xFD
 	cpu.A, cpu.X, cpu.Y = 0, 0, 0
 	cpu.opcode = 0
-	cpu.operands = nil
 	cpu.subCycle = 0
 	cpu.Magic = 0xFD
 	cpu.BreakSource = Break_Reset
@@ -123,9 +121,8 @@ func (cpu *CPU) CPU_Cycle() {
 				}
 			}
 			cpu.subCycle++
-			if debug.LoggingCPU {
-				cpu.SendToTracelogger()
-			}
+			cpu.SendToDebug()
+
 		} else {
 			cpu.RunInstruction()
 			cpu.subCycle++
@@ -840,7 +837,7 @@ func (cpu *CPU) CompleteInstruction() {
 	cpu.AddressBus = cpu.PC
 }
 
-func (cpu *CPU) SendToTracelogger() {
+func (cpu *CPU) SendToDebug() {
 	status := byte(0)
 	status += byte(common.Ternary(cpu.flag_Carry, 0x01, 0x00))
 	status += byte(common.Ternary(cpu.flag_Zero, 0x02, 0x00))
@@ -850,6 +847,8 @@ func (cpu *CPU) SendToTracelogger() {
 	status += 0x20
 	status += byte(common.Ternary(cpu.flag_Overflow, 0x40, 0x00))
 	status += byte(common.Ternary(cpu.flag_Negative, 0x80, 0x00))
-
-	debug.TraceLogger(cpu.opcode, cpu.A, cpu.X, cpu.Y, cpu.SP, status, cpu.PC)
+	debug.SetCPUData(cpu.opcode, cpu.A, cpu.X, cpu.Y, cpu.SP, status, cpu.PC, cpu.AddressBus)
+	if debug.LoggingCPU {
+		debug.TraceLogger(cpu.opcode, cpu.A, cpu.X, cpu.Y, cpu.SP, status, cpu.PC)
+	}
 }

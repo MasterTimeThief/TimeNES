@@ -49,6 +49,17 @@ type DEBUG struct {
 	apu APU
 }
 
+var (
+	cpuOpcode byte
+	cpuA      byte
+	cpuX      byte
+	cpuY      byte
+	cpuSP     byte
+	cpuStatus byte
+	cpuPC     uint16
+	cpuAB     uint16
+)
+
 var D DEBUG
 
 type APU interface {
@@ -75,6 +86,65 @@ var PTValues [256][128]byte
 
 func InitDEBUG(a APU) {
 	D.apu = a
+}
+
+func SetCPUData(opcode, A, X, Y, SP, status byte, PC, AB uint16) {
+	cpuOpcode = opcode
+	cpuA = A
+	cpuX = X
+	cpuY = Y
+	cpuSP = SP
+	cpuStatus = status
+	cpuPC = PC
+	cpuAB = AB
+}
+
+func FlagsString(status byte) string {
+	var flags string
+	if (status & 0x80) != 0 { // Negative flag
+		flags += "N"
+	} else {
+		flags += "n"
+	}
+
+	if (status & 0x40) != 0 { // Overflow flag
+		flags += "V"
+	} else {
+		flags += "v"
+	}
+
+	flags += "-"
+
+	if (status & 0x10) != 0 { // "B" flag
+		flags += "B"
+	} else {
+		flags += "b"
+	}
+
+	if (status & 0x08) != 0 { // Decimal flag
+		flags += "D"
+	} else {
+		flags += "d"
+	}
+
+	if (status & 0x04) != 0 { // Interrupt Disable flag
+		flags += "I"
+	} else {
+		flags += "i"
+	}
+
+	if (status & 0x02) != 0 { // Zero flag
+		flags += "Z"
+	} else {
+		flags += "z"
+	}
+
+	if (status & 0x01) != 0 { // Carry flag
+		flags += "C"
+	} else {
+		flags += "c"
+	}
+	return flags
 }
 
 /*
@@ -225,6 +295,20 @@ func DebugWindow(ctx *debugui.Context) {
 			//CPU Info
 			ctx.Header("CPU Info", false, func() {
 				ctx.SetGridLayout([]int{-1, -1}, nil)
+				ctx.Text("A: ")
+				ctx.Text(fmt.Sprintf("$%02X", cpuA))
+				ctx.Text("X: ")
+				ctx.Text(fmt.Sprintf("$%02X", cpuX))
+				ctx.Text("Y: ")
+				ctx.Text(fmt.Sprintf("$%02X", cpuY))
+				ctx.Text("SP: ")
+				ctx.Text(fmt.Sprintf("$%02X", cpuSP))
+				ctx.Text("Status: ")
+				ctx.Text(FlagsString(cpuStatus))
+				ctx.Text("PC: ")
+				ctx.Text(fmt.Sprintf("$%04X", cpuPC))
+				ctx.Text("Address Bus: ")
+				ctx.Text(fmt.Sprintf("$%04X", cpuAB))
 			})
 
 			//APU Info

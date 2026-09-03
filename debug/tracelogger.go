@@ -349,49 +349,7 @@ func TraceLogger(opcode, A, X, Y, SP, status byte, pc uint16) {
 	Traceline += "\t"
 
 	//Processor Flags
-	if (status & 0x80) != 0 { // Negative flag
-		Traceline += "N"
-	} else {
-		Traceline += "n"
-	}
-
-	if (status & 0x40) != 0 { // Overflow flag
-		Traceline += "V"
-	} else {
-		Traceline += "v"
-	}
-
-	Traceline += "-"
-
-	if (status & 0x10) != 0 { // "B" flag
-		Traceline += "B"
-	} else {
-		Traceline += "b"
-	}
-
-	if (status & 0x08) != 0 { // Decimal flag
-		Traceline += "D"
-	} else {
-		Traceline += "d"
-	}
-
-	if (status & 0x04) != 0 { // Interrupt Disable flag
-		Traceline += "I"
-	} else {
-		Traceline += "i"
-	}
-
-	if (status & 0x02) != 0 { // Zero flag
-		Traceline += "Z"
-	} else {
-		Traceline += "z"
-	}
-
-	if (status & 0x01) != 0 { // Carry flag
-		Traceline += "C"
-	} else {
-		Traceline += "c"
-	}
+	Traceline += FlagsString(status)
 
 	Traceline += "\tVRAM: " + fmt.Sprintf("%04X", ppu.VRAMAddress)
 	Traceline += "\tCycle: " + fmt.Sprintf("%d", common.CPU_TotalCycles)
