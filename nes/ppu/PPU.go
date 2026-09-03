@@ -54,11 +54,10 @@ var FrameColorBuffer [61440]color.RGBA
 var FrameColorBufferPos int = 0
 
 var OAM [0x100]byte
-var SecondaryOAM [0x20]byte
+var OAM2 [0x20]byte
 var ppuSpriteEvalTemp byte
-var ppuOAMAddress byte
-var OAMBusAddress byte
-var ppuSecondaryOAMAddress, ppuSecondaryOAMSize uint16
+var OAMAddress byte
+var OAM2Address, OAM2Size uint16
 var ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
 var ppuSpriteEvalTick int
 
@@ -124,9 +123,9 @@ func ResetPPU() {
 	FrameColorBufferPos = 0
 
 	OAM = [0x100]byte{}
-	SecondaryOAM = [0x20]byte{}
+	OAM2 = [0x20]byte{}
 	ppuSpriteEvalTemp = 0
-	ppuOAMAddress, OAMBusAddress, ppuSecondaryOAMAddress, ppuSecondaryOAMSize = 0, 0, 0, 0
+	OAMAddress, OAM2Address, OAM2Size = 0, 0, 0
 	ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed = false, false, false
 	ppuSpriteEvalTick = 0
 
@@ -288,7 +287,7 @@ func PPU_ResetYScroll() {
 
 func SpriteEvaluation() {
 	if PPUDot == 0 { //Step 0: Reset Secondary OAM count
-		ppuSecondaryOAMAddress = 0
+		OAM2Address = 0
 		ppuSecondaryOAMFull = false
 		ppuSpriteEvaluationOAMOverflowed = false
 	} else if PPUDot > 0 && PPUDot <= 64 { //Step 1: Clear Secondary OAM
@@ -297,28 +296,28 @@ func SpriteEvaluation() {
 			ppuSpriteEvalTemp = 0xFF
 		} else {
 			//Even PPU cycles store the value in secondaryOAM
-			SecondaryOAM[ppuSecondaryOAMAddress] = ppuSpriteEvalTemp
-			ppuSecondaryOAMAddress++
-			ppuSecondaryOAMAddress &= 0x1F //Keep this limited from $00 to $1F
+			OAM2[OAM2Address] = ppuSpriteEvalTemp
+			OAM2Address++
+			OAM2Address &= 0x1F //Keep this limited from $00 to $1F
 		}
 	} else if PPUDot > 64 && PPUDot <= 256 { //Step 2: Load OAM into Secondary OAM (If not full)
 		if (PPUDot & 1) == 1 {
 			//Odd PPU cycles load the value from OAM
-			ppuSpriteEvalTemp = OAM[ppuOAMAddress]
+			ppuSpriteEvalTemp = OAM[OAMAddress]
 		} else {
 			if !ppuSpriteEvaluationOAMOverflowed {
 				//Even PPU cycles store the value in secondaryOAM
 				if !ppuSecondaryOAMFull { //If SecondaryOAM is not full yet
 					// As long as secondaryOAM isn't full, this write *always* occurs, regardless of evaluation
-					SecondaryOAM[ppuSecondaryOAMAddress] = ppuSpriteEvalTemp
+					OAM2[OAM2Address] = ppuSpriteEvalTemp
 				}
 				if ppuSpriteEvalTick == 0 {
 					//Reading index 0 of an object's set of 4 bytes
 					if (PPUScanline-int(ppuSpriteEvalTemp) >= 0) && (PPUScanline-int(ppuSpriteEvalTemp) < int(common.Ternary(PPUCTRL_Use8x16Sprites, 16, 8))) {
 						//This object *is* on this scanline!
 						if !ppuSecondaryOAMFull {
-							ppuSecondaryOAMAddress++ //Increment this for the next write to Secondary OAM
-							ppuOAMAddress++          //Increment this for the next ream of Object Attribute Memory
+							OAM2Address++ //Increment this for the next write to Secondary OAM
+							OAMAddress++  //Increment this for the next ream of Object Attribute Memory
 							if PPUDot == 66 {
 								// Rather than verifying that this is OAM index 0,
 								// the PPU sets this flag if we found an object on this scanline
@@ -332,64 +331,64 @@ func SpriteEvaluation() {
 						}
 						ppuSpriteEvalTick++
 					} else {
-						ppuOAMAddress += 4
+						OAMAddress += 4
 					}
 				} else { //If ppuSpriteEvalTick != 0
 					// Reading index 1, 2, or 3 of an object's OAM data.
 					// We're not going to be making any checks for if things are on this scanline,
 					// so we can just simply increment the OAM address
-					ppuSecondaryOAMAddress++ //Increment this for the next write to Secondary OAM
-					ppuOAMAddress++          //Increment this for the next ream of Object Attribute Memory
-					if ppuSecondaryOAMAddress == 0x20 {
+					OAM2Address++ //Increment this for the next write to Secondary OAM
+					OAMAddress++  //Increment this for the next ream of Object Attribute Memory
+					if OAM2Address == 0x20 {
 						ppuSecondaryOAMFull = true
 					}
 					ppuSpriteEvalTick++
 					ppuSpriteEvalTick &= 3 // Wrap around to tick 0 after tick 3
 				}
-				if ppuOAMAddress == 0 {
+				if OAMAddress == 0 {
 					// If we overflow the OAM address, we want to stop running the sprite evaluation checks until dot 257
 					ppuSpriteEvaluationOAMOverflowed = true
 				}
 			}
 		}
 	} else if PPUDot > 256 && PPUDot <= 320 { //Step 3:
-		ppuOAMAddress = 0 //This is set to $00 during every one of these cycles
+		OAMAddress = 0 //This is set to $00 during every one of these cycles
 		if PPUDot == 257 {
-			ppuSecondaryOAMSize = ppuSecondaryOAMAddress
-			ppuSecondaryOAMAddress = 0
+			OAM2Size = OAM2Address
+			OAM2Address = 0
 			ppuSpriteEvalTick = 0
 		}
 
 		switch ppuSpriteEvalTick {
 		case 0:
 			//Set this object's Y position in the array
-			ppu_SpriteYposition[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
-			ppuSecondaryOAMAddress++
+			ppu_SpriteYposition[OAM2Address/4] = OAM2[OAM2Address]
+			OAM2Address++
 		case 1:
 			//Set this object's pattern in the array
-			ppu_SpritePattern[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
-			ppuSecondaryOAMAddress++
+			ppu_SpritePattern[OAM2Address/4] = OAM2[OAM2Address]
+			OAM2Address++
 		case 2:
 			//Set this object's attributes in the array
-			ppu_SpriteAttribute[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
-			ppuSecondaryOAMAddress++
+			ppu_SpriteAttribute[OAM2Address/4] = OAM2[OAM2Address]
+			OAM2Address++
 		case 3:
 			//Set this object's X position in the array
-			ppu_SpriteXposition[ppuSecondaryOAMAddress/4] = SecondaryOAM[ppuSecondaryOAMAddress]
+			ppu_SpriteXposition[OAM2Address/4] = OAM2[OAM2Address]
 		case 4:
-			PPUAddressBus = ppuFindSpritePatternData(ppuSecondaryOAMAddress / 4)
+			PPUAddressBus = ppuFindSpritePatternData(OAM2Address / 4)
 		case 5:
 			ppuSpriteEvalTemp = ReadPPU()
 			if PPUScanline == 261 {
 				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
 			}
-			if ((ppu_SpriteAttribute[ppuSecondaryOAMAddress/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
+			if ((ppu_SpriteAttribute[OAM2Address/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
 				// Real nice way to change the order of bits from 76543210 to 01234567
 				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xF0) >> 4) | ((ppuSpriteEvalTemp & 0xF) << 4))
 				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xCC) >> 2) | ((ppuSpriteEvalTemp & 0x33) << 2))
 				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xAA) >> 1) | ((ppuSpriteEvalTemp & 0x55) << 1))
 			}
-			ppu_SpriteShiftRegisterL[ppuSecondaryOAMAddress/4] = ppuSpriteEvalTemp
+			ppu_SpriteShiftRegisterL[OAM2Address/4] = ppuSpriteEvalTemp
 		case 6:
 			PPUAddressBus += 8
 		case 7:
@@ -397,14 +396,14 @@ func SpriteEvaluation() {
 			if PPUScanline == 261 {
 				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
 			}
-			if ((ppu_SpriteAttribute[ppuSecondaryOAMAddress/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
+			if ((ppu_SpriteAttribute[OAM2Address/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
 				// Real nice way to change the order of bits from 76543210 to 01234567
 				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xF0) >> 4) | ((ppuSpriteEvalTemp & 0xF) << 4))
 				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xCC) >> 2) | ((ppuSpriteEvalTemp & 0x33) << 2))
 				ppuSpriteEvalTemp = byte(((ppuSpriteEvalTemp & 0xAA) >> 1) | ((ppuSpriteEvalTemp & 0x55) << 1))
 			}
-			ppu_SpriteShiftRegisterH[ppuSecondaryOAMAddress/4] = ppuSpriteEvalTemp
-			ppuSecondaryOAMAddress++
+			ppu_SpriteShiftRegisterH[OAM2Address/4] = ppuSpriteEvalTemp
+			OAM2Address++
 		}
 		ppuSpriteEvalTick++
 		ppuSpriteEvalTick &= 7 // And reset at 8
@@ -615,10 +614,10 @@ func DecayPPUDataBus() {
 	}
 }
 
-func GetOAMBusAddress() byte {
-	return OAMBusAddress
+func GetOAMAddress() byte {
+	return OAMAddress
 }
 
-func SetOAMBusAddress(Value byte) {
-	OAMBusAddress = Value
+func SetOAMAddress(Value byte) {
+	OAMAddress = Value
 }

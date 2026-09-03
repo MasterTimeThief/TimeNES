@@ -72,14 +72,14 @@ func (b *BUS) Read(Address uint16) byte {
 			if ppu.PPUScanline < 240 && (ppu.PPUMASK_RenderBG || ppu.PPUMASK_RenderSprites) {
 				//Return buffer?
 				if ppu.PPUDot == 0 || ppu.PPUDot > 320 {
-					ppu.PPUBus = ppu.SecondaryOAM[0]
+					ppu.PPUBus = ppu.OAM2[0]
 				} else if ppu.PPUDot > 0 && ppu.PPUDot <= 64 {
 					ppu.PPUBus = 0xFF
 				} else {
 					CPUBus = ppu.PPUBus
 				}
 			} else {
-				ppu.PPUBus = ppu.OAM[ppu.GetOAMBusAddress()]
+				ppu.PPUBus = ppu.OAM[ppu.GetOAMAddress()]
 			}
 			ppu.UpdatePPUBus(ppu.PPUBus)
 		case 0x2005: //PPUSCROLL
@@ -89,6 +89,9 @@ func (b *BUS) Read(Address uint16) byte {
 			if (ppu.VRAMAddress & 0x3FFF) >= 0x3F00 {
 				//Palette data
 				data := ppu.ReadPPU()
+				ppu.PPUAddressBus = (ppu.VRAMAddress & 0x2FFF)
+				ppu.PPUReadBuffer = ppu.ReadPPU()
+				ppu.PPUAddressBus = ppu.VRAMAddress
 				ppu.PPUBus = (ppu.PPUBus & 0xC0) | (data & byte(common.Ternary(ppu.PPUMASK_Greyscale, 0x30, 0x3F)))
 				ppu.UpdatePPUBus2007Palette(ppu.PPUBus)
 			} else {
@@ -176,9 +179,9 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			ppu.PPUMASK_EmphasisBlue = (Value & 0x80) != 0
 		case 0x2002: //PPUSTATUS
 		case 0x2003: //OAMADDR
-			ppu.SetOAMBusAddress(Value)
+			ppu.SetOAMAddress(Value)
 		case 0x2004: //OAMDATA
-			oamAddr := ppu.GetOAMBusAddress()
+			oamAddr := ppu.GetOAMAddress()
 			if ((ppu.PPUScanline >= 240 && ppu.PPUScanline < 261) && (ppu.PPUMASK_RenderBG || ppu.PPUMASK_RenderSprites)) || (!ppu.PPUMASK_RenderBG && !ppu.PPUMASK_RenderSprites) {
 				if (oamAddr & 3) == 2 {
 					Value &= 0xE3
@@ -189,7 +192,7 @@ func (b *BUS) Write(Address uint16, Value byte) {
 				oamAddr += 4
 				oamAddr &= 0xFC
 			}
-			ppu.SetOAMBusAddress(oamAddr)
+			ppu.SetOAMAddress(oamAddr)
 		case 0x2005: //PPUSCROLL
 			if !ppu.WriteLatch {
 				ppu.PPUScrollFineX = byte(Value & 7)
@@ -217,7 +220,7 @@ func (b *BUS) Write(Address uint16, Value byte) {
 		}
 
 	} else if Address == 0x4014 { //OAMDMA
-		oamAddr := ppu.GetOAMBusAddress()
+		oamAddr := ppu.GetOAMAddress()
 		for i := 0; i < 256; i++ {
 			ppu.OAM[oamAddr] = b.Read((uint16(Value) << 8) + uint16(i))
 			oamAddr++

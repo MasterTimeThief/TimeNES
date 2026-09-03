@@ -36,7 +36,7 @@ func RenderTileData() {
 	}
 }
 
-func RenderNextPixel( /*g *Game*/ ) {
+func RenderNextPixel() {
 
 	if PPUScanline < 240 && PPUDot > 0 && PPUDot <= 256 {
 		var PalHi byte = 0  //Which color palette to use?
@@ -63,7 +63,7 @@ func RenderNextPixel( /*g *Game*/ ) {
 		var SpritePriority bool = false //Is the sprite in front or behind the BG?
 		if PPUMASK_RenderSprites && (PPUDot > 8 || PPUMASK_8pxMaskSprites) {
 			for i := 0; i < 8; i++ {
-				if ppu_SpriteXposition[i] == 0 && i <= int(ppuSecondaryOAMSize/4) { //If the sprite X position == 0 (The x position is decremented every ppu cycle)
+				if ppu_SpriteXposition[i] == 0 && i <= int(OAM2Size/4) { //If the sprite X position == 0 (The x position is decremented every ppu cycle)
 					SpixelL := ((ppu_SpriteShiftRegisterL[i]) & 0x80) != 0
 					SpixelH := ((ppu_SpriteShiftRegisterH[i]) & 0x80) != 0
 					SpritePalLow = 0
