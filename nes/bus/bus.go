@@ -226,7 +226,9 @@ func (b *BUS) Write(Address uint16, Value byte) {
 	} else if Address == 0x4014 { //OAMDMA
 		oamAddr := ppu.GetOAMAddress()
 		for i := 0; i < 256; i++ {
-			ppu.OAM[oamAddr] = b.Read((uint16(Value) << 8) + uint16(i))
+			// Check that this is how this should go
+			CPUBus = b.Read((uint16(Value) << 8) + uint16(i))
+			ppu.OAM[oamAddr] = CPUBus
 			oamAddr++
 		}
 		if common.CPU_TotalCycles%2 == 1 {
