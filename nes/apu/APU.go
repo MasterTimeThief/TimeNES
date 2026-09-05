@@ -34,6 +34,7 @@ var apuDMAGetCycle, apuDoDMCDMA, apuDMCDMAHalt bool
 var apuDMCDMADelay, apuCannotDMCDMARightNow byte
 
 var apu4017ResetTimer int = 0
+var APUFrameInterruptDelay bool
 var MuteEmulator bool = false
 
 //var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
@@ -70,7 +71,7 @@ func (a *APU) ResetAPU() {
 	IRQLevelDetector = false
 	DoIRQ = false
 
-	apuDMAGetCycle = true
+	apuDMAGetCycle = false
 	apuDoDMCDMA, apuDMCDMAHalt = false, false
 	apuDMCDMADelay, apuCannotDMCDMARightNow = 0, 0
 
@@ -80,12 +81,9 @@ func (a *APU) ResetAPU() {
 
 func (a *APU) APU_Cycle() {
 
-	if apuDMAGetCycle { //DMA Get Cycle
-		a.AudioOutput()
+	if apuDMAGetCycle {
 		a.DMA_Get()
-
-	} else { //DMA Put Cycle
-		a.ClockFrameCounter()
+	} else {
 		a.DMA_Put()
 	}
 	//Clock triangle timer every cycle
@@ -142,6 +140,12 @@ func (a *APU) APU_Cycle() {
 }
 
 func (a *APU) DMA_Get() {
+	if APUFrameInterruptDelay {
+		APUFrameInterruptDelay = false
+		APUFrameInterrupt = false
+	}
+
+	a.AudioOutput()
 	//Clock timers
 	a.Pulse1.ClockPulseTimer()
 	a.Pulse2.ClockPulseTimer()
@@ -154,6 +158,7 @@ func (a *APU) DMA_Get() {
 }
 
 func (a *APU) DMA_Put() {
+	a.ClockFrameCounter()
 	/*if Clearing_APU_FrameInterrupt {
 		Clearing_APU_FrameInterrupt = false
 		APU_Status_FrameInterrupt = false
@@ -181,7 +186,7 @@ func (a *APU) ReadAPU(Address uint16) byte {
 	status |= byte(common.Ternary(!(a.Triangle.LengthCounter.Counter == 0 /*|| apua.Triangle.LengthCounter.HaltFlag*/), 0x04, 0x00)) //Triangle Active
 	status |= byte(common.Ternary(!(a.Pulse2.LengthCounter.Counter == 0 /*|| apua.Pulse2.LengthCounter.HaltFlag*/), 0x02, 0x00))     //Pulse 2 Active
 	status |= byte(common.Ternary(!(a.Pulse1.LengthCounter.Counter == 0 /*|| apua.Pulse1.LengthCounter.HaltFlag*/), 0x01, 0x00))     //Pulse 1 Active
-	APUFrameInterrupt = false
+	APUFrameInterruptDelay = true
 	return status
 }
 

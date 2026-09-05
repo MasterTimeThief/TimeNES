@@ -250,7 +250,7 @@ func (cpu *CPU) Op_BIT(Value byte) {
 // SLO: ASL + ORA
 func (cpu *CPU) Op_SLO() {
 	cpu.Op_ASL()
-	cpu.Op_ORA(cpu.ReadFromAB())
+	cpu.Op_ORA(cpu.DL)
 }
 
 // DCP: DEC + CMP

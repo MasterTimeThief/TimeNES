@@ -99,33 +99,36 @@ func (cpu *CPU) ResetCPU() {
 func (cpu *CPU) CPU_Cycle() {
 	if cpu.DelayCounter == 0 {
 		if cpu.subCycle == 0 {
-			if cpu.BreakSource == Break_NMI {
+			if cpu.NMIPending {
 				print("")
 			}
 			// Suppress NMI if the read was on the same cycle as VBlank being set
-			if ppu.SuppressNMI && cpu.BreakSource == Break_NMI {
-				cpu.BreakSource = Break_None
-				cpu.PollInterrupts() // Check for an IRQ just in case?
+			if ppu.SuppressNMI && cpu.NMIPending {
+				cpu.DisableNMI()
+				//cpu.PollInterrupts() // Check for an IRQ just in case?
 			}
 
-			if cpu.BreakSource != Break_None {
+			if cpu.NMIPending {
 				cpu.SetOpcode(0x00)
-				if cpu.BreakSource == Break_IRQ {
-					cpu.DisableIRQFlags()
-				}
+				cpu.DisableNMI()
+				cpu.BreakSource = Break_NMI
+			} else if cpu.IRQPending {
+				cpu.SetOpcode(0x00)
+				cpu.BreakSource = Break_IRQ
+				cpu.DisableIRQFlags()
+			} else if cpu.BreakSource == Break_Reset {
+				cpu.SetOpcode(0x00)
 			} else {
 				cpu.SetOpcode(cpu.ReadFromPC())
 				if cpu.opcode == 0x00 {
 					cpu.BreakSource = Break_Software
 				}
 			}
-			cpu.subCycle++
 			cpu.SendToDebug()
-
 		} else {
 			cpu.RunInstruction()
-			cpu.subCycle++
 		}
+		cpu.subCycle++
 	} else {
 		cpu.DelayCounter--
 	}
@@ -784,13 +787,10 @@ func (cpu *CPU) PollInterrupts() {
 		return
 	}
 
-	if cpu.NMIPending {
-		cpu.NMIPending = false
-		cpu.BreakSource = Break_NMI
-	} else if cpu.PollIRQ() && cpu.BreakSource != Break_NMI {
-		cpu.IRQPending = true
-		cpu.BreakSource = Break_IRQ
+	if cpu.PollNMI() {
+		cpu.NMIPending = true
 	}
+	cpu.IRQPending = cpu.PollIRQ() && !cpu.flag_InterruptDisable
 }
 
 func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
@@ -798,12 +798,11 @@ func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
 		return
 	}
 
-	if cpu.NMIPending {
-		cpu.NMIPending = false
-		cpu.BreakSource = Break_NMI
-	} else if cpu.PollIRQ() && cpu.BreakSource != Break_NMI && cpu.BreakSource != Break_IRQ {
-		cpu.IRQPending = true
-		cpu.BreakSource = Break_IRQ
+	if cpu.PollNMI() {
+		cpu.NMIPending = true
+	}
+	if !cpu.IRQPending {
+		cpu.IRQPending = cpu.PollIRQ() && !cpu.flag_InterruptDisable
 	}
 }
 
@@ -822,16 +821,15 @@ func (cpu *CPU) PollIRQ() bool {
 	//if cpu.flag_InterruptDisable {
 	//	cpu.IRQPending = false
 	//}
-	return ( /*cpu.IRQPending ||*/ apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !cpu.flag_InterruptDisable
+	return (cpu.IRQPending || apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !cpu.flag_InterruptDisable
 }
 
 func (cpu *CPU) DisableNMI() {
-	if cpu.BreakSource == Break_NMI {
-		cpu.BreakSource = Break_None
-	}
+	cpu.NMIPending = false
 }
 
 func (cpu *CPU) DisableIRQFlags() {
+	cpu.IRQPending = false
 	apu.APUDMCInterrupt = false
 	apu.APUFrameInterrupt = false
 	mappers.MMC3_IRQPending = false
