@@ -27,7 +27,7 @@ type CPU interface {
 
 // var apuEnablePulse1, apuEnablePulse2, apuEnableTriangle, apuEnableNoise, apuEnableDMC bool
 var APUDMCInterrupt, apuDMCDelayed, APUFrameInterrupt, APUInhibitIRQ, APUFrameCounterMode, apuIsHalfFrame bool
-var apuFrameCounter int = 0
+var apuFrameCounter int
 var IRQLevelDetector, DoIRQ bool
 
 var apuDMAGetCycle, apuDoDMCDMA, apuDMCDMAHalt bool
@@ -80,21 +80,15 @@ func (a *APU) ResetAPU() {
 }
 
 func (a *APU) APU_Cycle() {
+	//Strobe controllers every 12 master clock cycles
+
+	//Clock triangle timer every cycle
+	a.Triangle.ClockTriangleTimer()
 
 	if apuDMAGetCycle {
 		a.DMA_Get()
 	} else {
 		a.DMA_Put()
-	}
-	//Clock triangle timer every cycle
-	a.Triangle.ClockTriangleTimer()
-
-	//Clock sequencer
-	if (apu4017ResetTimer & 0x80) == 0 {
-		apu4017ResetTimer--
-		if (apu4017ResetTimer & 0x80) != 0 {
-			apuFrameCounter = 0
-		}
 	}
 
 	/*
@@ -111,6 +105,8 @@ func (a *APU) APU_Cycle() {
 			}
 		}
 	*/
+	// Clock Frame Counter
+	a.ClockFrameCounter()
 
 	//If this isn't a Frame Counter half-frame
 	/*if !apuIsHalfFrame {
@@ -139,11 +135,8 @@ func (a *APU) APU_Cycle() {
 	}
 }
 
+// Runs on a DMA Get cycle, and transitions into a Put cycle
 func (a *APU) DMA_Get() {
-	if APUFrameInterruptDelay {
-		APUFrameInterruptDelay = false
-		APUFrameInterrupt = false
-	}
 
 	a.AudioOutput()
 	//Clock timers
@@ -157,13 +150,12 @@ func (a *APU) DMA_Get() {
 	}
 }
 
+// Runs on a DMA Put cycle, and transitions into a Get cycle
 func (a *APU) DMA_Put() {
-	a.ClockFrameCounter()
-	/*if Clearing_APU_FrameInterrupt {
-		Clearing_APU_FrameInterrupt = false
-		APU_Status_FrameInterrupt = false
-		IRQ_LevelDetector = false
-	}*/
+	if APUFrameInterruptDelay {
+		APUFrameInterruptDelay = false
+		APUFrameInterrupt = false
+	}
 	// DMC load from 4015
 	//if apuDMCDMADelay > 0 {
 	//	apuDMCDMADelay--                         // there's a small delay beetween the write occurring and the DMA beginning
@@ -402,28 +394,36 @@ func LengthCounterLoad(Value byte) byte {
 
 func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 	//Do frame counter shit
+	if (apu4017ResetTimer & 0x80) == 0 {
+		apu4017ResetTimer--
+		if (apu4017ResetTimer & 0x80) != 0 {
+			apuFrameCounter = 0
+		}
+	}
 	apuFrameCounter++
 	apuIsHalfFrame = false
 
 	if !APUFrameCounterMode { //4-Cycle mode
 		switch apuFrameCounter {
-		case 3728:
+		case 7457:
 			a.ClockFrameCounterQuarterFrame()
-		case 7456:
+		case 14913:
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
-		case 11185:
+		case 22371:
 			a.ClockFrameCounterQuarterFrame()
-		case 14914:
-			if !apuDMAGetCycle {
-				a.ClockFrameCounterQuarterFrame()
-				a.ClockFrameCounterHalfFrame()
-			}
+		case 29828:
+			APUFrameInterrupt = true
+		case 29829:
+			//if !apuDMAGetCycle {
+			a.ClockFrameCounterQuarterFrame()
+			a.ClockFrameCounterHalfFrame()
+			//}
 			APUFrameInterrupt = true
 			if !IRQLevelDetector {
 				IRQLevelDetector = !APUInhibitIRQ
 			}
-		case 14915:
+		case 29830:
 			APUFrameInterrupt = !APUInhibitIRQ
 			if !IRQLevelDetector {
 				IRQLevelDetector = !APUInhibitIRQ
@@ -432,19 +432,19 @@ func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 		}
 	} else { //5-Cycle mode
 		switch apuFrameCounter {
-		case 3728:
+		case 7457:
 			a.ClockFrameCounterQuarterFrame()
-		case 7456:
+		case 14913:
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
-		case 11185:
+		case 22371:
 			a.ClockFrameCounterQuarterFrame()
-		case 14914:
+		case 29829:
 			//Nothing?
-		case 18640:
+		case 37281:
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
-		case 18641:
+		case 37282:
 			apuFrameCounter = 0
 		}
 	}
