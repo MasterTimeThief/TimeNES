@@ -31,7 +31,7 @@ func PageCrossingCheck(Address uint16, index byte) bool {
 
 func (cpu *CPU) SetAddressBusHigh(Value byte) {
 	cpu.AddressBus &= 0x00FF
-	cpu.AddressBus += uint16(Value) << 8
+	cpu.AddressBus += (uint16(Value) << 8)
 }
 
 func (cpu *CPU) SetAddressBusLow(Value byte) {
@@ -78,8 +78,10 @@ func (cpu *CPU) GetAddress_Absolute() {
 	switch cpu.subCycle {
 	case 1:
 		cpu.DL = cpu.ReadFromPC()
+		cpu.SetAddressBusLow(cpu.DL)
 	case 2:
-		cpu.AddressBus = (uint16(cpu.ReadFromPC())<<8 | uint16(cpu.DL))
+		cpu.DL = cpu.ReadFromPC()
+		cpu.SetAddressBusHigh(cpu.DL)
 	}
 }
 
