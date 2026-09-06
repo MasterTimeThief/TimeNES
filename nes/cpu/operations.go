@@ -123,11 +123,11 @@ func (cpu *CPU) PullFlags() {
 
 // Performs Arithmetic Shift Left onto value at Address
 func (cpu *CPU) Op_ASL() {
-	Value := cpu.Read(cpu.AddressBus)
-	cpu.flag_Carry = (Value >= 0x80)
-	Value <<= 1
-	cpu.Write(cpu.AddressBus, Value)
-	cpu.SetZNFlags(Value)
+	//Value := cpu.Read(cpu.AddressBus)
+	cpu.flag_Carry = (cpu.DL >= 0x80)
+	cpu.DL <<= 1
+	cpu.Write(cpu.AddressBus, cpu.DL)
+	cpu.SetZNFlags(cpu.DL)
 }
 
 // Performs Arithmetic Shift Right onto value at Address
