@@ -126,56 +126,56 @@ func (cpu *CPU) Op_ASL() {
 	//Value := cpu.Read(cpu.AddressBus)
 	cpu.flag_Carry = (cpu.DL >= 0x80)
 	cpu.DL <<= 1
-	cpu.Write(cpu.AddressBus, cpu.DL)
+	cpu.WriteToAB(cpu.DL)
 	cpu.SetZNFlags(cpu.DL)
 }
 
 // Performs Arithmetic Shift Right onto value at Address
 func (cpu *CPU) Op_LSR() {
-	Value := cpu.Read(cpu.AddressBus)
-	cpu.flag_Carry = (Value & 1) != 0
-	Value >>= 1
-	cpu.Write(cpu.AddressBus, Value)
-	cpu.SetZNFlags(Value)
+	//Value := cpu.Read(cpu.AddressBus)
+	cpu.flag_Carry = (cpu.DL & 1) != 0
+	cpu.DL >>= 1
+	cpu.WriteToAB(cpu.DL)
+	cpu.SetZNFlags(cpu.DL)
 }
 
 // Perform Rotate Left onto value at Address
 func (cpu *CPU) Op_ROL() {
-	Value := cpu.Read(cpu.AddressBus)
-	futureCarry := (Value >= 0x80)
-	Value <<= 1
+	//Value := cpu.Read(cpu.AddressBus)
+	futureCarry := (cpu.DL >= 0x80)
+	cpu.DL <<= 1
 	if cpu.flag_Carry {
-		Value |= 1
+		cpu.DL |= 1
 	}
-	cpu.Write(cpu.AddressBus, Value)
+	cpu.WriteToAB(cpu.DL)
 	cpu.flag_Carry = futureCarry
-	cpu.SetZNFlags(Value)
+	cpu.SetZNFlags(cpu.DL)
 }
 
 // Perform Rotate Right onto value at Address
 func (cpu *CPU) Op_ROR() {
-	Value := cpu.Read(cpu.AddressBus)
-	futureCarry := (Value & 1) != 0
-	Value >>= 1
+	//Value := cpu.Read(cpu.AddressBus)
+	futureCarry := (cpu.DL & 1) != 0
+	cpu.DL >>= 1
 	if cpu.flag_Carry {
-		Value |= 0x80
+		cpu.DL |= 0x80
 	}
-	cpu.Write(cpu.AddressBus, Value)
+	cpu.WriteToAB(cpu.DL)
 	cpu.flag_Carry = futureCarry
-	cpu.SetZNFlags(Value)
+	cpu.SetZNFlags(cpu.DL)
 }
 
 // Increment Value, and save to Address
 func (cpu *CPU) Op_INC(Value byte) {
 	Value++
-	cpu.Write(cpu.AddressBus, Value)
+	cpu.WriteToAB(Value)
 	cpu.SetZNFlags(Value)
 }
 
 // Decrement Value, and save to Address
 func (cpu *CPU) Op_DEC(Value byte) {
 	Value--
-	cpu.Write(cpu.AddressBus, Value)
+	cpu.WriteToAB(Value)
 	cpu.SetZNFlags(Value)
 }
 
