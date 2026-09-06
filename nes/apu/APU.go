@@ -329,11 +329,12 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 	}
 }
 
+// Delay the Frame Counter reset depending on the DMA alignment
 func Set4017ResetTimer() {
 	if apuDMAGetCycle {
-		apu4017ResetTimer = 4
-	} else {
 		apu4017ResetTimer = 3
+	} else {
+		apu4017ResetTimer = 4
 	}
 }
 
@@ -514,6 +515,10 @@ func (a *APU) GetNoiseMute() *bool {
 }
 func (a *APU) GetDMCMute() *bool {
 	return &a.DMC.ForceMute
+}
+
+func (a *APU) ISDMAGetCycle() bool {
+	return apuDMAGetCycle
 }
 
 func (a *APU) SetEmulatorvolume(vol float64) {

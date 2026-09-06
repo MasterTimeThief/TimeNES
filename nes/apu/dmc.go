@@ -108,7 +108,7 @@ func (d *DeltaModChannel) DMCMemoryReader() {
 	switch cartridge.MapperChipID {
 	default:
 		if d.Buffer == 0 && d.BytesRemaining > 0 {
-			d.cpu.DelayCPU(4)
+			d.cpu.DelayCPU(3)
 			d.Buffer = d.cpu.Read(d.CurrentAddress)
 
 			//Advance the address

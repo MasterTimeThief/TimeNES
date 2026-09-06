@@ -21,6 +21,7 @@ type CPU interface {
 type APU interface {
 	ReadAPU(uint16) byte
 	WriteAPU(uint16, byte)
+	ISDMAGetCycle() bool
 }
 
 var CPUBus byte
@@ -231,8 +232,8 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			ppu.OAM[oamAddr] = CPUBus
 			oamAddr++
 		}
-		if common.CPU_TotalCycles%2 == 1 {
-			b.cpu.DelayCPU(514)
+		if b.apu.ISDMAGetCycle() {
+			b.cpu.DelayCPU(512)
 		} else {
 			b.cpu.DelayCPU(513)
 		}
