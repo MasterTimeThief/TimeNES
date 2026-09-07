@@ -81,8 +81,8 @@ func RenderNextPixel() {
 				}
 				if SpritePalLow != 0 {
 
-					if i == 0 && ppuScanlineContainsSpriteZero && PalLow != 0 && PPUMASK_RenderBG && PPUDot < 256 {
-						ppuScanlineContainsSpriteZero = false
+					if i == 0 && CurrentScanlineContainsSpriteZero && PalLow != 0 && PPUMASK_RenderBG && PPUDot < 256 {
+						CurrentScanlineContainsSpriteZero = false
 						PPUSTATUS_SpriteZeroHit = true
 					}
 					break

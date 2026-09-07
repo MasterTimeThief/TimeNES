@@ -60,7 +60,8 @@ var OAMAddress byte
 
 // var OAMBusAddress byte
 var OAM2Address, OAM2Size uint16
-var ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed bool
+var NextScanlineContainsSpriteZero, CurrentScanlineContainsSpriteZero, CanDetectSpriteZero bool
+var ppuSecondaryOAMFull, ppuSpriteEvaluationOAMOverflowed bool
 var ppuSpriteEvalTick int
 
 var ppu_SpriteShiftRegisterL [8]byte
@@ -128,7 +129,8 @@ func ResetPPU() {
 	OAM2 = [0x20]byte{}
 	ppuSpriteEvalTemp = 0
 	OAMAddress /*,OAMBusAddress*/, OAM2Address, OAM2Size = 0, 0, 0
-	ppuSecondaryOAMFull, ppuScanlineContainsSpriteZero, ppuSpriteEvaluationOAMOverflowed = false, false, false
+	NextScanlineContainsSpriteZero, CurrentScanlineContainsSpriteZero, CanDetectSpriteZero = false, false, false
+	ppuSecondaryOAMFull, ppuSpriteEvaluationOAMOverflowed = false, false
 	ppuSpriteEvalTick = 0
 
 	ppu_SpriteShiftRegisterL = [8]byte{}
@@ -307,6 +309,9 @@ func SpriteEvaluation() {
 			//Odd PPU cycles load the value from OAM
 			ppuSpriteEvalTemp = OAM[OAMAddress]
 		} else {
+			if PPUDot == 66 {
+				NextScanlineContainsSpriteZero = false
+			}
 			if !ppuSpriteEvaluationOAMOverflowed {
 				//Even PPU cycles store the value in secondaryOAM
 				if !ppuSecondaryOAMFull { //If SecondaryOAM is not full yet
@@ -324,7 +329,7 @@ func SpriteEvaluation() {
 								// Rather than verifying that this is OAM index 0,
 								// the PPU sets this flag if we found an object on this scanline
 								// during PPUDot 66, which would be the PPU cycle evaluating index 0
-								ppuScanlineContainsSpriteZero = true
+								NextScanlineContainsSpriteZero = true
 							}
 						} else {
 							if (PPUMASK_RenderBG || PPUMASK_RenderSprites) && ppuSpriteEvalTick%4 == 0 && (ppuSpriteEvalTemp < 240) {
@@ -354,6 +359,7 @@ func SpriteEvaluation() {
 			}
 		}
 	} else if PPUDot > 256 && PPUDot <= 320 { //Step 3:
+		CurrentScanlineContainsSpriteZero = NextScanlineContainsSpriteZero
 		OAMAddress = 0 //This is set to $00 during every one of these cycles
 		if PPUDot == 257 {
 			OAM2Size = OAM2Address
@@ -615,6 +621,8 @@ func DecayPPUDataBus() {
 		}
 	}
 }
+
+var OAMBusAddress byte
 
 func GetOAMAddress() byte {
 	return OAMAddress
