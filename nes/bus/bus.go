@@ -233,9 +233,9 @@ func (b *BUS) Write(Address uint16, Value byte) {
 			oamAddr++
 		}
 		if b.apu.ISDMAGetCycle() {
-			b.cpu.DelayCPU(512)
-		} else {
 			b.cpu.DelayCPU(513)
+		} else {
+			b.cpu.DelayCPU(514)
 		}
 	} else if Address == 0x4016 { //Controller Input
 		input.UpdateControllers()

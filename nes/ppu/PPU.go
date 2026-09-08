@@ -622,12 +622,13 @@ func DecayPPUDataBus() {
 	}
 }
 
+// TODO: I'm pretty sure this should just be OAMAddress, and yet it breaks games if I do that. Find out why.
 var OAMBusAddress byte
 
 func GetOAMAddress() byte {
-	return OAMAddress
+	return OAMBusAddress
 }
 
 func SetOAMAddress(Value byte) {
-	OAMAddress = Value
+	OAMBusAddress = Value
 }

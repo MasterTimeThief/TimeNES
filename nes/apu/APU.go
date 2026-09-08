@@ -329,16 +329,15 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 			a.ClockFrameCounterHalfFrame()
 		}
 		Set4017ResetTimer()
-
 	}
 }
 
 // Delay the Frame Counter reset depending on the DMA alignment
 func Set4017ResetTimer() {
 	if DMAGetCycle {
-		apu4017ResetTimer = 3
-	} else {
 		apu4017ResetTimer = 4
+	} else {
+		apu4017ResetTimer = 3
 	}
 }
 
