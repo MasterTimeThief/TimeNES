@@ -556,7 +556,7 @@ func WritePPU(Value byte) {
 func ReadFromNametable(Addr uint16, isHorizontal bool) byte {
 	if cartridge.AltNametableLayout {
 	} else {
-		if isHorizontal {
+		if cartridge.IsNametableHorizontal {
 			// Horizontal Mirroring
 			return cartridge.VRAM[int(Addr&0x3FF)|(int(Addr&0x800)>>1)]
 		} else {
@@ -570,7 +570,7 @@ func ReadFromNametable(Addr uint16, isHorizontal bool) byte {
 func WriteToNametable(Value byte, isHorizontal bool) {
 	if cartridge.AltNametableLayout {
 	} else {
-		if isHorizontal {
+		if cartridge.IsNametableHorizontal {
 			// Horizontal Mirroring
 			cartridge.VRAM[int(VRAMAddress&0x3FF)|int(VRAMAddress&0x800)>>1] = Value
 		} else {

@@ -1849,12 +1849,12 @@ func (cpu *CPU) X40_RTI() {
 		cpu.ReadFromAB() //Dummy read
 	case 3:
 		status := cpu.Pull()
-		cpu.flag_Carry = (status & 1) != 0
-		cpu.flag_Zero = (status & 2) != 0
-		cpu.flag_InterruptDisable = (status & 4) != 0
-		cpu.flag_Decimal = (status & 8) != 0
-		cpu.flag_Overflow = (status & 64) != 0
-		cpu.flag_Negative = (status & 128) != 0
+		cpu.flag_Carry = (status & 0x01) != 0
+		cpu.flag_Zero = (status & 0x02) != 0
+		cpu.flag_InterruptDisable = (status & 0x04) != 0
+		cpu.flag_Decimal = (status & 0x08) != 0
+		cpu.flag_Overflow = (status & 0x40) != 0
+		cpu.flag_Negative = (status & 0x80) != 0
 	case 4:
 		cpu.DL = cpu.Pull()
 	case 5:
