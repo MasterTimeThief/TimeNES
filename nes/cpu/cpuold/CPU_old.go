@@ -1650,7 +1650,7 @@ func (cpu *CPU) CPU_Cycle() {
 		ppu.PPU_Cycle()
 		ppu.PPU_Cycle()
 
-		apu.APU_Cycle()
+		//apu.APU_Cycle()
 	}
 
 	//InstructionCount++

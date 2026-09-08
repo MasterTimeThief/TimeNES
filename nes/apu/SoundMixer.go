@@ -98,7 +98,7 @@ func (a *APU) AudioOutput() {
 
 	tnd_out := tndTable[(3*triangle)+(2*noise)+dmc]
 
-	if apuDMAGetCycle {
+	if DMAGetCycle {
 		audBuf.sample += pulse_out + tnd_out
 		audBuf.sendSample()
 	}

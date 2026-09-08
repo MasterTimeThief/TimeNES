@@ -96,14 +96,16 @@ func (d *DeltaModChannel) DMCOutputCycle() {
 		//}
 		d.Shifter = d.Buffer // and set up the shifter with the new values.
 		d.Buffer = 0
-		d.DMCMemoryReader()
+		d.DMCDMA_Get()
 		d.Enabled = true // The DMC is not silent.
+		//APUSilent = false
 	} else {
 		d.Enabled = false
+		//APUSilent = true
 	}
 }
 
-func (d *DeltaModChannel) DMCMemoryReader() {
+func (d *DeltaModChannel) DMCDMA_Get() {
 	//Check for Mappers
 	switch cartridge.MapperChipID {
 	default:

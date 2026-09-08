@@ -30,11 +30,12 @@ var APUDMCInterrupt, apuDMCDelayed, APUFrameInterrupt, APUInhibitIRQ, APUFrameCo
 var apuFrameCounter int
 var IRQLevelDetector, DoIRQ bool
 
-var apuDMAGetCycle, apuDoDMCDMA, apuDMCDMAHalt bool
-var apuDMCDMADelay, apuCannotDMCDMARightNow byte
+var DMAGetCycle, DoDMCDMA, DMCDMAHalt bool
+var DMCDMADelay, apuCannotDMCDMARightNow byte
 
 var apu4017ResetTimer int = 0
 var APUFrameInterruptDelay bool
+var APUSilent bool
 var MuteEmulator bool = false
 
 //var apuLengthCounterLUT = [32]byte{10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30}
@@ -71,9 +72,9 @@ func (a *APU) ResetAPU() {
 	IRQLevelDetector = false
 	DoIRQ = false
 
-	apuDMAGetCycle = false
-	apuDoDMCDMA, apuDMCDMAHalt = false, false
-	apuDMCDMADelay, apuCannotDMCDMARightNow = 0, 0
+	DMAGetCycle = false
+	DoDMCDMA, DMCDMAHalt = false, false
+	DMCDMADelay, apuCannotDMCDMARightNow = 0, 0
 
 	apu4017ResetTimer = 0
 	//apuMixerInputBuffer = [apuMaxSamplesPerFrame]uint16{}
@@ -85,7 +86,7 @@ func (a *APU) APU_Cycle() {
 	//Clock triangle timer every cycle
 	a.Triangle.ClockTriangleTimer()
 
-	if apuDMAGetCycle {
+	if DMAGetCycle {
 		a.DMA_Get()
 	} else {
 		a.DMA_Put()
@@ -128,7 +129,7 @@ func (a *APU) APU_Cycle() {
 		apua.Noise.LengthCounter.ReloadFlag = false
 	}*/
 
-	apuDMAGetCycle = !apuDMAGetCycle
+	DMAGetCycle = !DMAGetCycle
 	if common.PendingMute {
 		MuteEmulator = !MuteEmulator
 		common.PendingMute = false
@@ -157,14 +158,14 @@ func (a *APU) DMA_Put() {
 		APUFrameInterrupt = false
 	}
 	// DMC load from 4015
-	//if apuDMCDMADelay > 0 {
-	//	apuDMCDMADelay--                         // there's a small delay beetween the write occurring and the DMA beginning
-	//	if apuDMCDMADelay == 0 && !apuDoDMCDMA { // if the DMA is already happening because of the timer
+	//if DMCDMADelay > 0 {
+	//	DMCDMADelay--                         // there's a small delay beetween the write occurring and the DMA beginning
+	//	if DMCDMADelay == 0 && !DoDMCDMA { // if the DMA is already happening because of the timer
 	//
-	//		apuDoDMCDMA = true
-	//		apuDMCDMAHalt = true
+	//		DoDMCDMA = true
+	//		DMCDMAHalt = true
 	//		a.DMC.Shifter = a.DMC.Buffer
-	//		a.DMC.Enabled = true
+	//		APUSilent = false
 	//	}
 	//}
 }
@@ -304,6 +305,9 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 		if a.DMC.Enabled {
 			if a.DMC.BytesRemaining == 0 {
 				a.DMC.DMCRestartSample()
+				if APUSilent {
+					DMCDMADelay = 2
+				}
 			}
 		} else {
 			a.DMC.BytesRemaining = 0
@@ -331,7 +335,7 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 
 // Delay the Frame Counter reset depending on the DMA alignment
 func Set4017ResetTimer() {
-	if apuDMAGetCycle {
+	if DMAGetCycle {
 		apu4017ResetTimer = 3
 	} else {
 		apu4017ResetTimer = 4
@@ -518,9 +522,13 @@ func (a *APU) GetDMCMute() *bool {
 }
 
 func (a *APU) ISDMAGetCycle() bool {
-	return apuDMAGetCycle
+	return DMAGetCycle
 }
 
 func (a *APU) SetEmulatorvolume(vol float64) {
 	a.player.SetVolume(vol)
+}
+
+func (a *APU) RunDMCDMA() {
+	//Put DMC DMA code here
 }

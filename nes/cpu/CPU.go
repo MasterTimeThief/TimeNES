@@ -13,8 +13,13 @@ type BUS interface {
 	Write(uint16, byte)
 }
 
+type APU interface {
+	RunDMCDMA()
+}
+
 type CPU struct {
 	bus BUS
+	apu APU
 
 	// CPU Registers
 	PC uint16 // Program Counter
@@ -71,6 +76,10 @@ func NewCPU() *CPU {
 
 func (cpu *CPU) SetBUS(b BUS) {
 	cpu.bus = b
+}
+
+func (cpu *CPU) SetAPU(a APU) {
+	cpu.apu = a
 }
 
 func (cpu *CPU) ResetCPU() {
