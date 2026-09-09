@@ -58,6 +58,7 @@ func (cpu *CPU) Branch(condition bool) {
 			cpu.CompleteInstruction()
 		}
 	case 2:
+		cpu.AddressBus = cpu.PC
 		cpu.ReadFromAB() // Dummy read
 		signedVal := int(cpu.DL)
 		if signedVal >= 128 {
@@ -65,11 +66,11 @@ func (cpu *CPU) Branch(condition bool) {
 		}
 		cpu.TempAddress = uint16(cpu.PC + uint16(signedVal))
 		cpu.PC = (cpu.PC & 0xFF00) | ((cpu.PC + uint16(cpu.DL)) & 0xFF)
-		cpu.AddressBus = cpu.PC
 		if (cpu.TempAddress & 0xFF00) == (cpu.PC & 0xFF00) {
 			cpu.CompleteInstruction()
 		}
 	case 3:
+		cpu.AddressBus = cpu.PC
 		cpu.PollInterrupts_CantDisableIRQ() // If the first poll detected an IRQ, this second poll should not be allowed to un-set the IRQ.
 		cpu.ReadFromAB()                    // Dummy read
 		cpu.PC = (cpu.TempAddress & 0xFF00) | (cpu.PC & 0xFF)
