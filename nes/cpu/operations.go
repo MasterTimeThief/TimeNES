@@ -49,7 +49,7 @@ func (cpu *CPU) SetZNFlags(Value byte) {
 //
 // 2-4 Steps
 func (cpu *CPU) Branch(condition bool) {
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.PollInterrupts()
 		cpu.DL = cpu.ReadFromPC()

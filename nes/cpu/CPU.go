@@ -41,7 +41,7 @@ type CPU struct {
 	flag_Negative         bool // Bit 7: Negative Flag
 
 	opcode           byte
-	subCycle         int
+	InstructionCycle int
 	Magic            byte //Magic constant, for some of the more "unstable" illegal opcodes
 	BreakSource      BreakType
 	NMILevelDetector bool
@@ -53,6 +53,8 @@ type CPU struct {
 	Target      uint16
 
 	DelayCounter int
+	NMILine      bool
+	IRQLine      bool
 	NMIPending   bool
 	IRQPending   bool
 }
@@ -86,7 +88,7 @@ func (cpu *CPU) ResetCPU() {
 	cpu.SP = 0xFD
 	cpu.A, cpu.X, cpu.Y = 0, 0, 0
 	cpu.opcode = 0
-	cpu.subCycle = 0
+	cpu.InstructionCycle = 0
 	cpu.Magic = 0xFD
 	cpu.BreakSource = Break_Reset
 	cpu.NMILevelDetector, cpu.RunningInterrupt = false, false
@@ -107,7 +109,7 @@ func (cpu *CPU) ResetCPU() {
 
 func (cpu *CPU) CPU_Cycle() {
 	if cpu.DelayCounter == 0 {
-		if cpu.subCycle == 0 {
+		if cpu.InstructionCycle == 0 {
 			if cpu.NMIPending {
 				print("")
 			}
@@ -137,7 +139,7 @@ func (cpu *CPU) CPU_Cycle() {
 		} else {
 			cpu.RunInstruction()
 		}
-		cpu.subCycle++
+		cpu.InstructionCycle++
 	} else {
 		cpu.DelayCounter--
 	}
@@ -799,7 +801,7 @@ func (cpu *CPU) PollInterrupts() {
 	if cpu.PollNMI() {
 		cpu.NMIPending = true
 	}
-	cpu.IRQPending = cpu.PollIRQ() && !cpu.flag_InterruptDisable
+	cpu.IRQPending = cpu.IRQLine && !cpu.flag_InterruptDisable
 }
 
 func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
@@ -811,7 +813,7 @@ func (cpu *CPU) PollInterrupts_CantDisableIRQ() {
 		cpu.NMIPending = true
 	}
 	if !cpu.IRQPending {
-		cpu.IRQPending = cpu.PollIRQ() && !cpu.flag_InterruptDisable
+		cpu.IRQPending = cpu.IRQLine && !cpu.flag_InterruptDisable
 	}
 }
 
@@ -822,15 +824,25 @@ func (cpu *CPU) UnknownOpcode() {
 
 func (cpu *CPU) PollNMI() bool {
 	prevNMILevelDetector := cpu.NMILevelDetector
-	cpu.NMILevelDetector = (ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank)
+	cpu.NMILevelDetector = cpu.NMILine
 	return !prevNMILevelDetector && cpu.NMILevelDetector && !ppu.SuppressNMI
+}
+
+func (cpu *CPU) SetNMILine() {
+	if !cpu.NMILine {
+		cpu.NMILine = ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank
+	}
+}
+
+func (cpu *CPU) SetIRQLine() {
+	cpu.IRQLine = apu.IRQLevelDetector || mappers.MMC3_IRQPending
 }
 
 func (cpu *CPU) PollIRQ() bool {
 	//if cpu.flag_InterruptDisable {
 	//	cpu.IRQPending = false
 	//}
-	return (cpu.IRQPending || apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !cpu.flag_InterruptDisable
+	return (cpu.IRQPending || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !cpu.flag_InterruptDisable
 }
 
 func (cpu *CPU) DisableNMI() {
@@ -850,7 +862,7 @@ func (cpu *CPU) SetOpcode(code byte) {
 
 func (cpu *CPU) CompleteInstruction() {
 	//cpu.PollInterrupts()
-	cpu.subCycle = -1
+	cpu.InstructionCycle = -1
 	cpu.AddressBus = cpu.PC
 }
 

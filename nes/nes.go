@@ -112,7 +112,7 @@ func (g *Game) Update() error {
 
 	for common.ROMLoaded && !PauseEmulation && !cpu.CPU_Halted {
 		//Emulator.cpu.CPU_Cycle()
-		MasterClockTick()
+		g.MasterClockTick()
 		if ppu.DrawNewFrame {
 			ppu.DrawNewFrame = false
 			break
@@ -158,7 +158,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return common.ScreenWidth * common.ScreenScale, common.ScreenHeight * common.ScreenScale
 }
 
-func MasterClockTick() {
+func (g *Game) MasterClockTick() {
 	// Clock the 2A03 and run CPU / PPU / APU
 	// CPU runs every 6 ticks
 	// PPU runs every 2 ticks
@@ -203,12 +203,17 @@ func MasterClockTick() {
 	cpuClock++
 	switch cpuClock {
 	case 1:
-		Emulator.cpu.CPU_Cycle()
+		g.cpu.CPU_Cycle()
 	case 2:
-		if Emulator.cpu.PollNMI() {
-			Emulator.cpu.NMIPending = true
+		g.cpu.SetNMILine()
+		if g.cpu.InstructionCycle == 0 && !(ppu.PPUCTRL_EnableNMI && ppu.PPUSTATUS_VBlank) {
+			g.cpu.NMILine = false
 		}
 	case 4:
+		g.cpu.SetIRQLine()
+		if apu.APUFrameInterrupt && !apu.APUInhibitIRQ {
+			apu.IRQLevelDetector = true // if the APU frame counter flag is never cleared, you will get another IRQ when the I flag is cleared.
+		}
 		if cartridge.MapperChipID == 4 {
 			mappers.MMC3_ClockM2(ppu.PPUAddressBus)
 		}

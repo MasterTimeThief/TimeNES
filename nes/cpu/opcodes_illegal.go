@@ -74,7 +74,7 @@ func (cpu *CPU) XE2_NOP_Immediate() {
 
 func (cpu *CPU) X04_NOP_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -85,7 +85,7 @@ func (cpu *CPU) X04_NOP_ZeroPage() {
 }
 func (cpu *CPU) X44_NOP_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -96,7 +96,7 @@ func (cpu *CPU) X44_NOP_ZeroPage() {
 }
 func (cpu *CPU) X64_NOP_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -108,7 +108,7 @@ func (cpu *CPU) X64_NOP_ZeroPage() {
 
 func (cpu *CPU) X14_NOP_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -119,7 +119,7 @@ func (cpu *CPU) X14_NOP_ZeroPage_X() {
 }
 func (cpu *CPU) X34_NOP_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -130,7 +130,7 @@ func (cpu *CPU) X34_NOP_ZeroPage_X() {
 }
 func (cpu *CPU) X54_NOP_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -141,7 +141,7 @@ func (cpu *CPU) X54_NOP_ZeroPage_X() {
 }
 func (cpu *CPU) X74_NOP_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -152,7 +152,7 @@ func (cpu *CPU) X74_NOP_ZeroPage_X() {
 }
 func (cpu *CPU) XD4_NOP_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -163,7 +163,7 @@ func (cpu *CPU) XD4_NOP_ZeroPage_X() {
 }
 func (cpu *CPU) XF4_NOP_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -175,7 +175,7 @@ func (cpu *CPU) XF4_NOP_ZeroPage_X() {
 
 func (cpu *CPU) X0C_NOP_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
 	case 4:
@@ -187,7 +187,7 @@ func (cpu *CPU) X0C_NOP_Absolute() {
 
 func (cpu *CPU) X1C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
 	case 4:
@@ -198,7 +198,7 @@ func (cpu *CPU) X1C_NOP_Absolute_X() {
 }
 func (cpu *CPU) X3C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
 	case 4:
@@ -209,7 +209,7 @@ func (cpu *CPU) X3C_NOP_Absolute_X() {
 }
 func (cpu *CPU) X5C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
 	case 4:
@@ -220,7 +220,7 @@ func (cpu *CPU) X5C_NOP_Absolute_X() {
 }
 func (cpu *CPU) X7C_NOP_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
 	case 4:
@@ -231,7 +231,7 @@ func (cpu *CPU) X7C_NOP_Absolute_X() {
 }
 func (cpu *CPU) XDC_NOP_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
 	case 4:
@@ -242,7 +242,7 @@ func (cpu *CPU) XDC_NOP_Absolute_X() {
 }
 func (cpu *CPU) XFC_NOP_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(true)
 	case 4:
@@ -258,7 +258,7 @@ func (cpu *CPU) XFC_NOP_Absolute_X() {
 
 func (cpu *CPU) X87_SAX_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -269,7 +269,7 @@ func (cpu *CPU) X87_SAX_ZeroPage() {
 }
 func (cpu *CPU) X97_SAX_ZeroPage_Y() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageY()
 	case 3:
@@ -280,7 +280,7 @@ func (cpu *CPU) X97_SAX_ZeroPage_Y() {
 }
 func (cpu *CPU) X8F_SAX_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -291,7 +291,7 @@ func (cpu *CPU) X8F_SAX_Absolute() {
 }
 func (cpu *CPU) X83_SAX_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -307,7 +307,7 @@ func (cpu *CPU) X83_SAX_Indirect_X() {
 
 func (cpu *CPU) XA7_LAX_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -320,7 +320,7 @@ func (cpu *CPU) XA7_LAX_ZeroPage() {
 }
 func (cpu *CPU) XB7_LAX_ZeroPage_Y() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageY()
 	case 3:
@@ -333,7 +333,7 @@ func (cpu *CPU) XB7_LAX_ZeroPage_Y() {
 }
 func (cpu *CPU) XAF_LAX_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -346,7 +346,7 @@ func (cpu *CPU) XAF_LAX_Absolute() {
 }
 func (cpu *CPU) XBF_LAX_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(true)
 	case 4:
@@ -359,7 +359,7 @@ func (cpu *CPU) XBF_LAX_Absolute_Y() {
 }
 func (cpu *CPU) XA3_LAX_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -372,7 +372,7 @@ func (cpu *CPU) XA3_LAX_Indirect_X() {
 }
 func (cpu *CPU) XB3_LAX_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(true)
 	case 5:
@@ -390,7 +390,7 @@ func (cpu *CPU) XB3_LAX_Indirect_Y() {
 
 func (cpu *CPU) X07_SLO_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -405,7 +405,7 @@ func (cpu *CPU) X07_SLO_ZeroPage() {
 }
 func (cpu *CPU) X17_SLO_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -420,7 +420,7 @@ func (cpu *CPU) X17_SLO_ZeroPage_X() {
 }
 func (cpu *CPU) X0F_SLO_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -435,7 +435,7 @@ func (cpu *CPU) X0F_SLO_Absolute() {
 }
 func (cpu *CPU) X1F_SLO_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
 	case 4:
@@ -450,7 +450,7 @@ func (cpu *CPU) X1F_SLO_Absolute_X() {
 }
 func (cpu *CPU) X1B_SLO_Absolute_Y() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -465,7 +465,7 @@ func (cpu *CPU) X1B_SLO_Absolute_Y() {
 }
 func (cpu *CPU) X03_SLO_Indirect_X() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -480,7 +480,7 @@ func (cpu *CPU) X03_SLO_Indirect_X() {
 }
 func (cpu *CPU) X13_SLO_Indirect_Y() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
 	case 5:
@@ -500,7 +500,7 @@ func (cpu *CPU) X13_SLO_Indirect_Y() {
 
 func (cpu *CPU) XC7_DCP_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -515,7 +515,7 @@ func (cpu *CPU) XC7_DCP_ZeroPage() {
 }
 func (cpu *CPU) XD7_DCP_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -530,7 +530,7 @@ func (cpu *CPU) XD7_DCP_ZeroPage_X() {
 }
 func (cpu *CPU) XCF_DCP_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -545,7 +545,7 @@ func (cpu *CPU) XCF_DCP_Absolute() {
 }
 func (cpu *CPU) XDF_DCP_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
 	case 4:
@@ -560,7 +560,7 @@ func (cpu *CPU) XDF_DCP_Absolute_X() {
 }
 func (cpu *CPU) XDB_DCP_Absolute_Y() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -575,7 +575,7 @@ func (cpu *CPU) XDB_DCP_Absolute_Y() {
 }
 func (cpu *CPU) XC3_DCP_Indirect_X() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -590,7 +590,7 @@ func (cpu *CPU) XC3_DCP_Indirect_X() {
 }
 func (cpu *CPU) XD3_DCP_Indirect_Y() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
 	case 5:
@@ -610,7 +610,7 @@ func (cpu *CPU) XD3_DCP_Indirect_Y() {
 
 func (cpu *CPU) X9F_SHA_Absolute_Y() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -625,7 +625,7 @@ func (cpu *CPU) X9F_SHA_Absolute_Y() {
 }
 func (cpu *CPU) X93_SHA_Indirect_Y() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
 	case 5:
@@ -645,7 +645,7 @@ func (cpu *CPU) X93_SHA_Indirect_Y() {
 
 func (cpu *CPU) X9E_SHX_Absolute_Y() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -665,7 +665,7 @@ func (cpu *CPU) X9E_SHX_Absolute_Y() {
 
 func (cpu *CPU) X9C_SHY_Absolute_X() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
 	case 4:
@@ -687,7 +687,7 @@ func (cpu *CPU) X9C_SHY_Absolute_X() {
 
 func (cpu *CPU) X9B_TAS_Absolute_Y() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -709,7 +709,7 @@ func (cpu *CPU) X9B_TAS_Absolute_Y() {
 
 func (cpu *CPU) XBB_LAS_Absolute_Y() {
 	// CPU_Cycles = 4+
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(true)
 	case 4:
@@ -729,7 +729,7 @@ func (cpu *CPU) XBB_LAS_Absolute_Y() {
 
 func (cpu *CPU) X27_RLA_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -744,7 +744,7 @@ func (cpu *CPU) X27_RLA_ZeroPage() {
 }
 func (cpu *CPU) X37_RLA_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -759,7 +759,7 @@ func (cpu *CPU) X37_RLA_ZeroPage_X() {
 }
 func (cpu *CPU) X2F_RLA_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -774,7 +774,7 @@ func (cpu *CPU) X2F_RLA_Absolute() {
 }
 func (cpu *CPU) X3F_RLA_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
 	case 4:
@@ -789,7 +789,7 @@ func (cpu *CPU) X3F_RLA_Absolute_X() {
 }
 func (cpu *CPU) X3B_RLA_Absolute_Y() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -804,7 +804,7 @@ func (cpu *CPU) X3B_RLA_Absolute_Y() {
 }
 func (cpu *CPU) X23_RLA_Indirect_X() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -819,7 +819,7 @@ func (cpu *CPU) X23_RLA_Indirect_X() {
 }
 func (cpu *CPU) X33_RLA_Indirect_Y() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
 	case 5:
@@ -839,7 +839,7 @@ func (cpu *CPU) X33_RLA_Indirect_Y() {
 
 func (cpu *CPU) X47_SRE_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -854,7 +854,7 @@ func (cpu *CPU) X47_SRE_ZeroPage() {
 }
 func (cpu *CPU) X57_SRE_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -869,7 +869,7 @@ func (cpu *CPU) X57_SRE_ZeroPage_X() {
 }
 func (cpu *CPU) X4F_SRE_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -884,7 +884,7 @@ func (cpu *CPU) X4F_SRE_Absolute() {
 }
 func (cpu *CPU) X5F_SRE_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
 	case 4:
@@ -899,7 +899,7 @@ func (cpu *CPU) X5F_SRE_Absolute_X() {
 }
 func (cpu *CPU) X5B_SRE_Absolute_Y() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -914,7 +914,7 @@ func (cpu *CPU) X5B_SRE_Absolute_Y() {
 }
 func (cpu *CPU) X43_SRE_Indirect_X() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -929,7 +929,7 @@ func (cpu *CPU) X43_SRE_Indirect_X() {
 }
 func (cpu *CPU) X53_SRE_Indirect_Y() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
 	case 5:
@@ -949,7 +949,7 @@ func (cpu *CPU) X53_SRE_Indirect_Y() {
 
 func (cpu *CPU) X67_RRA_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -965,7 +965,7 @@ func (cpu *CPU) X67_RRA_ZeroPage() {
 
 func (cpu *CPU) X77_RRA_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -980,7 +980,7 @@ func (cpu *CPU) X77_RRA_ZeroPage_X() {
 }
 func (cpu *CPU) X6F_RRA_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -995,7 +995,7 @@ func (cpu *CPU) X6F_RRA_Absolute() {
 }
 func (cpu *CPU) X7F_RRA_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
 	case 4:
@@ -1010,7 +1010,7 @@ func (cpu *CPU) X7F_RRA_Absolute_X() {
 }
 func (cpu *CPU) X7B_RRA_Absolute_Y() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -1025,7 +1025,7 @@ func (cpu *CPU) X7B_RRA_Absolute_Y() {
 }
 func (cpu *CPU) X63_RRA_Indirect_X() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -1040,7 +1040,7 @@ func (cpu *CPU) X63_RRA_Indirect_X() {
 }
 func (cpu *CPU) X73_RRA_Indirect_Y() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
 	case 5:
@@ -1060,7 +1060,7 @@ func (cpu *CPU) X73_RRA_Indirect_Y() {
 
 func (cpu *CPU) XE7_ISC_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.GetAddress_ZeroPage()
 	case 2:
@@ -1075,7 +1075,7 @@ func (cpu *CPU) XE7_ISC_ZeroPage() {
 }
 func (cpu *CPU) XF7_ISC_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_ZeroPageX()
 	case 3:
@@ -1090,7 +1090,7 @@ func (cpu *CPU) XF7_ISC_ZeroPage_X() {
 }
 func (cpu *CPU) XEF_ISC_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2:
 		cpu.GetAddress_Absolute()
 	case 3:
@@ -1105,7 +1105,7 @@ func (cpu *CPU) XEF_ISC_Absolute() {
 }
 func (cpu *CPU) XFF_ISC_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteX(false)
 	case 4:
@@ -1120,7 +1120,7 @@ func (cpu *CPU) XFF_ISC_Absolute_X() {
 }
 func (cpu *CPU) XFB_ISC_Absolute_Y() {
 	// CPU_Cycles = 7
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3:
 		cpu.GetAddress_AbsoluteY(false)
 	case 4:
@@ -1135,7 +1135,7 @@ func (cpu *CPU) XFB_ISC_Absolute_Y() {
 }
 func (cpu *CPU) XE3_ISC_Indirect_X() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectX()
 	case 5:
@@ -1150,7 +1150,7 @@ func (cpu *CPU) XE3_ISC_Indirect_X() {
 }
 func (cpu *CPU) XF3_ISC_Indirect_Y() {
 	// CPU_Cycles = 8
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1, 2, 3, 4:
 		cpu.GetAddress_IndirectY(false)
 	case 5:

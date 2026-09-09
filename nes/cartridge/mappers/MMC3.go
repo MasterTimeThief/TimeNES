@@ -41,7 +41,7 @@ var (
 	MMC3_PPUA12         bool
 	MMC3_PPUA12Prev     bool
 	MMC3_M2Count        int
-	MMC3_IRQPending     bool
+	MMC3_IRQPending     bool // TODO: Figure out how to update IRQ Level Detector from MMC3
 )
 
 //

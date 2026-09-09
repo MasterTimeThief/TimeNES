@@ -75,7 +75,7 @@ func (cpu *CPU) GetAddress_Immediate() {
 //
 // 2 Steps
 func (cpu *CPU) GetAddress_Absolute() {
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1:
 		cpu.DL = cpu.ReadFromPC()
 		cpu.SetAddressBusLow(cpu.DL)
@@ -107,7 +107,7 @@ func (cpu *CPU) GetAddress_AbsoluteX(pbCheck bool) {
 	// Some instructions will always take 4 cycles to determine the address,
 	// and others will normally take 3, but take the extra cycle if a page boundary was crossed.
 	if pbCheck {
-		switch cpu.subCycle {
+		switch cpu.InstructionCycle {
 		case 1:
 			cpu.DL = cpu.ReadFromPC()
 		case 2:
@@ -118,7 +118,7 @@ func (cpu *CPU) GetAddress_AbsoluteX(pbCheck bool) {
 			if PageCrossingCheck(cpu.TempAddress, cpu.X) {
 				FixHighByte = true
 			} else {
-				cpu.subCycle++
+				cpu.InstructionCycle++
 				FixHighByte = false
 			}
 			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.X)) & 0xFF)
@@ -133,7 +133,7 @@ func (cpu *CPU) GetAddress_AbsoluteX(pbCheck bool) {
 			cpu.DL = cpu.ReadFromAB() // Dummy Read
 		}
 	} else {
-		switch cpu.subCycle {
+		switch cpu.InstructionCycle {
 		case 1:
 			cpu.DL = cpu.ReadFromPC()
 		case 2:
@@ -160,7 +160,7 @@ func (cpu *CPU) GetAddress_AbsoluteY(pbCheck bool) {
 	// Some instructions will always take 4 cycles to determine the address,
 	// and others will normally take 3, but take the extra cycle if a page boundary was crossed.
 	if pbCheck {
-		switch cpu.subCycle {
+		switch cpu.InstructionCycle {
 		case 1:
 			cpu.DL = cpu.ReadFromPC()
 		case 2:
@@ -171,7 +171,7 @@ func (cpu *CPU) GetAddress_AbsoluteY(pbCheck bool) {
 			if PageCrossingCheck(cpu.TempAddress, cpu.Y) {
 				FixHighByte = true
 			} else {
-				cpu.subCycle++
+				cpu.InstructionCycle++
 				FixHighByte = false
 			}
 
@@ -187,7 +187,7 @@ func (cpu *CPU) GetAddress_AbsoluteY(pbCheck bool) {
 			cpu.DL = cpu.ReadFromAB() // Dummy Read
 		}
 	} else {
-		switch cpu.subCycle {
+		switch cpu.InstructionCycle {
 		case 1:
 			cpu.DL = cpu.ReadFromPC()
 		case 2:
@@ -214,7 +214,7 @@ func (cpu *CPU) GetAddress_AbsoluteY(pbCheck bool) {
 //
 // 4 Steps
 func (cpu *CPU) GetAddress_IndirectX() {
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1: // Fetch pointer address
 		cpu.AddressBus = uint16(cpu.ReadFromPC())
 	case 2: // Add X
@@ -240,7 +240,7 @@ func (cpu *CPU) GetAddress_IndirectY(pbCheck bool) {
 	// Some instructions will always take 4 cycles to determine the address,
 	// and others will normally take 3, but take the extra cycle if a page boundary was crossed.
 	if pbCheck {
-		switch cpu.subCycle {
+		switch cpu.InstructionCycle {
 		case 1: // Fetch pointer address
 			cpu.AddressBus = uint16(cpu.ReadFromPC())
 		case 2: // fetch address low
@@ -251,7 +251,7 @@ func (cpu *CPU) GetAddress_IndirectY(pbCheck bool) {
 			cpu.TempAddress = cpu.AddressBus
 			cpu.H = byte(cpu.AddressBus >> 8)
 			if !PageCrossingCheck(cpu.TempAddress, cpu.Y) {
-				cpu.subCycle++
+				cpu.InstructionCycle++
 			}
 			cpu.AddressBus = (cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + uint16(cpu.Y)) & 0xFF)
 		case 4: // increment high byte
@@ -261,7 +261,7 @@ func (cpu *CPU) GetAddress_IndirectY(pbCheck bool) {
 			cpu.AddressBus += 0x100
 		}
 	} else {
-		switch cpu.subCycle {
+		switch cpu.InstructionCycle {
 		case 1: // Fetch pointer address
 			cpu.AddressBus = uint16(cpu.ReadFromPC())
 		case 2: // fetch address low
@@ -294,7 +294,7 @@ func (cpu *CPU) GetAddress_ZeroPage() {
 //
 // 2 Steps
 func (cpu *CPU) GetAddress_ZeroPageX() {
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1: // Fetch address
 		cpu.AddressBus = uint16(cpu.ReadFromPC())
 	case 2: // Dummy read, and add X
@@ -307,7 +307,7 @@ func (cpu *CPU) GetAddress_ZeroPageX() {
 //
 // 2 Steps
 func (cpu *CPU) GetAddress_ZeroPageY() {
-	switch cpu.subCycle {
+	switch cpu.InstructionCycle {
 	case 1: // Fetch address
 		cpu.AddressBus = uint16(cpu.ReadFromPC())
 	case 2: // Dummy read, and add Y

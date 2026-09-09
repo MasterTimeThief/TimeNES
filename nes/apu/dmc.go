@@ -129,6 +129,7 @@ func (d *DeltaModChannel) DMCDMA_Get() {
 					d.Enabled = false
 					if d.IRQEnable {
 						APUDMCInterrupt = true
+						IRQLevelDetector = true
 					}
 				}
 			}
@@ -136,6 +137,9 @@ func (d *DeltaModChannel) DMCDMA_Get() {
 			d.Buffer = 0
 		}
 	}
+	//DoDMCDMA = false
+	//OAMDMA_Aligned = false
+	//apuCannotDMCDMARightNow = 2
 }
 
 func (d *DeltaModChannel) DMCRestartSample() {

@@ -156,6 +156,7 @@ func (a *APU) DMA_Put() {
 	if APUFrameInterruptDelay {
 		APUFrameInterruptDelay = false
 		APUFrameInterrupt = false
+		IRQLevelDetector = false
 	}
 	// DMC load from 4015
 	//if DMCDMADelay > 0 {
