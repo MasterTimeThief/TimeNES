@@ -18,6 +18,15 @@ type APU struct {
 
 	audioContext *audio.Context
 	player       *audio.Player
+
+	// DMC DMA
+	DMAGetCycle          bool
+	DoDMCDMA             bool
+	DMCDMAHalt           bool
+	DMCDMADelay          byte
+	CannotDMCDMARightNow byte
+
+	// Frame Counter
 }
 
 type CPU interface {
@@ -26,12 +35,9 @@ type CPU interface {
 }
 
 // var apuEnablePulse1, apuEnablePulse2, apuEnableTriangle, apuEnableNoise, apuEnableDMC bool
-var APUDMCInterrupt, apuDMCDelayed, APUFrameInterrupt, APUInhibitIRQ, APUFrameCounterMode, apuIsHalfFrame bool
-var apuFrameCounter int
+var APUDMCInterrupt, apuDMCDelayed, APUFrameInterrupt, APUInhibitIRQ, APUFrameCounterMode, APUIsHalfFrame bool
+var APUFrameCounter int
 var IRQLevelDetector, DoIRQ bool
-
-var DMAGetCycle, DoDMCDMA, DMCDMAHalt bool
-var DMCDMADelay, apuCannotDMCDMARightNow byte
 
 var apu4017ResetTimer int = 0
 var APUFrameInterruptDelay bool
@@ -67,14 +73,14 @@ func (a *APU) ResetAPU() {
 	APUInhibitIRQ = false
 	APUFrameCounterMode = false
 	//apuSilent = false
-	apuIsHalfFrame = false
-	apuFrameCounter = 0
+	APUIsHalfFrame = false
+	APUFrameCounter = 0
 	IRQLevelDetector = false
 	DoIRQ = false
 
-	DMAGetCycle = false
-	DoDMCDMA, DMCDMAHalt = false, false
-	DMCDMADelay, apuCannotDMCDMARightNow = 0, 0
+	a.DMAGetCycle = false
+	a.DoDMCDMA, a.DMCDMAHalt = false, false
+	a.DMCDMADelay, a.CannotDMCDMARightNow = 0, 0
 
 	apu4017ResetTimer = 0
 	//apuMixerInputBuffer = [apuMaxSamplesPerFrame]uint16{}
@@ -86,7 +92,7 @@ func (a *APU) APU_Cycle() {
 	//Clock triangle timer every cycle
 	a.Triangle.ClockTriangleTimer()
 
-	if DMAGetCycle {
+	if a.DMAGetCycle {
 		a.DMA_Get()
 	} else {
 		a.DMA_Put()
@@ -129,7 +135,7 @@ func (a *APU) APU_Cycle() {
 		apua.Noise.LengthCounter.ReloadFlag = false
 	}*/
 
-	DMAGetCycle = !DMAGetCycle
+	a.DMAGetCycle = !a.DMAGetCycle
 	if common.PendingMute {
 		MuteEmulator = !MuteEmulator
 		common.PendingMute = false
@@ -146,8 +152,8 @@ func (a *APU) DMA_Get() {
 	a.Noise.ClockNoiseTimer()
 	a.DMC.ClockDMCTimer()
 
-	if apuCannotDMCDMARightNow > 0 {
-		apuCannotDMCDMARightNow -= 2
+	if a.CannotDMCDMARightNow > 0 {
+		a.CannotDMCDMARightNow -= 2
 	}
 }
 
@@ -307,7 +313,7 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 			if a.DMC.BytesRemaining == 0 {
 				a.DMC.DMCRestartSample()
 				if APUSilent {
-					DMCDMADelay = 2
+					a.DMCDMADelay = 2
 				}
 			}
 		} else {
@@ -329,13 +335,13 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
 		}
-		Set4017ResetTimer()
+		a.Set4017ResetTimer()
 	}
 }
 
 // Delay the Frame Counter reset depending on the DMA alignment
-func Set4017ResetTimer() {
-	if DMAGetCycle {
+func (a *APU) Set4017ResetTimer() {
+	if a.DMAGetCycle {
 		apu4017ResetTimer = 4
 	} else {
 		apu4017ResetTimer = 3
@@ -402,14 +408,14 @@ func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 	if (apu4017ResetTimer & 0x80) == 0 {
 		apu4017ResetTimer--
 		if (apu4017ResetTimer & 0x80) != 0 {
-			apuFrameCounter = 0
+			APUFrameCounter = 0
 		}
 	}
-	apuFrameCounter++
-	apuIsHalfFrame = false
+	APUFrameCounter++
+	APUIsHalfFrame = false
 
 	if !APUFrameCounterMode { //4-Cycle mode
-		switch apuFrameCounter {
+		switch APUFrameCounter {
 		case 7457:
 			a.ClockFrameCounterQuarterFrame()
 		case 14913:
@@ -433,10 +439,10 @@ func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 			if !IRQLevelDetector {
 				IRQLevelDetector = !APUInhibitIRQ
 			}
-			apuFrameCounter = 0
+			APUFrameCounter = 0
 		}
 	} else { //5-Cycle mode
-		switch apuFrameCounter {
+		switch APUFrameCounter {
 		case 7457:
 			a.ClockFrameCounterQuarterFrame()
 		case 14913:
@@ -450,7 +456,7 @@ func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
 		case 37282:
-			apuFrameCounter = 0
+			APUFrameCounter = 0
 		}
 	}
 
@@ -493,7 +499,7 @@ func (a *APU) ClockFrameCounterHalfFrame() {
 	a.Triangle.ClockLengthCounter()
 	a.Noise.ClockLengthCounter()
 
-	apuIsHalfFrame = true
+	APUIsHalfFrame = true
 
 }
 
@@ -522,7 +528,7 @@ func (a *APU) GetDMCMute() *bool {
 }
 
 func (a *APU) ISDMAGetCycle() bool {
-	return DMAGetCycle
+	return a.DMAGetCycle
 }
 
 func (a *APU) SetEmulatorvolume(vol float64) {
