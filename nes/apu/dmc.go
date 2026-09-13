@@ -21,13 +21,6 @@ type DeltaModChannel struct {
 
 	ForceMute bool
 
-	// This will get the whole sample at once,
-	// so I don't have to go back and read it
-	// each time I need a new sample.
-	// Also because Go is being a baby about it.
-	//SampleBuffer    []byte
-	//SampleBufferPos byte
-
 	cpu CPU
 }
 
@@ -143,7 +136,6 @@ func (d *DeltaModChannel) DMCDMA_Get() {
 }
 
 func (d *DeltaModChannel) DMCRestartSample() {
-	//d.SampleBufferPos = 0
 	d.CurrentAddress = d.SampleAddress
 	d.BytesRemaining = d.SampleLength
 }

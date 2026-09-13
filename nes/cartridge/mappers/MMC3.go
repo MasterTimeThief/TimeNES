@@ -44,26 +44,10 @@ var (
 	MMC3_IRQPending     bool // TODO: Figure out how to update IRQ Level Detector from MMC3
 )
 
-//
-
 var ( //PRG Banks
 	MMC3_LastBank      uint32
 	MMC3_2ndToLastBank uint32
-
-//	MMC3_BankAddress_8000 uint32
-//	MMC3_BankAddress_A000 uint32
-//	MMC3_BankAddress_C000 uint32
 )
-
-//
-//var ( //CHR Banks
-//	MMC3_CHRBankAddress0 uint32
-//	MMC3_CHRBankAddress1 uint32
-//	MMC3_CHRBankAddress2 uint32
-//	MMC3_CHRBankAddress3 uint32
-//	MMC3_CHRBankAddress4 uint32
-//	MMC3_CHRBankAddress5 uint32
-//)
 
 var MMC3_PRGRAM [0x2000]byte
 

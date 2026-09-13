@@ -165,39 +165,6 @@ func (g *Game) MasterClockTick() {
 	// APU runs every 6
 	// - Alternates between DMA Get and Put
 
-	/*MasterClock++
-	switch MasterClock {
-	case 1:
-		Emulator.cpu.CPU_Cycle()
-		ppu.PPU_Cycle()
-		Emulator.apu.APU_Cycle()
-	//case 2:
-	case 3:
-		ppu.PPU_Cycle()
-	case 4:
-		if cartridge.MapperChipID == 4 {
-			mappers.MMC3_ClockM2(ppu.PPUAddressBus)
-		}
-	case 5:
-		ppu.PPU_Cycle()
-	//case 6:
-	case 7:
-		Emulator.cpu.CPU_Cycle()
-		ppu.PPU_Cycle()
-		Emulator.apu.APU_Cycle()
-	//case 8:
-	case 9:
-		ppu.PPU_Cycle()
-	case 10:
-		if cartridge.MapperChipID == 4 {
-			mappers.MMC3_ClockM2(ppu.PPUAddressBus)
-		}
-	case 11:
-		ppu.PPU_Cycle()
-	case 12:
-		MasterClock = 0
-	}*/
-
 	// 2A03
 	// CPU runs every 6 ticks
 	cpuClock++
