@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"mtt/timenes/common"
 	"mtt/timenes/debug"
-	"mtt/timenes/nes/apu"
-	"mtt/timenes/nes/cartridge/mappers"
 	"mtt/timenes/nes/ppu"
 )
 
@@ -1622,7 +1620,7 @@ func (cpu *CPU) CPU_Cycle() {
 		}
 
 		//Check for, and perform Interrupt Request (IRQ)
-		if (apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !DoNMI && !cpu.flag_InterruptDisable {
+		/*if (apu.APUDMCInterrupt || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !DoNMI && !cpu.flag_InterruptDisable {
 			cpu.flag_B = false
 			cpu.Push(byte(cpu.PC >> 8))
 			cpu.Push(byte(cpu.PC))
@@ -1637,7 +1635,7 @@ func (cpu *CPU) CPU_Cycle() {
 			apu.APUFrameInterrupt = false
 			mappers.MMC3_IRQPending = false
 			DoNMI = false
-		}
+		}*/
 
 	} else {
 		cpu.DelayCounter--

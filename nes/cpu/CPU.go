@@ -15,6 +15,8 @@ type BUS interface {
 
 type APU interface {
 	RunDMCDMA()
+	GetFrameInterrupt() bool
+	SetFrameInterrupt(bool)
 }
 
 type CPU struct {
@@ -842,7 +844,7 @@ func (cpu *CPU) PollIRQ() bool {
 	//if cpu.flag_InterruptDisable {
 	//	cpu.IRQPending = false
 	//}
-	return (cpu.IRQPending || apu.APUFrameInterrupt || mappers.MMC3_IRQPending) && !cpu.flag_InterruptDisable
+	return (cpu.IRQPending || cpu.apu.GetFrameInterrupt() || mappers.MMC3_IRQPending) && !cpu.flag_InterruptDisable
 }
 
 func (cpu *CPU) DisableNMI() {
@@ -852,7 +854,7 @@ func (cpu *CPU) DisableNMI() {
 func (cpu *CPU) DisableIRQFlags() {
 	cpu.IRQPending = false
 	apu.APUDMCInterrupt = false
-	apu.APUFrameInterrupt = false
+	cpu.apu.SetFrameInterrupt(false)
 	mappers.MMC3_IRQPending = false
 }
 

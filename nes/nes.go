@@ -178,7 +178,7 @@ func (g *Game) MasterClockTick() {
 		}
 	case 4:
 		g.cpu.SetIRQLine()
-		if apu.APUFrameInterrupt && !apu.APUInhibitIRQ {
+		if g.apu.APUFrameInterrupt && !g.apu.APUInhibitIRQ {
 			apu.IRQLevelDetector = true // if the APU frame counter flag is never cleared, you will get another IRQ when the I flag is cleared.
 		}
 		if cartridge.MapperChipID == 4 {

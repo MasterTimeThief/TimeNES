@@ -27,6 +27,12 @@ type APU struct {
 	CannotDMCDMARightNow byte
 
 	// Frame Counter
+	APUFrameCounter     int
+	apuDMCDelayed       bool
+	APUFrameInterrupt   bool
+	APUInhibitIRQ       bool
+	APUFrameCounterMode bool
+	APUIsHalfFrame      bool
 }
 
 type CPU interface {
@@ -34,10 +40,8 @@ type CPU interface {
 	DelayCPU(int)
 }
 
-// var apuEnablePulse1, apuEnablePulse2, apuEnableTriangle, apuEnableNoise, apuEnableDMC bool
-var APUDMCInterrupt, apuDMCDelayed, APUFrameInterrupt, APUInhibitIRQ, APUFrameCounterMode, APUIsHalfFrame bool
-var APUFrameCounter int
-var IRQLevelDetector, DoIRQ bool
+// Keep these out of the struct for now
+var APUDMCInterrupt, IRQLevelDetector bool
 
 var apu4017ResetTimer int = 0
 var APUFrameInterruptDelay bool
@@ -68,15 +72,14 @@ func (a *APU) ResetAPU() {
 
 	//APU Variables
 	APUDMCInterrupt = false
-	apuDMCDelayed = false
-	APUFrameInterrupt = false
-	APUInhibitIRQ = false
-	APUFrameCounterMode = false
+	a.apuDMCDelayed = false
+	a.APUFrameInterrupt = false
+	a.APUInhibitIRQ = false
+	a.APUFrameCounterMode = false
 	//apuSilent = false
-	APUIsHalfFrame = false
-	APUFrameCounter = 0
+	a.APUIsHalfFrame = false
+	a.APUFrameCounter = 0
 	IRQLevelDetector = false
-	DoIRQ = false
 
 	a.DMAGetCycle = false
 	a.DoDMCDMA, a.DMCDMAHalt = false, false
@@ -116,7 +119,7 @@ func (a *APU) APU_Cycle() {
 	a.ClockFrameCounter()
 
 	//If this isn't a Frame Counter half-frame
-	/*if !apuIsHalfFrame {
+	/*if !a.APUIsHalfFrame {
 		if apua.Pulse1.LengthCounter.ReloadFlag {
 			apua.Pulse1.LengthCounter.Counter = apua.Pulse1.LengthCounter.ReloadValue
 		}
@@ -161,7 +164,7 @@ func (a *APU) DMA_Get() {
 func (a *APU) DMA_Put() {
 	if APUFrameInterruptDelay {
 		APUFrameInterruptDelay = false
-		APUFrameInterrupt = false
+		a.APUFrameInterrupt = false
 		IRQLevelDetector = false
 	}
 	// DMC load from 4015
@@ -180,7 +183,7 @@ func (a *APU) DMA_Put() {
 func (a *APU) ReadAPU(Address uint16) byte {
 	status := byte(0)
 	status |= byte(common.Ternary(APUDMCInterrupt, 0x80, 0x00))                                                                      //DMC Interrupt
-	status |= byte(common.Ternary(APUFrameInterrupt, 0x40, 0x00))                                                                    //Frame Interrupt
+	status |= byte(common.Ternary(a.APUFrameInterrupt, 0x40, 0x00))                                                                  //Frame Interrupt
 	status |= byte(common.Ternary(a.DMC.BytesRemaining > 0, 0x10, 0x00))                                                             //DMC Active
 	status |= byte(common.Ternary(!(a.Noise.LengthCounter.Counter == 0 /*|| apua.Noise.LengthCounter.HaltFlag*/), 0x08, 0x00))       //Noise Active
 	status |= byte(common.Ternary(!(a.Triangle.LengthCounter.Counter == 0 /*|| apua.Triangle.LengthCounter.HaltFlag*/), 0x04, 0x00)) //Triangle Active
@@ -324,14 +327,14 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 		IRQLevelDetector = false
 
 	case 0x4017: //APU Frame Counter control
-		//modeFlagPrev := apuFrameCounterMode
-		APUFrameCounterMode = ((Value & 0x80) >> 7) != 0
-		APUInhibitIRQ = ((Value & 0x40) >> 6) != 0
-		if APUInhibitIRQ {
-			APUFrameInterrupt = false
+		//modeFlagPrev := a.APUFrameCounterMode
+		a.APUFrameCounterMode = ((Value & 0x80) >> 7) != 0
+		a.APUInhibitIRQ = ((Value & 0x40) >> 6) != 0
+		if a.APUInhibitIRQ {
+			a.APUFrameInterrupt = false
 			IRQLevelDetector = false
 		}
-		if /*!modeFlagPrev &&*/ APUFrameCounterMode {
+		if /*!modeFlagPrev &&*/ a.APUFrameCounterMode {
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
 		}
@@ -408,14 +411,14 @@ func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 	if (apu4017ResetTimer & 0x80) == 0 {
 		apu4017ResetTimer--
 		if (apu4017ResetTimer & 0x80) != 0 {
-			APUFrameCounter = 0
+			a.APUFrameCounter = 0
 		}
 	}
-	APUFrameCounter++
-	APUIsHalfFrame = false
+	a.APUFrameCounter++
+	a.APUIsHalfFrame = false
 
-	if !APUFrameCounterMode { //4-Cycle mode
-		switch APUFrameCounter {
+	if !a.APUFrameCounterMode { //4-Cycle mode
+		switch a.APUFrameCounter {
 		case 7457:
 			a.ClockFrameCounterQuarterFrame()
 		case 14913:
@@ -424,25 +427,25 @@ func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 		case 22371:
 			a.ClockFrameCounterQuarterFrame()
 		case 29828:
-			APUFrameInterrupt = true
+			a.APUFrameInterrupt = true
 		case 29829:
 			//if !apuDMAGetCycle {
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
 			//}
-			APUFrameInterrupt = true
+			a.APUFrameInterrupt = true
 			if !IRQLevelDetector {
-				IRQLevelDetector = !APUInhibitIRQ
+				IRQLevelDetector = !a.APUInhibitIRQ
 			}
 		case 29830:
-			APUFrameInterrupt = !APUInhibitIRQ
+			a.APUFrameInterrupt = !a.APUInhibitIRQ
 			if !IRQLevelDetector {
-				IRQLevelDetector = !APUInhibitIRQ
+				IRQLevelDetector = !a.APUInhibitIRQ
 			}
-			APUFrameCounter = 0
+			a.APUFrameCounter = 0
 		}
 	} else { //5-Cycle mode
-		switch APUFrameCounter {
+		switch a.APUFrameCounter {
 		case 7457:
 			a.ClockFrameCounterQuarterFrame()
 		case 14913:
@@ -456,7 +459,7 @@ func (a *APU) ClockFrameCounter() { //Also called Frame Sequencer
 			a.ClockFrameCounterQuarterFrame()
 			a.ClockFrameCounterHalfFrame()
 		case 37282:
-			APUFrameCounter = 0
+			a.APUFrameCounter = 0
 		}
 	}
 
@@ -499,7 +502,7 @@ func (a *APU) ClockFrameCounterHalfFrame() {
 	a.Triangle.ClockLengthCounter()
 	a.Noise.ClockLengthCounter()
 
-	APUIsHalfFrame = true
+	a.APUIsHalfFrame = true
 
 }
 
@@ -537,4 +540,12 @@ func (a *APU) SetEmulatorvolume(vol float64) {
 
 func (a *APU) RunDMCDMA() {
 	//Put DMC DMA code here
+}
+
+func (a *APU) GetFrameInterrupt() bool {
+	return a.APUFrameInterrupt
+}
+
+func (a *APU) SetFrameInterrupt(status bool) {
+	a.APUFrameInterrupt = status
 }
