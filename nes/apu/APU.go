@@ -19,13 +19,6 @@ type APU struct {
 	audioContext *audio.Context
 	player       *audio.Player
 
-	// DMC DMA
-	DMAGetCycle          bool
-	DoDMCDMA             bool
-	DMCDMAHalt           bool
-	DMCDMADelay          byte
-	CannotDMCDMARightNow byte
-
 	// Frame Counter
 	APUFrameCounter     int
 	apuDMCDelayed       bool
@@ -39,6 +32,15 @@ type CPU interface {
 	Read(uint16) byte
 	DelayCPU(int)
 }
+
+// DMC DMA
+var (
+	DMAGetCycle          bool
+	DoDMCDMA             bool
+	DMCDMAHalt           bool
+	DMCDMADelay          byte
+	CannotDMCDMARightNow byte
+)
 
 // Keep these out of the struct for now
 var APUDMCInterrupt, IRQLevelDetector bool
@@ -81,9 +83,9 @@ func (a *APU) ResetAPU() {
 	a.APUFrameCounter = 0
 	IRQLevelDetector = false
 
-	a.DMAGetCycle = false
-	a.DoDMCDMA, a.DMCDMAHalt = false, false
-	a.DMCDMADelay, a.CannotDMCDMARightNow = 0, 0
+	DMAGetCycle = false
+	DoDMCDMA, DMCDMAHalt = false, false
+	DMCDMADelay, CannotDMCDMARightNow = 0, 0
 
 	apu4017ResetTimer = 0
 	//apuMixerInputBuffer = [apuMaxSamplesPerFrame]uint16{}
@@ -95,7 +97,7 @@ func (a *APU) APU_Cycle() {
 	//Clock triangle timer every cycle
 	a.Triangle.ClockTriangleTimer()
 
-	if a.DMAGetCycle {
+	if DMAGetCycle {
 		a.DMA_Get()
 	} else {
 		a.DMA_Put()
@@ -138,7 +140,7 @@ func (a *APU) APU_Cycle() {
 		apua.Noise.LengthCounter.ReloadFlag = false
 	}*/
 
-	a.DMAGetCycle = !a.DMAGetCycle
+	DMAGetCycle = !DMAGetCycle
 	if common.PendingMute {
 		MuteEmulator = !MuteEmulator
 		common.PendingMute = false
@@ -155,8 +157,8 @@ func (a *APU) DMA_Get() {
 	a.Noise.ClockNoiseTimer()
 	a.DMC.ClockDMCTimer()
 
-	if a.CannotDMCDMARightNow > 0 {
-		a.CannotDMCDMARightNow -= 2
+	if CannotDMCDMARightNow > 0 {
+		CannotDMCDMARightNow -= 2
 	}
 }
 
@@ -316,7 +318,7 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 			if a.DMC.BytesRemaining == 0 {
 				a.DMC.DMCRestartSample()
 				if APUSilent {
-					a.DMCDMADelay = 2
+					DMCDMADelay = 2
 				}
 			}
 		} else {
@@ -344,7 +346,7 @@ func (a *APU) WriteAPU(Address uint16, Value byte) {
 
 // Delay the Frame Counter reset depending on the DMA alignment
 func (a *APU) Set4017ResetTimer() {
-	if a.DMAGetCycle {
+	if DMAGetCycle {
 		apu4017ResetTimer = 4
 	} else {
 		apu4017ResetTimer = 3
@@ -531,7 +533,7 @@ func (a *APU) GetDMCMute() *bool {
 }
 
 func (a *APU) ISDMAGetCycle() bool {
-	return a.DMAGetCycle
+	return DMAGetCycle
 }
 
 func (a *APU) SetEmulatorvolume(vol float64) {

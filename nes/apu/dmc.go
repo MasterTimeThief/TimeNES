@@ -82,10 +82,10 @@ func (d *DeltaModChannel) DMCOutputCycle() {
 	d.ShifterBitsRemaining = 8 // it's time for a DMC DMA!
 
 	if d.BytesRemaining > 0 /*|| APU_SetImplicitAbortDMC4015*/ {
-		//if !apuDoDMCDMA && apuCannotDMCDMARightNow != 2 {
+		//if !DoDMCDMA && CannotDMCDMARightNow != 2 {
 		//	// if playing a sample:
-		//	apuDoDMCDMA = true
-		//	apuDMCDMAHalt = true
+		//	DoDMCDMA = true
+		//	DMCDMAHalt = true
 		//}
 		d.Shifter = d.Buffer // and set up the shifter with the new values.
 		d.Buffer = 0
