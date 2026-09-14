@@ -168,8 +168,10 @@ func MMC3_ClockIRQ(Addr uint16) {
 			}
 		} else {
 			MMC3_IRQCounter--
-			if MMC3_IRQCounter == 0 && MMC3_IRQEnabled {
-				MMC3_IRQPending = true
+			if MMC3_IRQCounter == 0 {
+				if MMC3_IRQEnabled {
+					MMC3_IRQPending = true
+				}
 			} else if MMC3_IRQCounter == 0xFF {
 				MMC3_IRQCounter = MMC3_IRQReloadValue
 				MMC3_IRQReloadFlag = false

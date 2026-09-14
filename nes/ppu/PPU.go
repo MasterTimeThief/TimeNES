@@ -289,6 +289,8 @@ func PPU_ResetYScroll() {
 	VRAMAddress = ((VRAMAddress & 0b0000010000011111) | (TransferAddress & 0b0111101111100000))
 }
 
+var PPUSpriteAddress uint16
+
 func SpriteEvaluation() {
 	if PPUDot == 0 { //Step 0: Reset Secondary OAM count
 		OAM2Address = 0
@@ -384,10 +386,12 @@ func SpriteEvaluation() {
 			//Set this object's X position in the array
 			ppu_SpriteXposition[OAM2Address/4] = OAM2[OAM2Address]
 		case 4:
-			PPUAddressBus = ppuFindSpritePatternData(OAM2Address / 4)
+			PPUSpriteAddress = ppuFindSpritePatternData(OAM2Address / 4)
 		case 5:
-			ppuSpriteEvalTemp = ReadPPU()
-			if PPUScanline == 261 {
+			if PPUScanline != 261 {
+				PPUAddressBus = PPUSpriteAddress
+				ppuSpriteEvalTemp = ReadPPU()
+			} else {
 				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
 			}
 			if ((ppu_SpriteAttribute[OAM2Address/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
@@ -398,10 +402,12 @@ func SpriteEvaluation() {
 			}
 			ppu_SpriteShiftRegisterL[OAM2Address/4] = ppuSpriteEvalTemp
 		case 6:
-			PPUAddressBus += 8
+			PPUSpriteAddress = PPUAddressBus + 8
 		case 7:
-			ppuSpriteEvalTemp = ReadPPU()
-			if PPUScanline == 261 {
+			if PPUScanline != 261 {
+				PPUAddressBus = PPUSpriteAddress
+				ppuSpriteEvalTemp = ReadPPU()
+			} else {
 				ppuSpriteEvalTemp = 0 //Clear this if this is the pre-render line
 			}
 			if ((ppu_SpriteAttribute[OAM2Address/4] >> 6) & 1) == 1 { //Attributes are set up to flip X
