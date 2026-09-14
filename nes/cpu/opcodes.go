@@ -11,81 +11,81 @@ import "mtt/timenes/nes/cartridge/mappers"
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X85_STA_ZeroPage() {
+func (c *CPU) X85_STA_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X95_STA_ZeroPage_X() {
+func (c *CPU) X95_STA_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X8D_STA_Absolute() {
+func (c *CPU) X8D_STA_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X9D_STA_Absolute_X() {
+func (c *CPU) X9D_STA_Absolute_X() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(false)
+		c.GetAddress_AbsoluteX(false)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X99_STA_Absolute_Y() {
+func (c *CPU) X99_STA_Absolute_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(false)
+		c.GetAddress_AbsoluteY(false)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X81_STA_Indirect_X() {
+func (c *CPU) X81_STA_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X91_STA_Indirect_Y() {
+func (c *CPU) X91_STA_Indirect_Y() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(false)
+		c.GetAddress_IndirectY(false)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.A)
+		c.CompleteInstruction()
 	}
 }
 
@@ -94,95 +94,95 @@ func (cpu *CPU) X91_STA_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XA9_LDA_Immediate() {
+func (c *CPU) XA9_LDA_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.A = cpu.ReadFromPC()
-	cpu.SetZNFlags(cpu.A)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.A = c.ReadFromPC()
+	c.SetZNFlags(c.A)
+	c.CompleteInstruction()
 }
-func (cpu *CPU) XA5_LDA_ZeroPage() {
+func (c *CPU) XA5_LDA_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.A = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.ReadFromAB()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XB5_LDA_ZeroPage_X() {
+func (c *CPU) XB5_LDA_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.A = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.ReadFromAB()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XAD_LDA_Absolute() {
+func (c *CPU) XAD_LDA_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.A = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.ReadFromAB()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XBD_LDA_Absolute_X() {
+func (c *CPU) XBD_LDA_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.A = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.ReadFromAB()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XB9_LDA_Absolute_Y() {
+func (c *CPU) XB9_LDA_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.A = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.ReadFromAB()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XA1_LDA_Indirect_X() {
+func (c *CPU) XA1_LDA_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.A = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.ReadFromAB()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XB1_LDA_Indirect_Y() {
+func (c *CPU) XB1_LDA_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(true)
+		c.GetAddress_IndirectY(true)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.A = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.ReadFromAB()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
 
@@ -191,37 +191,37 @@ func (cpu *CPU) XB1_LDA_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X86_STX_ZeroPage() {
+func (c *CPU) X86_STX_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.X)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.X)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X96_STX_ZeroPage_Y() {
+func (c *CPU) X96_STX_ZeroPage_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageY()
+		c.GetAddress_ZeroPageY()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.X)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.X)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X8E_STX_Absolute() {
+func (c *CPU) X8E_STX_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.X)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.X)
+		c.CompleteInstruction()
 	}
 }
 
@@ -230,59 +230,59 @@ func (cpu *CPU) X8E_STX_Absolute() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XA2_LDX_Immediate() {
+func (c *CPU) XA2_LDX_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.X = cpu.ReadFromPC()
-	cpu.SetZNFlags(cpu.X)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.X = c.ReadFromPC()
+	c.SetZNFlags(c.X)
+	c.CompleteInstruction()
 }
-func (cpu *CPU) XA6_LDX_ZeroPage() {
+func (c *CPU) XA6_LDX_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.X = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.X)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.X = c.ReadFromAB()
+		c.SetZNFlags(c.X)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XAE_LDX_Absolute() {
+func (c *CPU) XAE_LDX_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.X = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.X)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.X = c.ReadFromAB()
+		c.SetZNFlags(c.X)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XB6_LDX_ZeroPage_Y() {
+func (c *CPU) XB6_LDX_ZeroPage_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageY()
+		c.GetAddress_ZeroPageY()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.X = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.X)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.X = c.ReadFromAB()
+		c.SetZNFlags(c.X)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XBE_LDX_Absolute_Y() {
+func (c *CPU) XBE_LDX_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.X = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.X)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.X = c.ReadFromAB()
+		c.SetZNFlags(c.X)
+		c.CompleteInstruction()
 	}
 }
 
@@ -291,37 +291,37 @@ func (cpu *CPU) XBE_LDX_Absolute_Y() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X84_STY_ZeroPage() {
+func (c *CPU) X84_STY_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.Y)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.Y)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X94_STY_ZeroPage_X() {
+func (c *CPU) X94_STY_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.Y)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.Y)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X8C_STY_Absolute() {
+func (c *CPU) X8C_STY_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.WriteToAB(cpu.Y)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.WriteToAB(c.Y)
+		c.CompleteInstruction()
 	}
 }
 
@@ -330,59 +330,59 @@ func (cpu *CPU) X8C_STY_Absolute() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XA0_LDY_Immediate() {
+func (c *CPU) XA0_LDY_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Y = cpu.ReadFromPC()
-	cpu.SetZNFlags(cpu.Y)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Y = c.ReadFromPC()
+	c.SetZNFlags(c.Y)
+	c.CompleteInstruction()
 }
-func (cpu *CPU) XA4_LDY_ZeroPage() {
+func (c *CPU) XA4_LDY_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.Y)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Y = c.ReadFromAB()
+		c.SetZNFlags(c.Y)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XAC_LDY_Absolute() {
+func (c *CPU) XAC_LDY_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.Y)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Y = c.ReadFromAB()
+		c.SetZNFlags(c.Y)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XB4_LDY_ZeroPage_X() {
+func (c *CPU) XB4_LDY_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.Y)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Y = c.ReadFromAB()
+		c.SetZNFlags(c.Y)
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XBC_LDY_Absolute_X() {
+func (c *CPU) XBC_LDY_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Y = cpu.ReadFromAB()
-		cpu.SetZNFlags(cpu.Y)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Y = c.ReadFromAB()
+		c.SetZNFlags(c.Y)
+		c.CompleteInstruction()
 	}
 }
 
@@ -395,12 +395,12 @@ func (cpu *CPU) XBC_LDY_Absolute_X() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XAA_TAX() {
+func (c *CPU) XAA_TAX() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.X = cpu.A
-	cpu.SetZNFlags(cpu.X)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.X = c.A
+	c.SetZNFlags(c.X)
+	c.CompleteInstruction()
 }
 
 //	TAY: Transfer Accumulator to Index Y
@@ -408,12 +408,12 @@ func (cpu *CPU) XAA_TAX() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XA8_TAY() {
+func (c *CPU) XA8_TAY() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Y = cpu.A
-	cpu.SetZNFlags(cpu.Y)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Y = c.A
+	c.SetZNFlags(c.Y)
+	c.CompleteInstruction()
 }
 
 //	TXA: Transfer Index X to Accumulator
@@ -421,12 +421,12 @@ func (cpu *CPU) XA8_TAY() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) X8A_TXA() {
+func (c *CPU) X8A_TXA() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.A = cpu.X
-	cpu.SetZNFlags(cpu.A)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.A = c.X
+	c.SetZNFlags(c.A)
+	c.CompleteInstruction()
 }
 
 //	TYA: Transfer Index Y to Accumulator
@@ -434,12 +434,12 @@ func (cpu *CPU) X8A_TXA() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) X98_TYA() {
+func (c *CPU) X98_TYA() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.A = cpu.Y
-	cpu.SetZNFlags(cpu.A)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.A = c.Y
+	c.SetZNFlags(c.A)
+	c.CompleteInstruction()
 }
 
 //----------------------------------------
@@ -451,87 +451,87 @@ func (cpu *CPU) X98_TYA() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	+
 
-func (cpu *CPU) X69_ADC_Immediate() {
+func (c *CPU) X69_ADC_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_ADC(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_ADC(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X65_ADC_ZeroPage() {
+func (c *CPU) X65_ADC_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_ADC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ADC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X75_ADC_ZeroPage_X() {
+func (c *CPU) X75_ADC_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_ADC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ADC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X6D_ADC_Absolute() {
+func (c *CPU) X6D_ADC_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_ADC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ADC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X7D_ADC_Absolute_X() {
+func (c *CPU) X7D_ADC_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_ADC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ADC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X79_ADC_Absolute_Y() {
+func (c *CPU) X79_ADC_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_ADC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ADC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X61_ADC_Indirect_X() {
+func (c *CPU) X61_ADC_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ADC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ADC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X71_ADC_Indirect_Y() {
+func (c *CPU) X71_ADC_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(true)
+		c.GetAddress_IndirectY(true)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ADC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ADC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -540,87 +540,87 @@ func (cpu *CPU) X71_ADC_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	+
 
-func (cpu *CPU) XE9_SBC_Immediate() {
+func (c *CPU) XE9_SBC_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_SBC(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_SBC(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) XE5_SBC_ZeroPage() {
+func (c *CPU) XE5_SBC_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_SBC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_SBC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XED_SBC_Absolute() {
+func (c *CPU) XED_SBC_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_SBC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_SBC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XF5_SBC_ZeroPage_X() {
+func (c *CPU) XF5_SBC_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_SBC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_SBC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XFD_SBC_Absolute_X() {
+func (c *CPU) XFD_SBC_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_SBC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_SBC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XF9_SBC_Absolute_Y() {
+func (c *CPU) XF9_SBC_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_SBC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_SBC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XE1_SBC_Indirect_X() {
+func (c *CPU) XE1_SBC_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_SBC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_SBC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XF1_SBC_Indirect_Y() {
+func (c *CPU) XF1_SBC_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(true)
+		c.GetAddress_IndirectY(true)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_SBC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_SBC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -629,62 +629,62 @@ func (cpu *CPU) XF1_SBC_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XE6_INC_ZeroPage() {
+func (c *CPU) XE6_INC_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 3:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_INC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XEE_INC_Absolute() {
+func (c *CPU) XEE_INC_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_INC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XF6_INC_ZeroPage_X() {
+func (c *CPU) XF6_INC_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_INC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XFE_INC_Absolute_X() {
+func (c *CPU) XFE_INC_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_AbsoluteX(false)
+		c.GetAddress_AbsoluteX(false)
 	case 5:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 6:
-		cpu.PollInterrupts()
-		cpu.Op_INC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_INC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -693,62 +693,62 @@ func (cpu *CPU) XFE_INC_Absolute_X() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XC6_DEC_ZeroPage() {
+func (c *CPU) XC6_DEC_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 3:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_DEC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_DEC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XCE_DEC_Absolute() {
+func (c *CPU) XCE_DEC_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_DEC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_DEC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XD6_DEC_ZeroPage_X() {
+func (c *CPU) XD6_DEC_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_DEC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_DEC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XDE_DEC_Absolute_X() {
+func (c *CPU) XDE_DEC_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_AbsoluteX(false)
+		c.GetAddress_AbsoluteX(false)
 	case 5:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 6:
-		cpu.PollInterrupts()
-		cpu.Op_DEC(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_DEC(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -757,13 +757,13 @@ func (cpu *CPU) XDE_DEC_Absolute_X() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XE8_INX() {
+func (c *CPU) XE8_INX() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.ReadFromAB() // Dummy Read
-	cpu.X++
-	cpu.SetZNFlags(cpu.X)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.ReadFromAB() // Dummy Read
+	c.X++
+	c.SetZNFlags(c.X)
+	c.CompleteInstruction()
 }
 
 //	DEX: Decrement Index X by One
@@ -771,13 +771,13 @@ func (cpu *CPU) XE8_INX() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XCA_DEX() {
+func (c *CPU) XCA_DEX() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.ReadFromAB() // Dummy Read
-	cpu.X--
-	cpu.SetZNFlags(cpu.X)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.ReadFromAB() // Dummy Read
+	c.X--
+	c.SetZNFlags(c.X)
+	c.CompleteInstruction()
 }
 
 //	INY: Increment Index Y by One
@@ -785,13 +785,13 @@ func (cpu *CPU) XCA_DEX() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XC8_INY() {
+func (c *CPU) XC8_INY() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.ReadFromAB() // Dummy Read
-	cpu.Y++
-	cpu.SetZNFlags(cpu.Y)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.ReadFromAB() // Dummy Read
+	c.Y++
+	c.SetZNFlags(c.Y)
+	c.CompleteInstruction()
 }
 
 //	DEY: Decrement Index Y by One
@@ -799,13 +799,13 @@ func (cpu *CPU) XC8_INY() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) X88_DEY() {
+func (c *CPU) X88_DEY() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.ReadFromAB() // Dummy Read
-	cpu.Y--
-	cpu.SetZNFlags(cpu.Y)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.ReadFromAB() // Dummy Read
+	c.Y--
+	c.SetZNFlags(c.Y)
+	c.CompleteInstruction()
 }
 
 //----------------------------------------
@@ -817,70 +817,70 @@ func (cpu *CPU) X88_DEY() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	-
 
-func (cpu *CPU) X0A_ASL() {
+func (c *CPU) X0A_ASL() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_Carry = cpu.A > 127
-	cpu.A <<= 1
-	cpu.SetZNFlags(cpu.A)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_Carry = c.A > 127
+	c.A <<= 1
+	c.SetZNFlags(c.A)
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X06_ASL_ZeroPage() {
+func (c *CPU) X06_ASL_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 3:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_ASL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ASL()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X0E_ASL_Absolute() {
+func (c *CPU) X0E_ASL_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ASL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ASL()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X16_ASL_ZeroPage_X() {
+func (c *CPU) X16_ASL_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ASL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ASL()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X1E_ASL_Absolute_X() {
+func (c *CPU) X1E_ASL_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_AbsoluteX(false)
+		c.GetAddress_AbsoluteX(false)
 	case 5:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 6:
-		cpu.PollInterrupts()
-		cpu.Op_ASL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ASL()
+		c.CompleteInstruction()
 	}
 }
 
@@ -889,70 +889,70 @@ func (cpu *CPU) X1E_ASL_Absolute_X() {
 //	N	Z	C	I	D	V
 //	0	+	+	-	-	-
 
-func (cpu *CPU) X4A_LSR() {
+func (c *CPU) X4A_LSR() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_Carry = (cpu.A & 1) != 0
-	cpu.A >>= 1
-	cpu.SetZNFlags(cpu.A)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_Carry = (c.A & 1) != 0
+	c.A >>= 1
+	c.SetZNFlags(c.A)
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X46_LSR_ZeroPage() {
+func (c *CPU) X46_LSR_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 3:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_LSR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_LSR()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X4E_LSR_Absolute() {
+func (c *CPU) X4E_LSR_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_LSR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_LSR()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X56_LSR_ZeroPage_X() {
+func (c *CPU) X56_LSR_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_LSR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_LSR()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X5E_LSR_Absolute_X() {
+func (c *CPU) X5E_LSR_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_AbsoluteX(false)
+		c.GetAddress_AbsoluteX(false)
 	case 5:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 6:
-		cpu.PollInterrupts()
-		cpu.Op_LSR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_LSR()
+		c.CompleteInstruction()
 	}
 }
 
@@ -961,74 +961,74 @@ func (cpu *CPU) X5E_LSR_Absolute_X() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	-
 
-func (cpu *CPU) X2A_ROL() {
+func (c *CPU) X2A_ROL() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	futureCarry := (cpu.A >= 0x80)
-	cpu.A <<= 1
-	if cpu.flag_Carry {
-		cpu.A |= 1
+	c.PollInterrupts()
+	futureCarry := (c.A >= 0x80)
+	c.A <<= 1
+	if c.flag_Carry {
+		c.A |= 1
 	}
-	cpu.flag_Carry = futureCarry
-	cpu.SetZNFlags(cpu.A)
-	cpu.CompleteInstruction()
+	c.flag_Carry = futureCarry
+	c.SetZNFlags(c.A)
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X26_ROL_ZeroPage() {
+func (c *CPU) X26_ROL_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 3:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_ROL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROL()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X2E_ROL_Absolute() {
+func (c *CPU) X2E_ROL_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ROL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROL()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X36_ROL_ZeroPage_X() {
+func (c *CPU) X36_ROL_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ROL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROL()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X3E_ROL_Absolute_X() {
+func (c *CPU) X3E_ROL_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_AbsoluteX(false)
+		c.GetAddress_AbsoluteX(false)
 	case 5:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 6:
-		cpu.PollInterrupts()
-		cpu.Op_ROL()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROL()
+		c.CompleteInstruction()
 	}
 }
 
@@ -1037,74 +1037,74 @@ func (cpu *CPU) X3E_ROL_Absolute_X() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	-
 
-func (cpu *CPU) X6A_ROR() {
+func (c *CPU) X6A_ROR() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	futureCarry := (cpu.A & 1) != 0
-	cpu.A >>= 1
-	if cpu.flag_Carry {
-		cpu.A |= 0x80
+	c.PollInterrupts()
+	futureCarry := (c.A & 1) != 0
+	c.A >>= 1
+	if c.flag_Carry {
+		c.A |= 0x80
 	}
-	cpu.flag_Carry = futureCarry
-	cpu.SetZNFlags(cpu.A)
-	cpu.CompleteInstruction()
+	c.flag_Carry = futureCarry
+	c.SetZNFlags(c.A)
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X66_ROR_ZeroPage() {
+func (c *CPU) X66_ROR_ZeroPage() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 3:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_ROR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROR()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X6E_ROR_Absolute() {
+func (c *CPU) X6E_ROR_Absolute() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ROR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROR()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X76_ROR_ZeroPage_X() {
+func (c *CPU) X76_ROR_ZeroPage_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.DL = cpu.ReadFromAB()
+		c.DL = c.ReadFromAB()
 	case 4:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ROR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROR()
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X7E_ROR_Absolute_X() {
+func (c *CPU) X7E_ROR_Absolute_X() {
 	// CPU_Cycles = 7
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_AbsoluteX(false)
+		c.GetAddress_AbsoluteX(false)
 	case 5:
-		cpu.WriteToAB(cpu.DL) // Dummy write
+		c.WriteToAB(c.DL) // Dummy write
 	case 6:
-		cpu.PollInterrupts()
-		cpu.Op_ROR()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ROR()
+		c.CompleteInstruction()
 	}
 }
 
@@ -1117,87 +1117,87 @@ func (cpu *CPU) X7E_ROR_Absolute_X() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) X29_AND_Immediate() {
+func (c *CPU) X29_AND_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_AND(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_AND(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X25_AND_ZeroPage() {
+func (c *CPU) X25_AND_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_AND(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_AND(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X2D_AND_Absolute() {
+func (c *CPU) X2D_AND_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_AND(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_AND(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X35_AND_ZeroPage_X() {
+func (c *CPU) X35_AND_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_AND(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_AND(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X3D_AND_Absolute_X() {
+func (c *CPU) X3D_AND_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_AND(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_AND(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X39_AND_Absolute_Y() {
+func (c *CPU) X39_AND_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_AND(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_AND(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X21_AND_Indirect_X() {
+func (c *CPU) X21_AND_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_AND(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_AND(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X31_AND_Indirect_Y() {
+func (c *CPU) X31_AND_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(true)
+		c.GetAddress_IndirectY(true)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_AND(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_AND(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1206,87 +1206,87 @@ func (cpu *CPU) X31_AND_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) X09_ORA_Immediate() {
+func (c *CPU) X09_ORA_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_ORA(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_ORA(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X05_ORA_ZeroPage() {
+func (c *CPU) X05_ORA_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_ORA(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ORA(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X0D_ORA_Absolute() {
+func (c *CPU) X0D_ORA_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_ORA(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ORA(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X15_ORA_ZeroPage_X() {
+func (c *CPU) X15_ORA_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_ORA(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ORA(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X1D_ORA_Absolute_X() {
+func (c *CPU) X1D_ORA_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_ORA(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ORA(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X19_ORA_Absolute_Y() {
+func (c *CPU) X19_ORA_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_ORA(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ORA(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X01_ORA_Indirect_X() {
+func (c *CPU) X01_ORA_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ORA(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ORA(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X11_ORA_Indirect_Y() {
+func (c *CPU) X11_ORA_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(true)
+		c.GetAddress_IndirectY(true)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_ORA(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_ORA(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1295,87 +1295,87 @@ func (cpu *CPU) X11_ORA_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) X49_EOR_Immediate() {
+func (c *CPU) X49_EOR_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_EOR(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_EOR(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) X45_EOR_ZeroPage() {
+func (c *CPU) X45_EOR_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_EOR(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_EOR(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X4D_EOR_Absolute() {
+func (c *CPU) X4D_EOR_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_EOR(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_EOR(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X55_EOR_ZeroPage_X() {
+func (c *CPU) X55_EOR_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_EOR(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_EOR(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X5D_EOR_Absolute_X() {
+func (c *CPU) X5D_EOR_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_EOR(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_EOR(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X59_EOR_Absolute_Y() {
+func (c *CPU) X59_EOR_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_EOR(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_EOR(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X41_EOR_Indirect_X() {
+func (c *CPU) X41_EOR_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_EOR(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_EOR(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X51_EOR_Indirect_Y() {
+func (c *CPU) X51_EOR_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(true)
+		c.GetAddress_IndirectY(true)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_EOR(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_EOR(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1391,26 +1391,26 @@ func (cpu *CPU) X51_EOR_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	M7	+	-	-	-	M6
 
-func (cpu *CPU) X24_BIT_ZeroPage() {
+func (c *CPU) X24_BIT_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_BIT(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_BIT(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) X2C_BIT_Absolute() {
+func (c *CPU) X2C_BIT_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_BIT(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_BIT(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1423,87 +1423,87 @@ func (cpu *CPU) X2C_BIT_Absolute() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	-
 
-func (cpu *CPU) XC9_CMP_Immediate() {
+func (c *CPU) XC9_CMP_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_CMP(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_CMP(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) XC5_CMP_ZeroPage() {
+func (c *CPU) XC5_CMP_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_CMP(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CMP(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XCD_CMP_Absolute() {
+func (c *CPU) XCD_CMP_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_CMP(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CMP(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XD5_CMP_ZeroPage_X() {
+func (c *CPU) XD5_CMP_ZeroPage_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_ZeroPageX()
+		c.GetAddress_ZeroPageX()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_CMP(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CMP(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XDD_CMP_Absolute_X() {
+func (c *CPU) XDD_CMP_Absolute_X() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteX(true)
+		c.GetAddress_AbsoluteX(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_CMP(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CMP(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XD9_CMP_Absolute_Y() {
+func (c *CPU) XD9_CMP_Absolute_Y() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.GetAddress_AbsoluteY(true)
+		c.GetAddress_AbsoluteY(true)
 	case 4:
-		cpu.PollInterrupts()
-		cpu.Op_CMP(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CMP(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XC1_CMP_Indirect_X() {
+func (c *CPU) XC1_CMP_Indirect_X() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectX()
+		c.GetAddress_IndirectX()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_CMP(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CMP(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XD1_CMP_Indirect_Y() {
+func (c *CPU) XD1_CMP_Indirect_Y() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2, 3, 4:
-		cpu.GetAddress_IndirectY(true)
+		c.GetAddress_IndirectY(true)
 	case 5:
-		cpu.PollInterrupts()
-		cpu.Op_CMP(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CMP(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1512,32 +1512,32 @@ func (cpu *CPU) XD1_CMP_Indirect_Y() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	-
 
-func (cpu *CPU) XE0_CPX_Immediate() {
+func (c *CPU) XE0_CPX_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_CPX(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_CPX(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) XE4_CPX_ZeroPage() {
+func (c *CPU) XE4_CPX_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_CPX(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CPX(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XEC_CPX_Absolute() {
+func (c *CPU) XEC_CPX_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_CPX(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CPX(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1546,32 +1546,32 @@ func (cpu *CPU) XEC_CPX_Absolute() {
 //	N	Z	C	I	D	V
 //	+	+	+	-	-	-
 
-func (cpu *CPU) XC0_CPY_Immediate() {
+func (c *CPU) XC0_CPY_Immediate() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.Op_CPY(cpu.ReadFromPC())
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.Op_CPY(c.ReadFromPC())
+	c.CompleteInstruction()
 }
-func (cpu *CPU) XC4_CPY_ZeroPage() {
+func (c *CPU) XC4_CPY_ZeroPage() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_ZeroPage()
+		c.GetAddress_ZeroPage()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Op_CPY(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CPY(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
-func (cpu *CPU) XCC_CPY_Absolute() {
+func (c *CPU) XCC_CPY_Absolute() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.PollInterrupts()
-		cpu.Op_CPY(cpu.ReadFromAB())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Op_CPY(c.ReadFromAB())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1584,10 +1584,10 @@ func (cpu *CPU) XCC_CPY_Absolute() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X90_BCC() {
-	switch cpu.InstructionCycle {
+func (c *CPU) X90_BCC() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(!cpu.flag_Carry)
+		c.Branch(!c.flag_Carry)
 	}
 }
 
@@ -1596,10 +1596,10 @@ func (cpu *CPU) X90_BCC() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) XB0_BCS() {
-	switch cpu.InstructionCycle {
+func (c *CPU) XB0_BCS() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(cpu.flag_Carry)
+		c.Branch(c.flag_Carry)
 	}
 }
 
@@ -1608,10 +1608,10 @@ func (cpu *CPU) XB0_BCS() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) XF0_BEQ() {
-	switch cpu.InstructionCycle {
+func (c *CPU) XF0_BEQ() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(cpu.flag_Zero)
+		c.Branch(c.flag_Zero)
 	}
 }
 
@@ -1620,10 +1620,10 @@ func (cpu *CPU) XF0_BEQ() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) XD0_BNE() {
-	switch cpu.InstructionCycle {
+func (c *CPU) XD0_BNE() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(!cpu.flag_Zero)
+		c.Branch(!c.flag_Zero)
 	}
 }
 
@@ -1632,10 +1632,10 @@ func (cpu *CPU) XD0_BNE() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X10_BPL() {
-	switch cpu.InstructionCycle {
+func (c *CPU) X10_BPL() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(!cpu.flag_Negative)
+		c.Branch(!c.flag_Negative)
 	}
 }
 
@@ -1644,10 +1644,10 @@ func (cpu *CPU) X10_BPL() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X30_BMI() {
-	switch cpu.InstructionCycle {
+func (c *CPU) X30_BMI() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(cpu.flag_Negative)
+		c.Branch(c.flag_Negative)
 	}
 }
 
@@ -1656,10 +1656,10 @@ func (cpu *CPU) X30_BMI() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X50_BVC() {
-	switch cpu.InstructionCycle {
+func (c *CPU) X50_BVC() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(!cpu.flag_Overflow)
+		c.Branch(!c.flag_Overflow)
 	}
 }
 
@@ -1668,10 +1668,10 @@ func (cpu *CPU) X50_BVC() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X70_BVS() {
-	switch cpu.InstructionCycle {
+func (c *CPU) X70_BVS() {
+	switch c.InstructionCycle {
 	case 1, 2, 3:
-		cpu.Branch(cpu.flag_Overflow)
+		c.Branch(c.flag_Overflow)
 	}
 }
 
@@ -1685,31 +1685,31 @@ func (cpu *CPU) X70_BVS() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X4C_JMP() {
+func (c *CPU) X4C_JMP() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 2:
-		cpu.PollInterrupts()
-		cpu.GetAddress_Absolute()
-		cpu.PC = cpu.AddressBus
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.GetAddress_Absolute()
+		c.PC = c.AddressBus
+		c.CompleteInstruction()
 	}
 }
 
-func (cpu *CPU) X6C_JMP_Indirect() {
+func (c *CPU) X6C_JMP_Indirect() {
 	// CPU_Cycles = 5
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1, 2:
-		cpu.GetAddress_Absolute()
+		c.GetAddress_Absolute()
 	case 3:
-		cpu.SB = cpu.ReadFromAB()
+		c.SB = c.ReadFromAB()
 	case 4:
-		cpu.PollInterrupts()
-		cpu.DL = cpu.bus.Read((cpu.AddressBus & 0xFF00) | ((cpu.AddressBus + 1) & 0xFF))
-		cpu.PC = cpu.BuildAddress(cpu.SB, cpu.DL)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.DL = c.bus.Read((c.AddressBus & 0xFF00) | ((c.AddressBus + 1) & 0xFF))
+		c.PC = c.BuildAddress(c.SB, c.DL)
+		c.CompleteInstruction()
 	}
 }
 
@@ -1720,23 +1720,23 @@ func (cpu *CPU) X6C_JMP_Indirect() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X20_JSR() {
+func (c *CPU) X20_JSR() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1: // fetch the byte that will be PC low
-		cpu.GetAddress_Immediate()
+		c.GetAddress_Immediate()
 	case 2: // transfer stack pointer to address bus, and alu to stack pointer. I'm just reusing `dl` here, but this instruction actually uses the Arithmetic Logic Unit for this.
-		cpu.AddressBus = uint16(cpu.SP) | 0x100
-		//cpu.SP = cpu.DL
-		cpu.ReadFromAB() // Dummy Read
+		c.AddressBus = uint16(c.SP) | 0x100
+		//c.SP = c.DL
+		c.ReadFromAB() // Dummy Read
 	case 3: // push PC high to stack via address bus
-		cpu.Push(byte(cpu.PC / 0x100))
+		c.Push(byte(c.PC / 0x100))
 	case 4: // push PC low to stack via address bus
-		cpu.Push(byte(cpu.PC))
+		c.Push(byte(c.PC))
 	case 5: // fetch PC High, transfer stack pointer to PC low, address bus to stack pointer.
-		cpu.PollInterrupts()
-		cpu.PC = cpu.BuildAddress(cpu.DL, cpu.ReadFromPC())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.PC = c.BuildAddress(c.DL, c.ReadFromPC())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1745,22 +1745,22 @@ func (cpu *CPU) X20_JSR() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X60_RTS() {
+func (c *CPU) X60_RTS() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_Immediate() // Dummy read to advance PC
+		c.GetAddress_Immediate() // Dummy read to advance PC
 	case 2:
-		cpu.SP--
-		cpu.Pull() // Dummy Read (Pull)
+		c.SP--
+		c.Pull() // Dummy Read (Pull)
 	case 3: // Target byte low
-		cpu.DL = cpu.Pull()
+		c.DL = c.Pull()
 	case 4: // Target byte high
-		cpu.PC = cpu.BuildAddress(cpu.DL, cpu.Pull())
+		c.PC = c.BuildAddress(c.DL, c.Pull())
 	case 5:
-		cpu.PollInterrupts()
-		cpu.ReadFromPC() // Dummy read to advance PC
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.ReadFromPC() // Dummy read to advance PC
+		c.CompleteInstruction()
 	}
 }
 
@@ -1779,61 +1779,61 @@ func (cpu *CPU) X60_RTS() {
 //	N	Z	C	I	D	V
 //	-	-	-	1	-	-
 
-func (cpu *CPU) X00_BRK() {
+func (c *CPU) X00_BRK() {
 	// CPU_Cycles = 7
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		if cpu.BreakSource == Break_Software {
-			cpu.GetAddress_Immediate() // Dummy read that increments PC
+		if c.BreakSource == Break_Software {
+			c.GetAddress_Immediate() // Dummy read that increments PC
 		} else {
-			cpu.ReadFromAB() // Dummy read that does not increment PC
+			c.ReadFromAB() // Dummy read that does not increment PC
 		}
 	case 2:
-		if cpu.BreakSource != Break_Reset {
-			cpu.Push(byte(cpu.PC >> 8))
+		if c.BreakSource != Break_Reset {
+			c.Push(byte(c.PC >> 8))
 		} else {
-			cpu.ResetReadPush()
+			c.ResetReadPush()
 		}
 	case 3:
-		if cpu.BreakSource != Break_Reset {
-			cpu.Push(byte(cpu.PC))
+		if c.BreakSource != Break_Reset {
+			c.Push(byte(c.PC))
 		} else {
-			cpu.ResetReadPush()
+			c.ResetReadPush()
 		}
 	case 4:
-		if cpu.BreakSource != Break_Reset {
-			cpu.flag_B = false
-			if cpu.BreakSource == Break_Software {
-				cpu.flag_B = true
+		if c.BreakSource != Break_Reset {
+			c.flag_B = false
+			if c.BreakSource == Break_Software {
+				c.flag_B = true
 			}
-			cpu.PushFlags()
+			c.PushFlags()
 		} else {
-			cpu.ResetReadPush()
+			c.ResetReadPush()
 		}
-		cpu.PollInterrupts()
+		c.PollInterrupts()
 	case 5:
-		if cpu.BreakSource == Break_NMI {
-			cpu.PC = (cpu.PC & 0xFF00) | uint16(cpu.bus.Read(0xFFFA))
-		} else if cpu.BreakSource == Break_Reset {
-			cpu.PC = (cpu.PC & 0xFF00) | uint16(cpu.bus.Read(0xFFFC))
+		if c.BreakSource == Break_NMI {
+			c.PC = (c.PC & 0xFF00) | uint16(c.bus.Read(0xFFFA))
+		} else if c.BreakSource == Break_Reset {
+			c.PC = (c.PC & 0xFF00) | uint16(c.bus.Read(0xFFFC))
 		} else {
-			cpu.PC = (cpu.PC & 0xFF00) | uint16(cpu.bus.Read(0xFFFE))
+			c.PC = (c.PC & 0xFF00) | uint16(c.bus.Read(0xFFFE))
 		}
 	case 6:
-		if cpu.BreakSource == Break_NMI {
-			cpu.PC = (cpu.PC & 0xFF) | (uint16(cpu.bus.Read(0xFFFB)) << 8)
-		} else if cpu.BreakSource == Break_Reset {
-			cpu.PC = (cpu.PC & 0xFF) | (uint16(cpu.bus.Read(0xFFFD)) << 8)
+		if c.BreakSource == Break_NMI {
+			c.PC = (c.PC & 0xFF) | (uint16(c.bus.Read(0xFFFB)) << 8)
+		} else if c.BreakSource == Break_Reset {
+			c.PC = (c.PC & 0xFF) | (uint16(c.bus.Read(0xFFFD)) << 8)
 		} else {
-			cpu.PC = (cpu.PC & 0xFF) | (uint16(cpu.bus.Read(0xFFFF)) << 8)
+			c.PC = (c.PC & 0xFF) | (uint16(c.bus.Read(0xFFFF)) << 8)
 		}
-		cpu.BreakSource = Break_None
-		cpu.NMIPending = false
-		cpu.IRQPending = false
-		cpu.IRQLine = false
+		c.BreakSource = Break_None
+		c.NMIPending = false
+		c.IRQPending = false
+		c.IRQLine = false
 		mappers.MMC3_IRQPending = false
-		cpu.flag_InterruptDisable = true
-		cpu.CompleteInstruction()
+		c.flag_InterruptDisable = true
+		c.CompleteInstruction()
 	}
 }
 
@@ -1845,28 +1845,28 @@ func (cpu *CPU) X00_BRK() {
 //	N	Z	C	I	D	V
 //	from stack
 
-func (cpu *CPU) X40_RTI() {
+func (c *CPU) X40_RTI() {
 	// CPU_Cycles = 6
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.GetAddress_Immediate()
+		c.GetAddress_Immediate()
 	case 2:
-		cpu.AddressBus = uint16(cpu.SP) | 0x100
-		cpu.ReadFromAB() //Dummy read
+		c.AddressBus = uint16(c.SP) | 0x100
+		c.ReadFromAB() //Dummy read
 	case 3:
-		status := cpu.Pull()
-		cpu.flag_Carry = (status & 0x01) != 0
-		cpu.flag_Zero = (status & 0x02) != 0
-		cpu.flag_InterruptDisable = (status & 0x04) != 0
-		cpu.flag_Decimal = (status & 0x08) != 0
-		cpu.flag_Overflow = (status & 0x40) != 0
-		cpu.flag_Negative = (status & 0x80) != 0
+		status := c.Pull()
+		c.flag_Carry = (status & 0x01) != 0
+		c.flag_Zero = (status & 0x02) != 0
+		c.flag_InterruptDisable = (status & 0x04) != 0
+		c.flag_Decimal = (status & 0x08) != 0
+		c.flag_Overflow = (status & 0x40) != 0
+		c.flag_Negative = (status & 0x80) != 0
 	case 4:
-		cpu.DL = cpu.Pull()
+		c.DL = c.Pull()
 	case 5:
-		cpu.PollInterrupts()
-		cpu.PC = cpu.BuildAddress(cpu.DL, cpu.Pull())
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.PC = c.BuildAddress(c.DL, c.Pull())
+		c.CompleteInstruction()
 	}
 }
 
@@ -1879,15 +1879,15 @@ func (cpu *CPU) X40_RTI() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X48_PHA() {
+func (c *CPU) X48_PHA() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.DL = cpu.ReadFromAB() // Dummy read
+		c.DL = c.ReadFromAB() // Dummy read
 	case 2:
-		cpu.PollInterrupts()
-		cpu.Push(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.Push(c.A)
+		c.CompleteInstruction()
 	}
 }
 
@@ -1896,20 +1896,20 @@ func (cpu *CPU) X48_PHA() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) X68_PLA() {
+func (c *CPU) X68_PLA() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.AddressBus = cpu.PC
-		cpu.ReadFromAB() // Dummy Read
+		c.AddressBus = c.PC
+		c.ReadFromAB() // Dummy Read
 	case 2:
-		cpu.AddressBus = uint16(cpu.SP) | 0x100
-		cpu.ReadFromAB() //Dummy read
+		c.AddressBus = uint16(c.SP) | 0x100
+		c.ReadFromAB() //Dummy read
 	case 3:
-		cpu.PollInterrupts()
-		cpu.A = cpu.Pull()
-		cpu.SetZNFlags(cpu.A)
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.A = c.Pull()
+		c.SetZNFlags(c.A)
+		c.CompleteInstruction()
 	}
 }
 
@@ -1920,16 +1920,16 @@ func (cpu *CPU) X68_PLA() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X08_PHP() {
+func (c *CPU) X08_PHP() {
 	// CPU_Cycles = 3
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.ReadFromAB() // Dummy read
+		c.ReadFromAB() // Dummy read
 	case 2:
-		cpu.PollInterrupts()
-		cpu.flag_B = true
-		cpu.PushFlags()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.flag_B = true
+		c.PushFlags()
+		c.CompleteInstruction()
 	}
 }
 
@@ -1940,19 +1940,19 @@ func (cpu *CPU) X08_PHP() {
 //	N	Z	C	I	D	V
 //	from stack
 
-func (cpu *CPU) X28_PLP() {
+func (c *CPU) X28_PLP() {
 	// CPU_Cycles = 4
-	switch cpu.InstructionCycle {
+	switch c.InstructionCycle {
 	case 1:
-		cpu.AddressBus = cpu.PC
-		cpu.ReadFromAB() // Dummy Read
+		c.AddressBus = c.PC
+		c.ReadFromAB() // Dummy Read
 	case 2:
-		cpu.AddressBus = uint16(cpu.SP) | 0x100
-		cpu.ReadFromAB() //Dummy read
+		c.AddressBus = uint16(c.SP) | 0x100
+		c.ReadFromAB() //Dummy read
 	case 3:
-		cpu.PollInterrupts()
-		cpu.PullFlags()
-		cpu.CompleteInstruction()
+		c.PollInterrupts()
+		c.PullFlags()
+		c.CompleteInstruction()
 	}
 }
 
@@ -1961,13 +1961,13 @@ func (cpu *CPU) X28_PLP() {
 //	N	Z	C	I	D	V
 //	+	+	-	-	-	-
 
-func (cpu *CPU) XBA_TSX() {
+func (c *CPU) XBA_TSX() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.X = cpu.SP
-	cpu.ReadFromAB() // Dummy read
-	cpu.SetZNFlags(cpu.X)
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.X = c.SP
+	c.ReadFromAB() // Dummy read
+	c.SetZNFlags(c.X)
+	c.CompleteInstruction()
 }
 
 //	TXS: Transfer Index X to Stack Register
@@ -1975,12 +1975,12 @@ func (cpu *CPU) XBA_TSX() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) X9A_TXS() {
+func (c *CPU) X9A_TXS() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.SP = cpu.X
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.SP = c.X
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //----------------------------------------
@@ -1992,12 +1992,12 @@ func (cpu *CPU) X9A_TXS() {
 //	N	Z	C	I	D	V
 //	-	-	0	-	-	-
 
-func (cpu *CPU) X18_CLC() {
+func (c *CPU) X18_CLC() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_Carry = false
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_Carry = false
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //	SEC: Set Carry Flag
@@ -2005,12 +2005,12 @@ func (cpu *CPU) X18_CLC() {
 //	N	Z	C	I	D	V
 //	-	-	1	-	-	-
 
-func (cpu *CPU) X38_SEC() {
+func (c *CPU) X38_SEC() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_Carry = true
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_Carry = true
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //	CLI: Clear Interrupt Disable Bit
@@ -2018,12 +2018,12 @@ func (cpu *CPU) X38_SEC() {
 //	N	Z	C	I	D	V
 //	-	-	-	0	-	-
 
-func (cpu *CPU) X58_CLI() {
+func (c *CPU) X58_CLI() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_InterruptDisable = false
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_InterruptDisable = false
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //	SEI: Set Interrupt Disable Status
@@ -2031,12 +2031,12 @@ func (cpu *CPU) X58_CLI() {
 //	N	Z	C	I	D	V
 //	-	-	-	1	-	-
 
-func (cpu *CPU) X78_SEI() {
+func (c *CPU) X78_SEI() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_InterruptDisable = true
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_InterruptDisable = true
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //	CLD: Clear Decimal Mode
@@ -2044,12 +2044,12 @@ func (cpu *CPU) X78_SEI() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	0	-
 
-func (cpu *CPU) XD8_CLD() {
+func (c *CPU) XD8_CLD() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_Decimal = false
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_Decimal = false
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //	SED: Set Decimal Flag
@@ -2057,12 +2057,12 @@ func (cpu *CPU) XD8_CLD() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	1	-
 
-func (cpu *CPU) XF8_SED() {
+func (c *CPU) XF8_SED() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_Decimal = true
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_Decimal = true
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //	CLV: Clear Overflow Flag
@@ -2070,12 +2070,12 @@ func (cpu *CPU) XF8_SED() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	0
 
-func (cpu *CPU) XB8_CLV() {
+func (c *CPU) XB8_CLV() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.flag_Overflow = false
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.flag_Overflow = false
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
 
 //----------------------------------------
@@ -2086,9 +2086,9 @@ func (cpu *CPU) XB8_CLV() {
 //	N	Z	C	I	D	V
 //	-	-	-	-	-	-
 
-func (cpu *CPU) XEA_NOP() {
+func (c *CPU) XEA_NOP() {
 	// CPU_Cycles = 2
-	cpu.PollInterrupts()
-	cpu.ReadFromAB() // Dummy read
-	cpu.CompleteInstruction()
+	c.PollInterrupts()
+	c.ReadFromAB() // Dummy read
+	c.CompleteInstruction()
 }
