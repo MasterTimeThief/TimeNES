@@ -2,7 +2,6 @@ package ppu
 
 import (
 	"image"
-	"mtt/timenes/common"
 	"mtt/timenes/nes/cartridge"
 )
 
@@ -55,9 +54,6 @@ func RenderNextPixel() {
 			}
 		}
 
-		if PPUScanline == 238 && PPUDot == 255 {
-			common.Print("")
-		}
 		var SpritePalHi byte = 0        //Which color palette to use
 		var SpritePalLow byte = 0       //Index into a color palette
 		var SpritePriority bool = false //Is the sprite in front or behind the BG?

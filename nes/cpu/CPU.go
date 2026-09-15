@@ -112,9 +112,6 @@ func (c *CPU) ResetCPU() {
 func (c *CPU) CPU_Cycle() {
 	if c.DelayCounter == 0 {
 		if c.InstructionCycle == 0 {
-			if c.NMIPending {
-				print("")
-			}
 			// Suppress NMI if the read was on the same cycle as VBlank being set
 			if ppu.SuppressNMI && c.NMIPending {
 				c.DisableNMI()
