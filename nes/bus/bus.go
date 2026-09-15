@@ -47,8 +47,7 @@ func (b *BUS) Read(Address uint16) byte {
 		CPUBus = cartridge.RAM[Address&0x7FF]
 	} else if Address < 0x4000 {
 		//Reading a PPU Register
-		Address &= 0x2007
-		switch Address {
+		switch Address & 0x2007 {
 		case 0x2000: //PPUCTRL
 		case 0x2001: //PPUMASK
 		case 0x2002: //PPUSTATUS
@@ -158,8 +157,7 @@ func (b *BUS) Write(Address uint16, Value byte) {
 	} else if Address < 0x4000 {
 		//Write to PPU Register
 		ppu.UpdatePPUBus(Value)
-		Address &= 0x2007
-		switch Address {
+		switch Address & 0x2007 {
 		case 0x2000: //PPUCTRL
 			ppu.PPUCTRL_NametableSelect = Value & 0x03
 			ppu.PPUCTRL_VRAMInc32Mode = (Value & 0x04) != 0
